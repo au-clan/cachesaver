@@ -18,3 +18,6 @@ class DataBasic(ABC):
     @abstractmethod
     def get_initial_state(self, idx: int, randomness: int=0) -> StateBasic:
         pass
+
+    def download_data(self,):
+        raise NotImplementedError

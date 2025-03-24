@@ -129,7 +129,7 @@ class EnvironmentGame24(EnvironmentBasic):
         return inference
     
     @staticmethod
-    def verify(state: StateGame24)-> dict:
+    def verify(state: StateGame24)-> Verification:
         """
         Given a state returns its verification. 
         Verification pertains to whether the state is finished and if the answer is correct.

@@ -2,9 +2,11 @@ import asyncio
 from typing import List, Any
 from dataclasses import dataclass
 
-from cachesaver.typedefs import Request, Batch, Response, SingleRequestModel, BatchRequestModel
+from cachesaver.typedefs import Request, Batch, Response
 
-class OnlineLLM(SingleRequestModel, BatchRequestModel):
+from .model_basic import ModelBasic
+
+class OnlineLLM(ModelBasic):
     def __init__(self, client: Any, model: str):
         self.client = client
         self.model = model
