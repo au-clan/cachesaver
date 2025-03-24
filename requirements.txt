@@ -1,0 +1,8 @@
+pandas
+diskcache
+omegaconf
+together
+sympy
+langchain
+langchain-community
+wikipedia
