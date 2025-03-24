@@ -1,12 +1,23 @@
-import yaml
 import random
 from typing import List
 import numpy as np 
 from collections import namedtuple
-import hashlib
 
-def sha256(string: str):
-    return hashlib.sha256(string.encode()).hexdigest()
+def tokens2cost(tokens: dict, model_name: str) -> dict:
+    catalog = {
+        "meta-llama/Llama-3.3-70B-Instruct-Turbo" : {"in": 0.88, "out": 0.88},
+        "meta-llama/Llama-3.2-90B-Vision-Instruct-Turbo" : {"in": 0.88, "out": 0.88},
+        "gpt-4o": {"in": 2.50, "out": 10.00},
+        "gpt-4o-mini": {"in": 0.15, "out": 0.60},
+        "gpt-3.5-turbo": {"in": 0.50, "out": 2.00}
+    }
+
+    catalog["llama-3.3-70b-specdec"] = catalog["meta-llama/Llama-3.3-70B-Instruct-Turbo"]
+    catalog["llama-3.2-90b-vision-preview"] = catalog["meta-llama/Llama-3.2-90B-Vision-Instruct-Turbo"]
+    
+    price_in = catalog[model_name]["in"] * tokens["in"] / 1e6
+    price_out = catalog[model_name]["out"] * tokens["out"] / 1e6
+    return {"in": price_in, "out": price_out, "total": price_in + price_out}
 
 class Resampler: 
     def __init__(self, randomness: int):

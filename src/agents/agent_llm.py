@@ -21,6 +21,11 @@ class AgentLLM(AgentBasic):
         self.name = "LLM Agent"
         self.api = api
         self.calls = {"total": 0, "cached": 0, "duplicated": 0}
+        self.tokens = {
+            "total": {"in": 0, "out": 0},
+            "cached": {"in": 0, "out": 0},
+            "generated": {"in": 0, "out": 0}
+        }
 
     async def request(self, prompt: str, n: int, request_id:str, namespace: str, config: DictConfig) -> List[Any]:
         """
@@ -42,7 +47,20 @@ class AgentLLM(AgentBasic):
             "cached": self.calls["cached"] + sum(response.cached),
             "duplicated": self.calls["duplicated"] + sum(response.duplicated)
         }
-        return response.data
+        
+        messages, tokin, tokout = zip(*response.data)
+        cached_tokin = [int(tokens * cached) for tokens, cached in zip(tokin, response.cached)]
+        cached_tokout = [int(tokens * cached) for tokens, cached in zip(tokout, response.cached)]
+        generated_tokin = [int(tokens * (not cached)) for tokens, cached in zip(tokin, response.cached)]
+        generated_tokout = [int(tokens * (not cached)) for tokens, cached in zip(tokout, response.cached)]
+
+        self.tokens["total"]["in"] += sum(tokin)
+        self.tokens["total"]["out"] += sum(tokout)
+        self.tokens["cached"]["in"] += sum(cached_tokin)
+        self.tokens["cached"]["out"] += sum(cached_tokout)
+        self.tokens["generated"]["in"] += sum(generated_tokin)
+        self.tokens["generated"]["out"] += sum(generated_tokout)
+        return messages
 
     async def act_step(self, state: StateBasic, environment: EnvironmentBasic, namespace: str, request_id: str, config: DictConfig, cache: dict=None) -> StateBasic:
         """

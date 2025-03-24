@@ -29,8 +29,10 @@ class OnlineLLM(ModelBasic):
             logprobs = request.logprobs or False,
             top_logprobs = request.top_logprobs or None,
         )
+        input_tokens = completion.usage.prompt_tokens
+        completion_tokens = completion.usage.completion_tokens
         response = Response(
-            data = [choice.message.content for choice in completion.choices]
+            data = [(choice.message.content, input_tokens, completion_tokens/request.n) for choice in completion.choices]
         )
         return response
     
