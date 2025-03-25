@@ -16,7 +16,7 @@ class FrameworkToT(FrameworkBasic):
 
         # ToT options
         self.n_select_sample = config.framework.n_select_sample
-
+        self.num_steps = config.framework.num_steps
 
         # Task options
         self.task = config.task.name
@@ -37,7 +37,7 @@ class FrameworkToT(FrameworkBasic):
         log = {}
         log[puzzle_idx] = {"puzzle": puzzle}
 
-        for step in range(self.min_steps):
+        for step in range(self.num_steps):
             print(f"Step {step}")
 
             

@@ -18,6 +18,7 @@ framework:
   name: Tree of Thoughts (ToT)
   evaluations: 3
   n_select_sample: 3
+  num_steps: 5
 
 task:
   name: GameOf24
