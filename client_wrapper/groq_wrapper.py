@@ -3,10 +3,10 @@ import re
 import time
 from typing import List
 
-from cachesaver.typedefs import Request, Batch
-from cachesaver.typedefs import Response
 from groq import AsyncGroq, RateLimitError
 
+from cachesaver.typedefs import Request, Batch
+from cachesaver.typedefs import Response
 from src.models.model_basic import ModelBasic
 
 
@@ -56,7 +56,7 @@ class GroqModel(ModelBasic):
 
         # todo locks, could also be semaphore
         self.rate_limit_lock = asyncio.Lock()
-        self.semaphore = asyncio.Semaphore(5)#todo the same as the batch sizes or the number of requests pr minute
+        self.semaphore = asyncio.Semaphore(20)  # todo the same as the batch sizes or the number of requests pr minute
 
     async def batch_request(self, batch: Batch) -> List[Response]:
         """Handles a batch of requests"""
@@ -66,23 +66,27 @@ class GroqModel(ModelBasic):
         return responses
 
     async def request(self, request: Request) -> Response:
-        """Handles a single request"""
 
-        # prompts = [{"role": "user", "content": request.prompt}]
+        responses = await asyncio.gather(*(self.single_request(request) for _ in range(request.n)))
+        # todo format here
+        merged_data = [item for r in responses for item in r.data]
+        merged_response = Response(
+            data=merged_data
+        )
+        return merged_response
 
+    async def single_request(self, request: Request) -> Response:
         await self.obey_rate_limits()
         async with self.rate_limit_lock:
             if self.rpm_remaining > 0:
                 self.rpm_remaining -= 1
         now = time.strftime("%Y-%m-%d %H:%M:%S")
         print(f"[{now}] Making request")
+
         async with self.semaphore:
             try:
-
-                # self.rpm_remaining -= 1
-
                 completions = await self.client.with_raw_response.chat.completions.create(
-                    messages=[
+                    messages=[ #todo in CoT this approach might not be possible as we want to make multiple messages in the request, one approach could be to pass the Msg object and not only the prompt?
                         {
                             "role": "user",
                             "content": request.prompt
@@ -121,20 +125,17 @@ class GroqModel(ModelBasic):
                 input_tokens = data.usage.prompt_tokens
                 completion_tokens = data.usage.completion_tokens
                 response = Response(
-                    data=[(choice.message.content, input_tokens, completion_tokens / request.n) for choice in
-                          data.choices]
+                    data=[(data.choices[0].message.content, input_tokens, completion_tokens)]
                 )
-                print("we got a response")
+
                 return response
-
-
             except RateLimitError as e:
                 match = re.search(r"Please try again in (\d+(\.\d+)?)s", str(e))
                 retry_after = float(match.group(1)) if match else 5  # Default to 5s if missing
 
                 print(f"Sleeping for {retry_after:.2f} seconds before retrying...")
                 await asyncio.sleep(retry_after)
-                return await self.request(request)
+                return await self.single_request(request)
 
     async def obey_rate_limits(self):
         """Check and wait if rate limits are exceeded before allowing a request."""
