@@ -68,7 +68,7 @@ class GroqModel(ModelBasic):
     async def request(self, request: Request) -> Response:
 
         responses = await asyncio.gather(*(self.single_request(request) for _ in range(request.n)))
-        # todo format here
+        # todo format here, request count, input tokens and output tokens math should go here
         merged_data = [item for r in responses for item in r.data]
         merged_response = Response(
             data=merged_data
