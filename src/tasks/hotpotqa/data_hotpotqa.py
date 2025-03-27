@@ -1,5 +1,5 @@
 import pandas as pd
-from typing import List
+from typing import List, Tuple
 
 class DataHotpotQA:
     def __init__(self, path: str):
@@ -35,7 +35,7 @@ class DataHotpotQA:
             raise ValueError("Invalid set name")
         
         return indices
-    def read(self, idx: int):
+    def read(self, idx: int) -> Tuple[str, str]:
         question = pd.read_csv(self.path, usecols=["question"], compression="gzip").iloc[idx]["question"]
         answer = pd.read_csv(self.path, usecols=["answer"], compression="gzip").iloc[idx]["answer"]
         return question, answer

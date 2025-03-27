@@ -3,3 +3,4 @@ logs
 zzz*
 *.pyc
 local
+.DS_Store
