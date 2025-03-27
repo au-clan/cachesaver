@@ -96,7 +96,7 @@ class EnvironmentHotpotQA(EnvironmentBasic):
             values = []
             for response in responses:
                 try:
-                    value = int(re.search(r"Thus the correctness score is (\d+)", response).group(1))
+                    value = int(re.search(r"correctness score is (\d+)", response).group(1))
                 except AttributeError:
                     print(f"Unable to parse value from response : {response}")
                     value = 1
