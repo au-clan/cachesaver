@@ -1,0 +1,50 @@
+api:
+  model:
+    model_name: llama-3.3-70b-versatile
+    provider: Groq
+  parameters:
+    max_completion_tokens: 150
+    max_tokens: 50
+    temperature: 0.7
+    top_p: 1.0
+    top_k: 50
+    request_timeout: 120
+    stop: Null
+
+logs:
+  log_name: developing
+  log_dir: logs/game24/rafa
+
+framework:
+  name: Reason for Feature, Act for Now (RAFA)
+  evaluations: 1
+  #  n_select_sample: 3
+  num_steps: 5
+  ##from rafa below (until task)
+  naive_run: false
+  prompt_sample: standard
+
+  method_generate: sample
+  method_evaluate: value #todo they also have something called botes but their impl is missing
+  method_select: sample
+
+  n_generate_sample: 2
+  n_evaluate_sample: 1
+  n_select_sample: 1
+
+  feedback: true
+  planning: naive
+  generate: sample
+  max_step: 2
+  cache_value: false
+
+
+task:
+  name: GameOf24
+  min_steps: 1
+
+run:
+  set: mini
+  repeats: 1
+  debugging: null
+  to_print: true

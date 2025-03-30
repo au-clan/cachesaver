@@ -141,3 +141,90 @@ impossible
 Input: {input}
 Answer: {answer}
 Judge:'''
+
+###FOR RAFA:
+# 5-shot
+standard_prompt = '''Use numbers and basic arithmetic operations (+ - * /) to obtain 24.
+Input: 4 4 6 8
+Answer: (4 + 8) * (6 - 4) = 24
+Input: 2 9 10 12
+Answer: 2 * 12 * (10 - 9) = 24
+Input: 4 9 10 13
+Answer: (13 - 9) * (10 - 4) = 24
+Input: 1 4 8 8
+Answer: (8 / 4 + 1) * 8 = 24
+Input: 5 5 5 9
+Answer: 5 + 5 + 5 + 9 = 24
+Input: {input}
+'''
+
+
+# 1-shot
+propose_prompt = '''Now use numbers and basic arithmetic operations (+ - * /) to generate possible next steps. Make sure use steps that is sure to leads to 24 and avoid steps that are impossible to generate 24. Note that it is possible that we are considering intermediate steps so the numbers of the input may be less than 4.
+Example:
+Input: 2 8 8 14 
+Possible next steps: 
+2 + 8 = 10 (left: 8 10 14)
+8 / 2 = 4 (left: 4 8 14)
+14 + 2 = 16 (left: 8 8 16)
+2 * 8 = 16 (left: 8 14 16)
+8 - 2 = 6 (left: 6 8 14)
+14 - 8 = 6 (left: 2 6 8)
+14 /  2 = 7 (left: 7 8 8)
+14 - 2 = 12 (left: 8 8 12)
+Example:
+Input: 2 5 8
+5 - 2 = 3 (left: 3 8)
+5 * 2 = 10 (left: 10 8)
+8 / 2 = 4 (left: 4 5)
+Now try with the following input:
+Input: {input}
+Possible next steps:
+'''
+#todo this is similar to the evaluate prpompt
+validation_prompt = '''Evaluate if given formula is a valid move in the game of 24. Especially, check if a number is missing, if the arithmetic is incorrect, or if a number is used that is not in the input or used twice.
+Example
+
+Input: 3 6 8 10
+3 * 6 = 18 (left: 18 8 10)
+valid
+
+Input: 2 6 8 14
+2 * 6 = 1 (left: 1 8 14)
+invalid
+
+Input: 4 6 8 10
+10 * 5 = 50 (left: 6 50)
+invalid
+
+Input: 1 5 7
+5 * 5 = 25 (left: 1 25 7)
+invalid
+
+Now evaluate the followng formula:
+Input: {input}
+{formula}
+'''
+
+value_prompt  = '''
+Evaluate if given numbers can reach 24 and choose labels from 'sure', 'likely' and 'impossible'. If the given numbers are already in the feedback above, just give the answer. Otherwise enumerate possible steps and try to give an approximate answer. Give the final answer in a separated line.
+ {input}
+ '''
+
+reflect_prompt = '''
+Now we would like to play a game of 24. That is, given 4 numbers, try to use them with arithmetic operations (+ - * /) to get 24. Now we consider the following puzzle: {input}. 
+Here is an attempt answer: 
+{answer}
+And we have the following feedback: 
+{feedback}
+Now using the above feedback, give 'sure' or 'impossible' labels for each formula with left numbers from each step. Give 'sure' if the formula is correct and can lead to 24 and give 'impossible' if the formula is incorrect or illegal. First repeat the formula with left numbers from each step above and then give the label, with the following form: {{formula}} (left: {{left numbers}}): {{label}}.
+'''
+
+value_reflect_prompt = '''
+Now we would like to play a game of 24. That is, given 4 numbers, try to use them with arithmetic operations (+ - * /) to get 24. Now we consider the following puzzle: {input}. 
+Here is an attempt answer:
+{answer}
+And we have the following feedback:
+{feedback}
+Now using the above feedback, give 'sure' or 'impossible' labels for left numbers from each step. Give 'sure' if the formula is correct and left numbers can lead to 24 and give 'impossible' if the formula is incorrect or illegal. First repeat the left numbers from each step above and then give the label, with the following form: {{left numbers}}: {{label}}.
+'''

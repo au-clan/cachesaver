@@ -8,6 +8,8 @@ from diskcache import Cache
 from omegaconf import OmegaConf
 
 from client_wrapper.groq_wrapper import GroqModel
+from client_wrapper.groq_wrapper_with_multiple_message_support import GroqModel1
+from src.frameworks.framework_rafa import FrameworkRAFA
 
 sys.path.append('..')
 
@@ -22,7 +24,7 @@ async def main():
     task = "game24"  # "hotpotqa" or "game24"
 
     # Config
-    config = OmegaConf.load(f'../configs/{task}/config_foa_{task}.yaml')
+    config = OmegaConf.load(f'../configs/{task}/config_rafa_{task}.yaml')
 
     # Environment
     env = EnvironmentBasic.create(task=task, data_path=f"../datasets/dataset_{task}.csv.gz")
@@ -33,7 +35,7 @@ async def main():
     # LLM Client and Model
     # client = AsyncTogether(api_key=os.environ.get('TOGETHER_API_KEY_PERS'))
     model_name = "meta-llama/Llama-3.3-70B-Instruct-Turbo"
-    model = GroqModel(api_key=os.getenv("GROQ_API_KEY"), model="gemma2-9b-it")
+    model = GroqModel1(api_key=os.getenv("GROQ_API_KEY"), model="gemma2-9b-it")
 
     # CacheSaver API
     api = OnlineAPI(
@@ -46,34 +48,10 @@ async def main():
     # Agent
     agent = AgentLLM(api=api)
 
-    # # Basic FoA operations test
 
-    state = env.reset(0)
-    print(f"{state=}\n")
-
-    new_state = await agent.foa_step(
-        state=state,
-        environment=env,
-        namespace="0",
-        request_id="0",
-        cache=None,
-        config=config.api.parameters
-    )
-    print(f"{new_state=}\n")
-
-    value = await agent.evaluate(
-        state=new_state,
-        environment=env,
-        n=1,
-        namespace="0",
-        request_id="1",
-        cache=None,
-        config=config.api.parameters
-    )
-    print(f"{value=}\n")
 
     # Complete Framework
-    fw = FrameworkFoA(config, agent, env)
+    fw = FrameworkRAFA(config, agent, env)
 
     for seed in range(config.run.repeats):
         log = {}
@@ -92,6 +70,7 @@ async def main():
                 seed=seed,
                 value_cache=value_cache,
                 step_cache=step_cache,
+
             )
             for puzzle_idx in puzzle_idxs
         ]

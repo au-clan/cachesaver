@@ -1,21 +1,22 @@
 from abc import abstractmethod, ABC
 
-from dataclasses import dataclass
-from typing import List, Any
+from dataclasses import dataclass, field
+from typing import List, Any, Optional
+
 
 @dataclass(frozen=True)
 class StateBasic(ABC):
     # The initial puzzle to solve
-    puzzle: Any
+    puzzle: Optional[Any] = None
     
     # Current state towards solving the puzzle
-    current_state: Any
+    current_state: Optional[Any]= None
 
     # Steps taken towards solving the puzzle
-    steps: List[Any]
+    steps: Optional[List[Any]] = field(default_factory=list)
 
     # A random number associated with the state
-    randomness: int
+    randomness: Optional[int]= None
 
     @abstractmethod
     def __hash__(self):
