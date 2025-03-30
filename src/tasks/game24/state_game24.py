@@ -36,8 +36,19 @@ class StateGame24(StateBasic):
 
     def items(self):
         return self.puzzle, self.current_state, self.steps, self.randomness
+    
+    def log(self):
+        """
+        Returns a dictionary representation of the state.
+        """
+        return {
+            "puzzle": self.puzzle,
+            "current_state": self.current_state,
+            "steps": " -> ".join(self.steps),
+            "randomness": self.randomness
+        }
 
-    def duplicate(self, randomness: int = None) -> "StateGame24":
+    def duplicate(self, randomness: int=None) -> "StateGame24":
         """
         Returns a new instance of GameOf24State with an optional new randomness value.
         """

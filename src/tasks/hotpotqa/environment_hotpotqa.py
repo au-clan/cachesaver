@@ -96,7 +96,7 @@ class EnvironmentHotpotQA(EnvironmentBasic):
             values = []
             for response in responses:
                 try:
-                    value = int(re.search(r"Thus the correctness score is (\d+)", response).group(1))
+                    value = int(re.search(r"correctness score is (\d+)", response).group(1))
                 except AttributeError:
                     print(f"Unable to parse value from response : {response}")
                     value = 1
@@ -205,13 +205,13 @@ def perform_action(docstore: DocstoreExplorer, action_type: str, argument: str, 
     if action_type == "Search":
         try:
             # Added '' around the argument. Not in reflexion. After some (small) testing, it seems to be equal or better.
-            obs = docstore.search(f"\'{argument}\'")
+            obs = docstore.search(f"\'{argument}\'").strip("\n").strip()
         except Exception as e:
             print(f"Error searching for '{argument}'")
             obs = 'Page does not exist, try something else.'
     elif action_type == "Lookup":
         try:
-            obs = docstore.lookup(argument)
+            obs = docstore.lookup(argument).strip('\n').strip()
         except Exception as e:
             print(f"Error looking up '{argument}'")
             obs = 'The last page Searched was not found, so you cannot Lookup a keyword in it. Please try one of the similar pages given in the previous observation.'

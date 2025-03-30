@@ -23,7 +23,10 @@ class StateBasic(ABC):
         pass
 
     @abstractmethod
-    def items(self):
+    def log(self) -> dict:
+        """
+        Returns a dictionary representation of the state.
+        """
         pass
 
     @abstractmethod

@@ -36,9 +36,17 @@ class StateHotpotQA(StateBasic):
 
     def __hash__(self):
         return hash((self.puzzle, self.current_state, " -> ".join(self.steps)))
-    
-    def items(self):
-        return self.puzzle, self.current_state, self.steps, self.randomness
+
+    def log(self) -> dict:
+        """
+        Returns a dictionary representation of the state.
+        """
+        return {
+            "actions": self.actions,
+            "thoughts": self.thoughts,
+            "observations": self.observations,
+            "randomness": self.randomness,
+        }
     
     def duplicate(self, randomness: int=None) -> "StateHotpotQA":
         """

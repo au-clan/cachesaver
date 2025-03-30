@@ -57,8 +57,8 @@ class FrameworkToT(FrameworkBasic):
             states = [state for branch in branches for state in branch] # Flatten suggestions
 
             # Logging - Step
-            log[puzzle_idx]["Step {step}"] = {}
-            log[puzzle_idx]["Step {step}"]["Suggestions"] = [f"{' -> '.join(state.steps)}" for state in states]
+            log[puzzle_idx][f"Step {step}"] = {}
+            log[puzzle_idx][f"Step {step}"]["Suggestions"] = [state.log() for state in states]
             
             # Evaluation
             value_coroutines = [
@@ -76,7 +76,7 @@ class FrameworkToT(FrameworkBasic):
             values = await asyncio.gather(*value_coroutines)
 
             # Logging - Evaluation
-            log[puzzle_idx]["Step {step}"]["Evaluations"] = values
+            log[puzzle_idx][f"Step {step}"]["Evaluations"] = values
 
             # Selection
             agent_ids = [f"{step}.{i}" for i in range(len(states))]
@@ -85,7 +85,7 @@ class FrameworkToT(FrameworkBasic):
             states, values, selected_ids = map(list, zip(*sorted_pairs[:self.n_select_sample])) 
 
             # Logging - Selection
-            log[puzzle_idx]["Step {step}"]["Selected"] = [f"{id} : {' -> '.join(state.steps)}" for id, state in zip(selected_ids,states)]
+            log[puzzle_idx][f"Step {step}"]["Selected"] = [{"id":id, **state.log()} for id, state in zip(selected_ids,states)]
             
         verifications = [self.environment.verify(state) for state in states]
         log[puzzle_idx]["Input"] = puzzle
