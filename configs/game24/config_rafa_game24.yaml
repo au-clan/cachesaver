@@ -19,7 +19,7 @@ framework:
   name: Reason for Feature, Act for Now (RAFA)
   evaluations: 1
   #  n_select_sample: 3
-  num_steps: 5
+  num_steps: 1
   ##from rafa below (until task)
   naive_run: false
   prompt_sample: standard
@@ -28,7 +28,7 @@ framework:
   method_evaluate: value #todo they also have something called botes but their impl is missing
   method_select: sample
 
-  n_generate_sample: 2
+  n_generate_sample: 1
   n_evaluate_sample: 1
   n_select_sample: 1
 
@@ -37,6 +37,7 @@ framework:
   generate: sample
   max_step: 2
   cache_value: false
+
 
 
 task:

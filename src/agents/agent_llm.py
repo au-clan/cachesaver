@@ -242,12 +242,14 @@ class AgentLLM(AgentBasic):
                 messages.extend([{"role": "user", "content": h["feedback"]}])
         messages.append({"role": "user", "content": prompt})
 
-        response = await self.chatgpt(messages=messages, prompt=prompt, n=n,config=config, namespace=namespace, request_id=request_id)
+        response = await self.chatgpt(messages=messages, prompt=prompt, n=n, config=config, namespace=namespace,
+                                      request_id=request_id)
         return response
 
     async def gpt(self, prompt, n, config, namespace, request_id) -> list:
         messages = [{"role": "user", "content": prompt}]
-        return await self.chatgpt(messages=messages, prompt=prompt, n=n, config=config, namespace=namespace, request_id=request_id)
+        return await self.chatgpt(messages=messages, prompt=prompt, n=n, config=config, namespace=namespace,
+                                  request_id=request_id)
 
     async def chatgpt(self, messages, prompt, config, n, namespace, request_id) -> list:
         response = await self.request(
@@ -264,15 +266,18 @@ class AgentLLM(AgentBasic):
         value_prompt = environment.Prompter.value_prompt_wrap(state.puzzle, y)
 
         if config.framework.cache_value and value_prompt in env.value_cache:
-            return environment.Prompter.value_cache[value_prompt] #todo cache values in future
-        value_outputs = await self.gpt_with_history(prompt=value_prompt,state=state, n=config.framework.n_evaluate_sample, config=config,namespace=namespace, request_id=request_id)#todo could simply use the state.puzzle_index as the namespace as that is what it is...
+            return environment.Prompter.value_cache[value_prompt]  # todo cache values in future
+        value_outputs = await self.gpt_with_history(prompt=value_prompt, state=state,
+                                                    n=config.framework.n_evaluate_sample, config=config,
+                                                    namespace=namespace,
+                                                    request_id=request_id)  # todo could simply use the state.puzzle_index as the namespace as that is what it is...
 
         value = environment.Prompter.value_outputs_unwrap(state.puzzle, y, value_outputs)
         if config.framework.cache_value:
             environment.Prompter.value_cache[value_prompt] = value
         return value
 
-    async def get_values(self, env, state, ys, config, environment, request_id,namespace):
+    async def get_values(self, env, state, ys, config, environment, request_id, namespace):
         values = []
         local_value_cache = {}
         for y in ys:  # each partial output
@@ -280,7 +285,8 @@ class AgentLLM(AgentBasic):
                 value = local_value_cache[y]
             else:
                 # value = get_value(env, history, x, y, n_evaluate_sample, cache_value=cache_value)
-                value =await self.get_value(env=env, state=state, y=y,config=config, environment=environment, namespace=namespace, request_id=request_id)
+                value = await self.get_value(env=env, state=state, y=y, config=config, environment=environment,
+                                             namespace=namespace, request_id=request_id)
                 if config.framework.cache_value:
                     local_value_cache[y] = value
             values.append(value)
@@ -290,9 +296,10 @@ class AgentLLM(AgentBasic):
         # propose_prompt = env.propose_prompt_wrap(state.puzzle, y)
         propose_prompt = environment.Prompter.propose_prompt_wrap(state.puzzle, y)
         # proposal_list = [x.split('\n') for x in self.gpt_with_history(propose_prompt, state.history, n=1, stop=["\n\n"])] #todo the stop token
-        result=await self.gpt_with_history(prompt=propose_prompt, state=state, n=1,config=config, namespace = namespace, request_id = request_id)
+        result = await self.gpt_with_history(prompt=propose_prompt, state=state, n=1, config=config,
+                                             namespace=namespace, request_id=request_id)
 
-        proposal_list = [x.split('\n') for x in result] #todo the stop token
+        proposal_list = [x.split('\n') for x in result]  # todo the stop token
         proposals = []
         for p in proposal_list:
             proposals.extend(p)
@@ -306,7 +313,8 @@ class AgentLLM(AgentBasic):
             prompt = environment.Prompter.cot_prompt_wrap(x, y)
         else:
             raise ValueError(f'prompt_sample {config.framework.prompt_sample} not recognized')
-        samples = await self.gpt(prompt=prompt, n=config.framework.n_generate_sample, config=config, namespace=namespace,request_id=request_id)
+        samples = await self.gpt(prompt=prompt, n=config.framework.n_generate_sample, config=config,
+                                 namespace=namespace, request_id=request_id)
         return [y + _ for _ in samples]
 
     async def plan_rafa(self, state, environment, config):
@@ -332,14 +340,18 @@ class AgentLLM(AgentBasic):
                 #     for y in ys]
 
                 coroutines = [
-                    self.get_samples(environment=environment, x=state.puzzle, y=y, config=config, namespace=str(state.index), request_id=f"step-{str(state.index)}-{step}-{y}-{hash(state)}")
+                    self.get_samples(environment=environment, x=state.puzzle, y=y, config=config,
+                                     namespace=str(state.index),
+                                     request_id=f"step-{str(state.index)}-{step}-{y}-{hash(state)}")
                     for y in ys]
                 new_ys = await asyncio.gather(*coroutines)
 
             elif config.framework.method_generate == 'propose':
                 # new_ys = [self.get_proposals(obs, state.puzzle, y, config.framework.n_generate_sample) for y in ys]
                 coroutines = [
-                    self.get_proposals(environment=environment,state=state,y=y,config=config,namespace=str(state.index), request_id= f"step-{str(state.index)}-{step}-{y}-{hash(state)}")
+                    self.get_proposals(environment=environment, state=state, y=y, config=config,
+                                       namespace=str(state.index),
+                                       request_id=f"step-{str(state.index)}-{step}-{y}-{hash(state)}")
                     for y in ys]
                 new_ys = await asyncio.gather(*coroutines)
 
@@ -350,7 +362,9 @@ class AgentLLM(AgentBasic):
                 print("vote not impl")
                 # values = get_votes(env, value_obs, x, new_ys, self.n_evaluate_sample)
             elif config.framework.method_evaluate == 'value':
-                values = await self.get_values(env=value_obs, state=state, ys=new_ys, config=config, environment=environment, namespace=str(state.index), request_id=f"step-{str(state.index)}-{step}-{step}-{hash(state)}")#todo step twice, not sure if safe
+                values = await self.get_values(env=value_obs, state=state, ys=new_ys, config=config,
+                                               environment=environment, namespace=str(state.index),
+                                               request_id=f"step-{str(state.index)}-{step}-{step}-{hash(state)}")  # todo step twice, not sure if safe
 
             # selection
             if config.framework.method_select == 'sample':
@@ -368,7 +382,8 @@ class AgentLLM(AgentBasic):
                     f'-- new_ys --: {sorted_new_ys}\n-- sol values --: {sorted_values}\n-- choices --: {select_new_ys}\n')
 
             infos.append(
-                {'step': step, 'x': state.puzzle, 'ys': ys, 'new_ys': new_ys, 'values': values, 'select_new_ys': select_new_ys})
+                {'step': step, 'x': state.puzzle, 'ys': ys, 'new_ys': new_ys, 'values': values,
+                 'select_new_ys': select_new_ys})
             ys = select_new_ys
 
         if config.run.to_print:
@@ -397,6 +412,6 @@ class AgentLLM(AgentBasic):
 
     def update_rafa(self, state, done):
         if done:
-            state= replace(state, reflects=[], value_reflects=[])
+            state = replace(state, reflects=[], value_reflects=[])
             # state.value_reflects = []
-            return state
+        return state
