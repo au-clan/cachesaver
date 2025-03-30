@@ -87,12 +87,6 @@ class GroqModel1(ModelBasic):
             try:
                 completions = await self.client.with_raw_response.chat.completions.create(
                     messages= request.messages,
-                    # messages=[ #todo in CoT this approach might not be possible as we want to make multiple messages in the request, one approach could be to pass the Msg object and not only the prompt?
-                    #     {
-                    #         "role": "user",
-                    #         "content": request.prompt
-                    #     }
-                    # ],
                     model=self.model,
                     n=1,
                     max_tokens=request.max_completion_tokens or None,  # or None not needed but just to be explicit
