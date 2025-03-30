@@ -10,7 +10,7 @@ from cachesaver.typedefs import Response
 from src.models.model_basic import ModelBasic
 
 
-class GroqModel(ModelBasic):
+class GroqModel1(ModelBasic):
     def __init__(self, api_key: str, model: str):
         super().__init__()
         self.client = AsyncGroq(api_key=api_key)
@@ -86,12 +86,13 @@ class GroqModel(ModelBasic):
         async with self.semaphore:
             try:
                 completions = await self.client.with_raw_response.chat.completions.create(
-                    messages=[ #todo in CoT this approach might not be possible as we want to make multiple messages in the request, one approach could be to pass the Msg object and not only the prompt?
-                        {
-                            "role": "user",
-                            "content": request.prompt
-                        }
-                    ],
+                    messages= request.messages,
+                    # messages=[ #todo in CoT this approach might not be possible as we want to make multiple messages in the request, one approach could be to pass the Msg object and not only the prompt?
+                    #     {
+                    #         "role": "user",
+                    #         "content": request.prompt
+                    #     }
+                    # ],
                     model=self.model,
                     n=1,
                     max_tokens=request.max_completion_tokens or None,  # or None not needed but just to be explicit

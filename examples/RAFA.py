@@ -9,7 +9,7 @@ from diskcache import Cache
 from omegaconf import OmegaConf
 
 from cachesaver.pipelines import OnlineAPI
-from client_wrapper.groq_wrapper_with_multiple_message_support import GroqModel1
+from client_wrapper.groq_wrapper import GroqModel1
 from src.frameworks.framework_rafa import FrameworkRAFA
 from src.tasks.game24.state_game24 import StateGame24
 
