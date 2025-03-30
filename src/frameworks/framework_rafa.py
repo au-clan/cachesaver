@@ -24,7 +24,7 @@ class FrameworkRAFA(FrameworkBasic):
         self.n_evaluate_sample = config.framework.n_evaluate_sample
         self.n_select_sample = config.framework.n_select_sample
 
-        self.value_cache = {}
+        self.value_cache = {} #todo use as they do in the rafa code
 
     async def run(self, puzzle_idx: int, namespace: str, seed: int = 0, value_cache: dict = None,
                   step_cache: dict = None):
@@ -36,30 +36,27 @@ class FrameworkRAFA(FrameworkBasic):
         randomness = puzzle_idx + seed
         random.seed(randomness)
 
-
         # Set up log
-        logs=[]
-        log = {}
-        log[puzzle_idx] = {"puzzle": puzzle}
+        logs = []
 
         state = self.environment.reset_rafa(puzzle_idx)
         log = {'idx': puzzle_idx, 'agent_info': [], 'env_info': []}
         done = False
         while not done:
             state, action, agent_info = await self.agent.act_rafa(state=state, environment=self.environment,
-                                                                  config=self.config)  # todo env is something similar to our env?
+                                                                  config=self.config)
 
             state, obs, reward, done, env_info = self.environment.step_rafa(config=self.config, action=action,
-                                                                             state=state, environment=self.environment)
-            # agent.update(obs, reward, done, env_info)
-            state = self.agent.update_rafa(state=state,done= done)
+                                                                            state=state, environment=self.environment)
+
+            state = self.agent.update_rafa(state=state, done=done)
             log['agent_info'].append(agent_info)
             log['env_info'].append(env_info)
             print(obs)
             print(reward, done, env_info)
-            # log['usage_so_far'] = gpt_usage(args.backend)
+
             logs = logs + [log]
-            log+=logs
+
 
             # with open(file, 'w') as f:
             #     json.dump(tmp_logs, f, indent=4)
