@@ -49,24 +49,14 @@ class AgentLLM(AgentBasic):
             top_p=config.top_p,
             stop=config.stop
         )
-        # response = await self.api.request(request) #todo batch request instead
+
         response = await self.api.batch_request(Batch(requests=[request]))
         self.calls = {
             "total": self.calls["total"] + sum(len(r.data) for r in response),
             "cached": self.calls["cached"] + sum(sum(r.cached) for r in response if r.cached),
             "duplicated": self.calls["duplicated"] + sum(sum(r.duplicated) for r in response if r.duplicated)
         }
-        # self.calls = {
-        #     "total": self.calls["total"] + len(response.data),
-        #     "cached": self.calls["cached"] + sum(response.cached),
-        #     "duplicated": self.calls["duplicated"] + sum(response.duplicated)
-        # }
 
-        # messages, tokin, tokout = zip(*response.data)
-        # cached_tokin = [int(tokens * cached) for tokens, cached in zip(tokin, response.cached)]
-        # cached_tokout = [int(tokens * cached) for tokens, cached in zip(tokout, response.cached)]
-        # generated_tokin = [int(tokens * (not cached)) for tokens, cached in zip(tokin, response.cached)]
-        # generated_tokout = [int(tokens * (not cached)) for tokens, cached in zip(tokout, response.cached)]
         all_data = [item for r in response for item in r.data]
         all_cached = [flag for r in response for flag in (r.cached or [])]
 
@@ -124,7 +114,7 @@ class AgentLLM(AgentBasic):
         if cache is not None and state in cache:
             inference = cache[state]
         else:
-            prompt = environment.prompter.react(state)
+            prompt = environment.Prompter.react(state)
             response = await self.request(
                 prompt=prompt,
                 n=1,
@@ -132,7 +122,7 @@ class AgentLLM(AgentBasic):
                 namespace=namespace,
                 config=config
             )
-            inference = environment.parser.react(response[0])
+            inference = environment.Parser.react(response[0])
 
             if cache is not None:
                 cache[state] = inference
@@ -151,10 +141,11 @@ class AgentLLM(AgentBasic):
         """
         Returns a list of proposals for the given state.
         """
+        # todo duplicate code, alson in tot_step
         if cache is not None and state in cache:
             inferences = cache[state]
         else:
-            prompt = environment.prompter.bfs(state)
+            prompt = environment.Prompter.bfs(state)
             response = await self.request(
                 prompt=prompt,
                 n=1,
@@ -162,7 +153,7 @@ class AgentLLM(AgentBasic):
                 namespace=namespace,
                 config=config
             )
-            inferences = environment.parser.bfs(response[0])
+            inferences = environment.Parser.bfs(response[0])
 
             if cache is not None:
                 cache[state] = inferences
@@ -211,7 +202,7 @@ class AgentLLM(AgentBasic):
     async def evaluate(self, state: StateBasic, environment: EnvironmentBasic, n: int, namespace: str, request_id: str,
                        config: DictConfig, cache: dict = None) -> int:
         """
-        Some tasks use exlucively deterministc methods for evaluation (humaneval), others exlucively llm-based methods (mini crosswords) and others a mixture of the two (game24).
+        Some tasks use exclusively deterministic methods for evaluation (humaneval), others exclusively llm-based methods (mini crosswords) and others a mixture of the two (game24).
 
         For this, even in this LLM-based agent, we employ a 2 step methods. First we employ the deterministic method, if it fails to find a value, we employ the llm-based method.
         """
@@ -232,7 +223,7 @@ class AgentLLM(AgentBasic):
                 namespace=namespace,
                 config=config
             )
-            inference = environment.Parser.evaluate(response)
+            inference = environment.Parser.evaluate(response[0])  # todo confirm the [0] is working
 
         if cache is not None:
             cache[state] = inference
@@ -302,9 +293,7 @@ class AgentLLM(AgentBasic):
         return values
 
     async def get_proposals(self, environment, state, y, config, namespace, request_id):
-        # propose_prompt = env.propose_prompt_wrap(state.puzzle, y)
         propose_prompt = environment.Prompter.propose_prompt_wrap(state.puzzle, y)
-        # proposal_list = [x.split('\n') for x in self.gpt_with_history(propose_prompt, state.history, n=1, stop=["\n\n"])] #todo the stop token
         result = await self.gpt_with_history(prompt=propose_prompt, state=state, n=1, config=config,
                                              namespace=namespace, request_id=request_id)
 
@@ -401,17 +390,18 @@ class AgentLLM(AgentBasic):
         reflect_prompt, value_reflect_prompt = environment.prompter.reflect_prompt_wrap(state.puzzle, y, feedback)
         reflects = await self.gpt(prompt=reflect_prompt, n=config.framework.n_generate_sample, config=config)
         value_reflects = self.gpt(prompt=value_reflect_prompt, n=config.framework.n_generate_sample, config=config)
-        state.reflects.extend(reflects)  # todo cant extend frozen dataclass
-        state.value_reflects.extend(value_reflects)
+        state = replace(state, reflects=reflects, value_reflects=value_reflects)
+
         return state
 
     async def act_rafa(self, state, environment, config):
-        if len(state.feedback) >= 1:  # todo not correct
+        if len(state.feedback) >= 1:
             state = await self.reflect_rafa(state=state, environment=environment, config=config)
         state, action, info = await self.plan_rafa(state=state, environment=environment, config=config)
         return state, action, info
 
-    def update_rafa(self, state, done):
+    @staticmethod
+    def update_rafa(state, done):
         if done:
             state = replace(state, reflects=[], value_reflects=[])
         return state
