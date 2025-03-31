@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
-from typing import Any
 
 from .state_basic import StateBasic
 from ...typedefs import Inference, Verification
+
 
 class EnvironmentBasic(ABC):
     class Prompter:
@@ -28,7 +28,7 @@ class EnvironmentBasic(ABC):
         @staticmethod
         def evaluate(state: StateBasic) -> str:
             raise NotImplementedError
-    
+
     class Parser:
         def __init__(self):
             self.name = "Environment Parser"
@@ -53,6 +53,7 @@ class EnvironmentBasic(ABC):
         def evaluate(response: str) -> Inference:
             raise NotImplementedError
 
+#todo this method should prob be in an init file as it is the same for all envs, right?
     @classmethod
     def create(cls, task: str, data_path: str) -> "EnvironmentBasic":
         if task == "game24":
@@ -63,18 +64,17 @@ class EnvironmentBasic(ABC):
             return EnvironmentHotpotQA(data_path)
         else:
             raise NotImplementedError(f"Task '{task}' is not implemented.")
-    
+
     def __init__(self, task: str, data_path: str):
         pass  # The base class should not be directly instantiated
 
     @staticmethod
     @abstractmethod
-    def reset(idx: int, randomness: int=0) -> StateBasic:
+    def reset(idx: int, randomness: int = 0) -> StateBasic:
         """
         Given an index of the dataset and a randomness return the initial state.
         """
         pass
-
 
     @staticmethod
     @abstractmethod
@@ -89,7 +89,7 @@ class EnvironmentBasic(ABC):
     @abstractmethod
     def get_value(state: StateBasic) -> Inference:
         """
-        Deterministic evaluation mehtods. If there's no such methods returns None
+        Deterministic evaluation methods. If there's no such methods returns None
         """
         inference = Inference(value=None)
         return inference

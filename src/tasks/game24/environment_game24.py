@@ -46,9 +46,8 @@ class EnvironmentGame24(EnvironmentBasic):
                 prompt = prompts.evaluate.format(input=state.current_state)
             return prompt
 
-        ##Below is from RAFA: TODO merge with existing code?
+        ##Below is from RAFA:
         ##--------------------------------------------------------------------------------------------------------
-        # this is a helper method in rafa(get_current_numbers) and should probably not live here long term
         @staticmethod
         def get_current_numbers(y: str) -> str:
             last_line = y.strip().split('\n')[-1]
@@ -68,11 +67,8 @@ class EnvironmentGame24(EnvironmentBasic):
             # current_numbers = get_current_numbers(y if y else x)
             current_numbers = EnvironmentGame24.Prompter.get_current_numbers(y if y else x)
             if current_numbers == '24':
-                # prompt = cot_prompt.format(input=x) + 'Steps:\n' + y
                 prompt = prompts.cot.format(input=x) + 'Steps:\n' + y
-                # print([prompt])
             else:
-                # prompt = propose_prompt.format(input=current_numbers)
                 prompt = prompts.propose_prompt.format(input=current_numbers)
             return prompt
 
@@ -82,11 +78,9 @@ class EnvironmentGame24(EnvironmentBasic):
             if 'left: ' not in last_line:  # last step
                 return
             if len(y.strip().split('\n')) > 1:
-                # prev_line = get_current_numbers(y.strip().split('\n')[-2])
                 prev_line = EnvironmentGame24.Prompter.get_current_numbers(y.strip().split('\n')[-2])
             else:
                 prev_line = x
-            # return validation_prompt.format(input=prev_line, formula=last_line)
             return prompts.validation_prompt.format(input=prev_line, formula=last_line)
 
         @staticmethod
@@ -94,12 +88,8 @@ class EnvironmentGame24(EnvironmentBasic):
             last_line = y.strip().split('\n')[-1]
             if 'left: ' not in last_line:  # last step
                 ans = last_line.lower().replace('answer: ', '')
-                # print([value_last_step_prompt.format(input=x, answer=ans)])
-                # return value_last_step_prompt.format(input=x, answer=ans)
                 return prompts.evaluate_answer.format(input=x, answer=ans)
-            # current_numbers = get_current_numbers(y)
             current_numbers = EnvironmentGame24.Prompter.get_current_numbers(y)
-            # return value_prompt.format(input=current_numbers)
             return prompts.value_prompt.format(input=current_numbers)
 
         @staticmethod
@@ -111,9 +101,7 @@ class EnvironmentGame24(EnvironmentBasic):
 
         @staticmethod
         def reflect_prompt_wrap(x: str, y: str, feedback: str) -> str:
-            # return reflect_prompt.format(input=x, answer=y, feedback=feedback), value_reflect_prompt.format(input=x,
-            #                                                                                                 answer=y,
-            #                                                                                                 feedback=feedback)
+
             return prompts.reflect_prompt.format(input=x, answer=y,
                                                  feedback=feedback), prompts.value_reflect_prompt.format(input=x,
                                                                                                          answer=y,
@@ -172,14 +160,12 @@ class EnvironmentGame24(EnvironmentBasic):
             if sorted(numbers) != sorted(problem_numbers):
                 return False, "The numbers you use are not the original numbers from the problem."
             try:
-                # print(sympy.simplify(expression))
                 if sympy.simplify(expression) == 24:
                     return True, "The formula is correct."
                 else:
                     return False, "The formula does not lead to 24."
 
             except Exception as e:
-                # print(e)
                 return False, "The formula is invalid."
 
         @staticmethod
