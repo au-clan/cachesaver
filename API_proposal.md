@@ -68,7 +68,12 @@ class Benchmark:
     def get(idx) -> initial_state
 ```
 
-So `FoA` is a specific algorithm, and putting it all together could look like this:
+So `FoA` is a specific algorithm.
+One pitch of `FoA` was that it can be readily used with the code from ToT, without changing the prompts. That was in the back of my mind while writing down the snippets above.
+The `FoA` algorithm could use the same `Agent` and `Heuristic` as ToT.
+The agent will return a list of possible actions. The `FoA` implementation just chooses one of them.
+
+Putting it all together could look like this:
 
 ```python
 from gameof24 import GameOf24Agent, GameOf24Heuristic, GameOf24Environment, GameOf24Benchmark
