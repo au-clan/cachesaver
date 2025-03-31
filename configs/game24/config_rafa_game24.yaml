@@ -32,7 +32,7 @@ framework:
   n_evaluate_sample: 1
   n_select_sample: 1
 
-  feedback: true
+  feedback_print: true
   planning: naive
   generate: sample
   max_step: 2

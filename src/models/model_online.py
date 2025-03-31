@@ -2,7 +2,7 @@ import asyncio
 from typing import List, Any
 from dataclasses import dataclass
 
-from cachesaver.typedefs import Request, Batch, Response
+from cachesaver.typedefs import BaseRequest, Batch, Response
 
 from .model_basic import ModelBasic
 
@@ -11,7 +11,7 @@ class OnlineLLM(ModelBasic):
         self.client = client
         self.model = model
 
-    async def request(self, request: Request) -> Response:
+    async def request(self, request: BaseRequest) -> Response:
         sleep = 1
         while True:
             try:

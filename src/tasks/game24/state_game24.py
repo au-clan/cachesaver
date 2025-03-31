@@ -21,15 +21,16 @@ class StateGame24(StateBasic):
 
     history: Optional[list[str]] = field(default_factory=list)
     feedbacks: Optional[list[str]] = field(default_factory=list)
+    cur_step: Optional[int] = 0
 
+    #these two should maybe be shared across runs?
     reflects: Optional[list[str]] = field(default_factory=list)
     value_reflects: Optional[list[str]] = field(default_factory=list)
-    cur_step: Optional[int] = 0
-    last_feedback: Optional[str] = ""
+
+    #these two below have they formatted weird in rafa
     feedback: Optional[list[str]] = field(default_factory=list)
     action: Optional[str] = ""
 
-    # feedback = True
 
     def __hash__(self):
         return hash((self.puzzle, self.current_state, " -> ".join(self.steps)))

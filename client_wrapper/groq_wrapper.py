@@ -5,7 +5,7 @@ from typing import List
 
 from groq import AsyncGroq, RateLimitError
 
-from cachesaver.typedefs import Request, Batch
+from cachesaver.typedefs import BaseRequest, Batch
 from cachesaver.typedefs import Response
 from src.models.model_basic import ModelBasic
 
@@ -65,7 +65,7 @@ class GroqModel1(ModelBasic):
 
         return responses
 
-    async def request(self, request: Request) -> Response:
+    async def request(self, request: BaseRequest) -> Response:
 
         responses = await asyncio.gather(*(self.single_request(request) for _ in range(request.n)))
         # todo format here, request count, input tokens and output tokens math should go here
@@ -75,7 +75,7 @@ class GroqModel1(ModelBasic):
         )
         return merged_response
 
-    async def single_request(self, request: Request) -> Response:
+    async def single_request(self, request: BaseRequest) -> Response:
         await self.obey_rate_limits()
         async with self.rate_limit_lock:
             if self.rpm_remaining > 0:

@@ -9,37 +9,47 @@ class EnvironmentBasic(ABC):
         def __init__(self):
             self.name = "Environment Prompter"
 
-    def cot(state: StateBasic) -> str:
-        raise NotImplementedError
-    
-    def act(state: StateBasic) -> str:
-        raise NotImplementedError
-    
-    def react(state: StateBasic) -> str:
-        raise NotImplementedError
-    
-    def bfs(state: StateBasic) -> str:
-        raise NotImplementedError
-    
-    def evaluate(state: StateBasic) -> str:
-        raise NotImplementedError
+        @staticmethod
+        def cot(state: StateBasic) -> str:
+            raise NotImplementedError
+
+        @staticmethod
+        def act(state: StateBasic) -> str:
+            raise NotImplementedError
+
+        @staticmethod
+        def react(state: StateBasic) -> str:
+            raise NotImplementedError
+
+        @staticmethod
+        def bfs(state: StateBasic) -> str:
+            raise NotImplementedError
+
+        @staticmethod
+        def evaluate(state: StateBasic) -> str:
+            raise NotImplementedError
     
     class Parser:
         def __init__(self):
             self.name = "Environment Parser"
-        
+
+        @staticmethod
         def cot(response: str) -> Inference:
             raise NotImplementedError
-        
+
+        @staticmethod
         def act(response: str) -> Inference:
             raise NotImplementedError
-        
+
+        @staticmethod
         def react(response: str) -> Inference:
             raise NotImplementedError
-        
+
+        @staticmethod
         def bfs(response: str) -> Inference:
             raise NotImplementedError
-        
+
+        @staticmethod
         def evaluate(response: str) -> Inference:
             raise NotImplementedError
 
@@ -57,6 +67,7 @@ class EnvironmentBasic(ABC):
     def __init__(self, task: str, data_path: str):
         pass  # The base class should not be directly instantiated
 
+    @staticmethod
     @abstractmethod
     def reset(idx: int, randomness: int=0) -> StateBasic:
         """
@@ -64,6 +75,8 @@ class EnvironmentBasic(ABC):
         """
         pass
 
+
+    @staticmethod
     @abstractmethod
     def get_next_state(inference: Inference, state: StateBasic, randomness: int) -> StateBasic:
         """
@@ -72,6 +85,7 @@ class EnvironmentBasic(ABC):
         """
         pass
 
+    @staticmethod
     @abstractmethod
     def get_value(state: StateBasic) -> Inference:
         """
@@ -79,7 +93,8 @@ class EnvironmentBasic(ABC):
         """
         inference = Inference(value=None)
         return inference
-    
+
+    @staticmethod
     @abstractmethod
     def verify(state: StateBasic) -> Verification:
         """

@@ -382,7 +382,7 @@ class EnvironmentGame24(EnvironmentBasic):
             print(e)
             return f"Step {state.index} is invalid.", 0
 
-    def generate_feedback_rafa(self, action, state: StateGame24, environment):
+    def generate_feedback_rafa(self, action, state: StateGame24, environment, config):
         feedbacks = ["Evaluation:"]  # feedbacks for each step
         rewards = 0
         if isinstance(action, list):
@@ -390,7 +390,7 @@ class EnvironmentGame24(EnvironmentBasic):
         actions = action.strip(" \n").split('\n')
         idx = len(state.history)
 
-
+        #
 
         for action in actions:
             if idx == 0:
@@ -399,32 +399,28 @@ class EnvironmentGame24(EnvironmentBasic):
                 last_step = state.history[-1]
             print(last_step)
             # print(action)
-            if state.feedback:
+            if config.framework.feedback_print:
                 idx += 1
             feedback, reward = self.check_step_rafa(state=state, action=action, environment=environment)
-            if state.feedback:
+            if config.framework.feedback_print:
                 state=replace(state, feedbacks=state.feedbacks.append(feedback))
-                # state.feedbacks.append(feedback)  # todo the dataclass is frozen
                 feedbacks.append(feedback)
             if reward > 0:
-                if state.feedback:
+                if config.framework.feedback_print:
                     state = replace(state, history=state.history.append(action))
                     # state.history.append(action)
                 rewards += reward
             else:
                 break
-        # if 'answer' not in steps[-1].lower():
-        #     feedbacks.append("The answer is not complete.")
-        total_feedback = " ".join(feedbacks) if state.feedback else None
+
+        total_feedback = " ".join(feedbacks) if config.framework.feedback_print else None
         return state, total_feedback, rewards
 
     def step_rafa(self, config, action, state: StateGame24, environment):
         # state.cur_step += 1 #todo frozen dataclass
         state= replace(state, cur_step=state.cur_step+1)
-        # self.cur_step += 1
-        # prev_len = len(self.history)
         prev_len = len(state.history)
-        generated_state, feedback, reward = self.generate_feedback_rafa(action, state, environment=environment)
+        generated_state, feedback, reward = self.generate_feedback_rafa(action, state, environment=environment, config=config)
         new_len = len(state.history)
         delta = new_len - prev_len + 1 if new_len < 4 else new_len - prev_len
         assert delta > 0

@@ -1,30 +1,29 @@
 import asyncio
 import itertools
 import random
-from typing import List, Any
 from dataclasses import dataclass, replace
+from typing import List, Any
 
 import numpy as np
 from omegaconf.dictconfig import DictConfig
 
-from cachesaver.typedefs import BatchRequestModel
-from cachesaver.typedefs import Request, Response
-
+from cachesaver.typedefs import BatchRequestModel, Batch
+from cachesaver.typedefs import BaseRequest
 from .agent_basic import AgentBasic
 from ..tasks.basic import StateBasic, EnvironmentBasic
-from ..tasks.game24 import EnvironmentGame24
 
 
 @dataclass(frozen=True)
-class Request(Request):
-    max_completion_tokens: int
-    temperature: float
-    top_p: float
-    stop: str
+class Request(BaseRequest):
+    max_completion_tokens: int = None
+    temperature: float = None
+    top_p: float = None
+    stop: str = None
 
 
 class AgentLLM(AgentBasic):
     def __init__(self, api: BatchRequestModel):
+        super().__init__()
         self.name = "LLM Agent"
         self.api = api
         self.calls = {"total": 0, "cached": 0, "duplicated": 0}
@@ -35,7 +34,7 @@ class AgentLLM(AgentBasic):
         }
 
     async def request(self, prompt: str, n: int, request_id: str, namespace: str, config: DictConfig,
-                      messages: List[Any]) -> List[Any]:
+                      messages: List[Any] = None) -> List[Any]:
         """
         Makes a request to the api and tracks the number of calls.
         """
@@ -50,18 +49,34 @@ class AgentLLM(AgentBasic):
             top_p=config.top_p,
             stop=config.stop
         )
-        response = await self.api.request(request)
+        # response = await self.api.request(request) #todo batch request instead
+        response = await self.api.batch_request(Batch(requests=[request]))
         self.calls = {
-            "total": self.calls["total"] + len(response.data),
-            "cached": self.calls["cached"] + sum(response.cached),
-            "duplicated": self.calls["duplicated"] + sum(response.duplicated)
+            "total": self.calls["total"] + sum(len(r.data) for r in response),
+            "cached": self.calls["cached"] + sum(sum(r.cached) for r in response if r.cached),
+            "duplicated": self.calls["duplicated"] + sum(sum(r.duplicated) for r in response if r.duplicated)
         }
+        # self.calls = {
+        #     "total": self.calls["total"] + len(response.data),
+        #     "cached": self.calls["cached"] + sum(response.cached),
+        #     "duplicated": self.calls["duplicated"] + sum(response.duplicated)
+        # }
 
-        messages, tokin, tokout = zip(*response.data)
-        cached_tokin = [int(tokens * cached) for tokens, cached in zip(tokin, response.cached)]
-        cached_tokout = [int(tokens * cached) for tokens, cached in zip(tokout, response.cached)]
-        generated_tokin = [int(tokens * (not cached)) for tokens, cached in zip(tokin, response.cached)]
-        generated_tokout = [int(tokens * (not cached)) for tokens, cached in zip(tokout, response.cached)]
+        # messages, tokin, tokout = zip(*response.data)
+        # cached_tokin = [int(tokens * cached) for tokens, cached in zip(tokin, response.cached)]
+        # cached_tokout = [int(tokens * cached) for tokens, cached in zip(tokout, response.cached)]
+        # generated_tokin = [int(tokens * (not cached)) for tokens, cached in zip(tokin, response.cached)]
+        # generated_tokout = [int(tokens * (not cached)) for tokens, cached in zip(tokout, response.cached)]
+        all_data = [item for r in response for item in r.data]
+        all_cached = [flag for r in response for flag in (r.cached or [])]
+
+        messages, tokin, tokout = zip(*all_data)
+
+        # Step 3: Compute metrics
+        cached_tokin = [int(tokens * cached) for tokens, cached in zip(tokin, all_cached)]
+        cached_tokout = [int(tokens * cached) for tokens, cached in zip(tokout, all_cached)]
+        generated_tokin = [int(tokens * (not cached)) for tokens, cached in zip(tokin, all_cached)]
+        generated_tokout = [int(tokens * (not cached)) for tokens, cached in zip(tokout, all_cached)]
 
         self.tokens["total"]["in"] += sum(tokin)
         self.tokens["total"]["out"] += sum(tokout)
@@ -79,7 +94,7 @@ class AgentLLM(AgentBasic):
         if cache is not None and state in cache:
             inference = cache[state]
         else:
-            prompt = environment.prompter.act(state)
+            prompt = environment.Prompter.act(state)
             response = await self.request(
                 prompt=prompt,
                 n=1,
@@ -87,7 +102,7 @@ class AgentLLM(AgentBasic):
                 namespace=namespace,
                 config=config
             )
-            inference = environment.parser.act(response[0])
+            inference = environment.Parser.act(response[0])
 
             if cache is not None:
                 cache[state] = inference
@@ -170,7 +185,7 @@ class AgentLLM(AgentBasic):
         if cache is not None and state in cache:
             inferences = cache[state]
         else:
-            prompt = environment.prompter.bfs(state)
+            prompt = environment.Prompter.bfs(state)
             response = await self.request(
                 prompt=prompt,
                 n=1,
@@ -178,7 +193,7 @@ class AgentLLM(AgentBasic):
                 namespace=namespace,
                 config=config
             )
-            inferences = environment.parser.bfs(response[0])
+            inferences = environment.Parser.bfs(response[0])
 
             if cache is not None:
                 cache[state] = inferences
@@ -209,7 +224,7 @@ class AgentLLM(AgentBasic):
 
         # LLM-based method
         if inference.value is None:
-            prompt = environment.prompter.evaluate(state)
+            prompt = environment.Prompter.evaluate(state)
             response = await self.request(
                 prompt=prompt,
                 n=n,
@@ -217,7 +232,7 @@ class AgentLLM(AgentBasic):
                 namespace=namespace,
                 config=config
             )
-            inference = environment.parser.evaluate(response)
+            inference = environment.Parser.evaluate(response)
 
         if cache is not None:
             cache[state] = inference
@@ -226,12 +241,6 @@ class AgentLLM(AgentBasic):
         return value
 
     ##RAFA BELOW-------------------------------------
-    # def completions_with_backoff(**kwargs):
-    #     if "prompt" in kwargs:
-    #         return openai.Completion.create(**kwargs)
-    #     else:
-    #         assert "messages" in kwargs, "Either prompt or messages must be provided"
-    #         return openai.ChatCompletion.create(**kwargs)
 
     async def gpt_with_history(self, prompt, state, n, config, namespace, request_id) -> list:
         messages = []
@@ -334,11 +343,6 @@ class AgentLLM(AgentBasic):
             # generation
 
             if config.framework.method_generate == 'sample':
-
-                # new_ys = [
-                #     self.get_samples( environment=environment,x=state.puzzle, y=y, config=config)
-                #     for y in ys]
-
                 coroutines = [
                     self.get_samples(environment=environment, x=state.puzzle, y=y, config=config,
                                      namespace=str(state.index),
@@ -347,7 +351,6 @@ class AgentLLM(AgentBasic):
                 new_ys = await asyncio.gather(*coroutines)
 
             elif config.framework.method_generate == 'propose':
-                # new_ys = [self.get_proposals(obs, state.puzzle, y, config.framework.n_generate_sample) for y in ys]
                 coroutines = [
                     self.get_proposals(environment=environment, state=state, y=y, config=config,
                                        namespace=str(state.index),
@@ -360,7 +363,6 @@ class AgentLLM(AgentBasic):
             # evaluation
             if config.framework.method_evaluate == 'vote':
                 print("vote not impl")
-                # values = get_votes(env, value_obs, x, new_ys, self.n_evaluate_sample)
             elif config.framework.method_evaluate == 'value':
                 values = await self.get_values(env=value_obs, state=state, ys=new_ys, config=config,
                                                environment=environment, namespace=str(state.index),
@@ -388,15 +390,14 @@ class AgentLLM(AgentBasic):
 
         if config.run.to_print:
             print(ys)
-        # if len(ys):
-        #     return ys[0], {'steps': infos}
+
         ys_list = [y.split('\n')[len(history):] for y in ys]
         res_ys = ["\n".join(ys) for ys in ys_list][0]
         return state, res_ys, {'steps': infos}
 
     async def reflect_rafa(self, state, environment, config):
         y = state.answer
-        feedback = state.feedback
+        feedback = config.framework.feedback
         reflect_prompt, value_reflect_prompt = environment.prompter.reflect_prompt_wrap(state.puzzle, y, feedback)
         reflects = await self.gpt(prompt=reflect_prompt, n=config.framework.n_generate_sample, config=config)
         value_reflects = self.gpt(prompt=value_reflect_prompt, n=config.framework.n_generate_sample, config=config)
@@ -405,7 +406,7 @@ class AgentLLM(AgentBasic):
         return state
 
     async def act_rafa(self, state, environment, config):
-        if len(state.feedback) >= 1:
+        if len(state.feedback) >= 1:  # todo not correct
             state = await self.reflect_rafa(state=state, environment=environment, config=config)
         state, action, info = await self.plan_rafa(state=state, environment=environment, config=config)
         return state, action, info
@@ -413,5 +414,4 @@ class AgentLLM(AgentBasic):
     def update_rafa(self, state, done):
         if done:
             state = replace(state, reflects=[], value_reflects=[])
-            # state.value_reflects = []
         return state
