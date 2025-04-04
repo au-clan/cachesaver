@@ -1,5 +1,6 @@
 The following three classes follow the standard RL setup, with a couple key changes that will hopefully make them more reusable.
 The `Agent` doesn't have just an `act` method, but a `discover_actions`. This makes it possible to return a list of actions. Very important for ToT.
+Comment: hm, maybe we just define act to be a probability distribution? Can be uniform. Or leave it at act and allow a list of actions.
 The `Agent` also has methods to serialize / clone. Important for FoA.
 In practice, the `Agent` will probably be a thin wrapper around the prompting mechanism for discovering new thoughts/actions.
 This also means that we'll have individual agents for each task.
@@ -21,7 +22,7 @@ The `Heuristic` can have a state!
 This code just documents the API
 ```python
 class Agent:
-    def discover_actions(self, state) -> list of actions
+    def discover_actions(self, state) -> list of actions # ToDo: see updated comments
     def seed(self, randomness)
     def serialize(self)
     def clone(self, randomness) # combination of clone and seed
