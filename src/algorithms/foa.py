@@ -1,6 +1,6 @@
 import random
 import asyncio
-from ..typedefs import Algorithm, Model, Agent, Heuristic, Environment, DecodingParameters, State
+from ..typedefs import Algorithm, Model, Agent, Heuristic, Environment, DecodingParameters, State, Benchmark
 from ..utils import Resampler
 
 
@@ -33,7 +33,7 @@ class AlgorithmFOA(Algorithm):
         self.min_steps = min_steps
 
 
-    async def run(self, idx: int, state: State, namespace: str, value_cache: dict = None):
+    async def solve(self, idx: int, state: State, namespace: str, value_cache: dict = None):
         randomness = 0
         random.seed(randomness)
         resampler = Resampler(randomness)
@@ -114,6 +114,9 @@ class AlgorithmFOA(Algorithm):
         evaluations = [self.environment.evaluate(state) for state in states]
 
         return evaluations
+    
+    async def benchmark(self, benchmark: Benchmark):
+        pass
 
 
 

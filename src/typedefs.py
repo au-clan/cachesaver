@@ -120,13 +120,5 @@ class Algorithm(ABC):
         self.heuristic = heuristic
 
     @abstractmethod
-    async def run(self):
-        pass
-
-    @abstractmethod
-    def save(self):
-        pass
-
-    @abstractmethod
-    def load(self):
+    async def solve(self):
         pass
