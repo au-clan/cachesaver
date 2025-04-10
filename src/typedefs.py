@@ -1,8 +1,20 @@
-from typing import List, Tuple, Any, NamedTuple
+from typing import List, Tuple, Any, NamedTuple, Optional
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from cachesaver.typedefs import Request, Batch, Response, SingleRequestModel, BatchRequestModel
+from cachesaver.typedefs import Batch, Response, SingleRequestModel, BatchRequestModel
+from cachesaver.typedefs import Request as CacheSaverRequest
 from torch.utils.data import Dataset
+
+MAX_SEED = 10000
+
+@dataclass(frozen=True)
+class Request(CacheSaverRequest):# Clean this up
+    model: str
+    max_completion_tokens: Optional[int]=None
+    temperature: Optional[float]=1.0
+    top_p: Optional[float]=1.0
+    stop: Optional[str]=None
+    logprobs: Optional[bool]=False
 
 class DecodingParameters(NamedTuple):
     max_completion_tokens: int
@@ -24,7 +36,7 @@ class Model(SingleRequestModel, BatchRequestModel):
         pass
 
 class Benchmark(Dataset):
-    def __init__(self):
+    def __init__(self, path: str, set_name: str):
         pass
 
     @abstractmethod
@@ -49,35 +61,11 @@ class State(ABC):
     def clone(self, randomness: int) -> "State":
         pass
 
-
-class Agent(ABC):
-    def __init__(self, model: Model):
-        self.model = model
-
     @staticmethod
     @abstractmethod
-    def act(model: Model, state: State, n: int) -> List[str]:
+    def get_seed(self) -> int:
         pass
 
-    @staticmethod
-    @abstractmethod
-    def bfs(model: Model, state: State) -> List[str]:
-        pass
-
-    @staticmethod
-    @abstractmethod
-    def react(model: Model, state: State, n: int) -> List[str]:
-        pass
-
-    @staticmethod
-    @abstractmethod
-    def reflect(model: Model, state: State, n: int) -> List[str]:
-        pass
-
-    @staticmethod
-    @abstractmethod
-    def evaluate(model: Model, state: State, n: int) -> int:
-        pass
     
 class Environment(ABC):
     def __init__(self):
@@ -103,22 +91,23 @@ class Environment(ABC):
     def evaluate(state: State) -> Tuple[bool, float]:
         pass
 
-class Heuristic(ABC):
-    def __init__(self):
-        pass
+class Agent(ABC):
 
     @staticmethod
     @abstractmethod
-    def value(state: State) -> float:
+    def act(model: Model, state: State) -> Any:
         pass
-
+    
 class Algorithm(ABC):
-    def __init__(self, model: Model, agent: Agent, env: Environment, heuristic: Heuristic):
+    def __init__(self, model: Model, agents: dict[str, Agent], env: Environment):
         self.model = model
-        self.agent = agent
+        self.agent = agents
         self.env = env
-        self.heuristic = heuristic
 
     @abstractmethod
-    async def solve(self):
+    async def solve(self) -> List[State]:
+        pass
+
+    @abstractmethod
+    async def benchmark(self, benchmark: Benchmark) -> List[List[State]]:
         pass

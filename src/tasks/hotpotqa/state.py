@@ -1,11 +1,13 @@
 from dataclasses import dataclass
 from typing import List
+from langchain.agents.react.base import DocstoreExplorer
 
 from ...typedefs import State
 
 @dataclass(frozen=True)
-class StateGame24(State):
-    # The initial puzzle to solve
+class StateHotpotQA(State):
+
+    # The initial question to solve
     puzzle: str
 
     # Current state towards solving the puzzle
@@ -13,6 +15,12 @@ class StateGame24(State):
 
     # Steps taken towards solving the puzzle
     steps: List[str]
+
+    # The true answer to the question
+    answer: str
+
+    # Docstore the current state is using
+    docstore: DocstoreExplorer
 
     # A random number associated with the state
     randomness: int
@@ -26,12 +34,22 @@ class StateGame24(State):
             "steps": " -> ".join(self.steps)
         }
     
-    def clone(self, randomness: int=None) -> "StateGame24":
+    def clone(self, randomness: int=None) -> "StateHotpotQA":
         """
-        Returns a new instance of GameOf24State with an optional new randomness value.
+        Returns a new instance of StateHotpotQA with an optional new randomness value.
         """
-        return StateGame24(
+        return StateHotpotQA(
             puzzle=self.puzzle,
             current_state=self.current_state,
             steps=self.steps,
+            answer=self.answer,
+            docstore=self.docstore,
             randomness=randomness or self.randomness)
+
+    def get_seed(self) -> int:
+        """
+        Returns the randomness value associated with the state.
+        """
+        return self.randomness
+    
+
