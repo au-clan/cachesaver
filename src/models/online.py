@@ -4,12 +4,11 @@ from dataclasses import dataclass
 
 from cachesaver.typedefs import Request, Batch, Response
 
-from .model_basic import ModelBasic
+from ..typedefs import Model
 
-class OnlineLLM(ModelBasic):
-    def __init__(self, client: Any, model: str):
+class OnlineLLM(Model):
+    def __init__(self, client: Any):
         self.client = client
-        self.model = model
 
     async def request(self, request: Request) -> Response:
         sleep = 1
@@ -22,7 +21,7 @@ class OnlineLLM(ModelBasic):
                             "content" : request.prompt
                         }
                     ],
-                    model = self.model,
+                    model = request.model,
                     n = request.n,
                     max_tokens= request.max_completion_tokens or None, # or None not needed but just to be explicit
                     temperature = request.temperature or 1,

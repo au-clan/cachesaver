@@ -9,7 +9,7 @@ def tokens2cost(tokens: dict, model_name: str) -> dict:
         "meta-llama/Llama-3.2-90B-Vision-Instruct-Turbo" : {"in": 0.88, "out": 0.88},
         "gpt-4o": {"in": 2.50, "out": 10.00},
         "gpt-4o-mini": {"in": 0.15, "out": 0.60},
-        "gpt-3.5-turbo": {"in": 0.50, "out": 2.00}
+        "gpt-3.5-turbo": {"in": 0.50, "out": 1.50}
     }
 
     catalog["llama-3.3-70b-specdec"] = catalog["meta-llama/Llama-3.3-70B-Instruct-Turbo"]
@@ -60,7 +60,7 @@ class Resampler:
         random.seed(self.randomness)
         new_randomness = [random.randint(1, 1000) for _ in range(n_picks)]
         self.randomness = new_randomness[-1]
-        resampled_states = [state_records[i][2].duplicate(randomness) for i, randomness in zip(resampled_indices, new_randomness)]
+        resampled_states = [state_records[i][2].clone(randomness) for i, randomness in zip(resampled_indices, new_randomness)]
         return resampled_states, resampled_indices
     
     @staticmethod

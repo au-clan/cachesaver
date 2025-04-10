@@ -1,1 +1,3 @@
-from .environment_hotpotqa import EnvironmentHotpotQA
+from .agents import *
+from .benchmark import BenchmarkHotpotQA
+from .environment import EnvironmentHotpotQA

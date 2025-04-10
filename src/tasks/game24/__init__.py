@@ -1,1 +1,3 @@
-from .environment_game24 import EnvironmentGame24
+from .agents import *
+from .benchmark import BenchmarkGame24
+from .environment import EnvironmentGame24

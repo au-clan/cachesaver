@@ -1,11 +1,10 @@
 from dataclasses import dataclass
 from typing import List
 
-from ..basic import StateBasic
-
+from ...typedefs import State
 
 @dataclass(frozen=True)
-class StateGame24(StateBasic):
+class StateGame24(State):
     # The initial puzzle to solve
     puzzle: str
 
@@ -18,24 +17,16 @@ class StateGame24(StateBasic):
     # A random number associated with the state
     randomness: int
 
-    def __hash__(self):
-        return hash((self.puzzle, self.current_state, " -> ".join(self.steps)))
-    
-    def items(self):
-        return self.puzzle, self.current_state, self.steps, self.randomness
-    
-    def log(self):
+    def serialize(self) -> dict:
         """
         Returns a dictionary representation of the state.
         """
         return {
-            "puzzle": self.puzzle,
             "current_state": self.current_state,
-            "steps": " -> ".join(self.steps),
-            "randomness": self.randomness
+            "steps": " -> ".join(self.steps)
         }
     
-    def duplicate(self, randomness: int=None) -> "StateGame24":
+    def clone(self, randomness: int=None) -> "StateGame24":
         """
         Returns a new instance of GameOf24State with an optional new randomness value.
         """
@@ -43,4 +34,16 @@ class StateGame24(StateBasic):
             puzzle=self.puzzle,
             current_state=self.current_state,
             steps=self.steps,
-            randomness=randomness if randomness else self.randomness)
+            randomness=randomness or self.randomness)
+    
+    def get_seed(self) -> int:
+        """
+        Returns the randomness value associated with the state.
+        """
+        return self.randomness
+    
+    def __hash__(self) -> int:
+        """
+        Returns a hash of the current state.
+        """
+        return hash(str(self.serialize()))

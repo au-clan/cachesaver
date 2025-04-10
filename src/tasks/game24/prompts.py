@@ -1,4 +1,22 @@
 # Updated
+act = '''Use numbers and basic arithmetic operations (+ - * /). Each step, you are only allowed to choose two of the remaining numbers to obtain a new number. Do not explain simply list one possible next step, as well as all the remaining numbers and nothing else.
+
+Example: 2 8 8 14
+Possible next step:
+14 + 2 = 16 (left: 8 8 16)
+
+Example: 1 4 6
+Possible next steps:
+1 * 4 = 4 (left: 6 4)
+
+Example: 1 3
+Possible next step:
+1 * 3 = 3 (left: 3)
+
+Input: {input}
+Possible next step:
+'''
+
 bfs = '''Use numbers and basic arithmetic operations (+ - * /). Each step, you are only allowed to choose two of the remaining numbers to obtain a new number. Do not explain simply list possible next steps as well as all the remaining numbers and nothing else.
 
 Example: 2 8 8 14
