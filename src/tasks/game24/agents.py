@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Union
 
 from . import prompts as prompts
 from .state import StateGame24
@@ -26,6 +26,31 @@ class AgentActGame24(Agent):
 
         # Parse the response
         proposals = [r.strip() for r in responses]
+        return proposals
+    
+class AgentAggregateGame24(Agent):
+    """
+    """
+    async def act(model: Model, states: List[StateGame24], k: int, n: int, namespace: str, request_id: str, params: DecodingParameters) -> Union[str, List[str]]:
+        # Format the prompt
+        proposals = ''
+        for idx, state in enumerate(states):
+            proposals += f'({idx + 1})' + state.current_state + '\n'
+
+        current_numbers = get_current_numbers(state)
+        prompt = prompts.aggregate.format(input=current_numbers, proposals=proposals, n_select=k)
+
+        responses = await model.request(
+            prompt=prompt,
+            n=n,
+            request_id=request_id,
+            namespace=namespace,
+            params=params
+        )
+
+        # Parse the response
+        uncut_proposals = responses[0].rpartition(")")[0] + ")"
+        proposals = [r.strip() for r in uncut_proposals.split("\n")]
         return proposals
 
 
