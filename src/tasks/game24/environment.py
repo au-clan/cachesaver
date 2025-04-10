@@ -45,7 +45,7 @@ class EnvironmentGame24(Environment):
         Checks if the current state is a final state.
         """
         expression = state.steps[-1]
-        if "left" in expression and len(state.current_state.split(' '))>1:
+        if "left" in expression or len(state.current_state.split(' '))>1:
             return False
         else:
             return True
