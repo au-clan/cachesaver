@@ -1,5 +1,6 @@
 import random
 import asyncio
+from tqdm.asyncio import tqdm
 from typing import TypedDict
 from ..typedefs import Algorithm, Model, Agent, Environment, DecodingParameters, State, Benchmark, MAX_SEED
 
@@ -112,6 +113,6 @@ class AlgorithmGOT(Algorithm):
             )
             for index, state in benchmark
         ]
-        results = await asyncio.gather(*solve_coroutines)
+        results = await tqdm.gather(*solve_coroutines)
         return results
 

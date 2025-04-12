@@ -13,7 +13,7 @@ import sys
 sys.path.append(os.getcwd())
 
 from src.utils import tokens2cost
-from src.algorithm import *
+from src.algorithms import *
 from src.models import OnlineLLM, API
 from src.typedefs import DecodingParameters
 from src.tasks.game24 import EnvironmentGame24, BenchmarkGame24, AgentActGame24, AgentAggregateGame24, AgentEvaluateGame24, AgentBfsGame24
@@ -121,7 +121,7 @@ async def run(args):
     else:
         raise NotImplementedError(f"Method {args.method} is not implemented yet.")
     
-    benchmark = BenchmarkGame24(path=args.benchmark_path, split=args.split)
+    benchmark = BenchmarkGame24(path=args.dataset_path, split=args.split)
     results = await method.benchmark(
         benchmark=benchmark,
         share_ns=args.share_ns,
@@ -166,6 +166,10 @@ if __name__ == "__main__":
     parser.add_argument("--value_cache", action="store_true", help="Use value cache")
     args = parser.parse_args()
 
-    logging.basicConfig(level=logging.INFO, filename=f"logs/game24/{args.method}.log", filemode="w")
+    log_file = f"logs/game24/{args.method}.log"
+    if not os.path.exists(os.path.dirname(log_file)):
+        os.makedirs(os.path.dirname(log_file))
+
+    logging.basicConfig(level=logging.INFO, filename=log_file, filemode="w")
 
     asyncio.run(run(args))
