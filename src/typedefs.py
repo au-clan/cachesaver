@@ -15,6 +15,7 @@ class Request(CacheSaverRequest):# Clean this up
     top_p: Optional[float]=1.0
     stop: Optional[str]=None
     logprobs: Optional[bool]=False
+    messages: Optional[list[str]]=None
 
 class DecodingParameters(NamedTuple):
     max_completion_tokens: int
