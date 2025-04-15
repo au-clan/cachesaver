@@ -1,21 +1,24 @@
-from dataclasses import dataclass
-from typing import List
+from dataclasses import dataclass, field
+from typing import List, Optional
 
 from ...typedefs import State
+
+
 
 @dataclass(frozen=True)
 class StateGame24(State):
     # The initial puzzle to solve
-    puzzle: str
+    puzzle: Optional[str] = None
 
     # Current state towards solving the puzzle
-    current_state: str
+    current_state: Optional[str] = None
 
     # Steps taken towards solving the puzzle
-    steps: List[str]
-
+    steps: Optional[List[str]] = field(default_factory=list)
     # A random number associated with the state
-    randomness: int
+    randomness: Optional[int] = None
+
+
 
     def serialize(self) -> dict:
         """
@@ -47,3 +50,19 @@ class StateGame24(State):
         Returns a hash of the current state.
         """
         return hash(str(self.serialize()))
+
+@dataclass(frozen=True)
+class GameState_rafa(StateGame24):
+    index: Optional[int] = None
+
+    history: Optional[list[str]] = field(default_factory=list)
+    feedbacks: Optional[list[str]] = field(default_factory=list)
+    cur_step: Optional[int] = 0
+
+    #these two should maybe be shared across runs?
+    reflects: Optional[list[str]] = field(default_factory=list)
+    value_reflects: Optional[list[str]] = field(default_factory=list)
+
+    #these two below have they formatted weird in rafa
+    feedback: Optional[list[str]] = field(default_factory=list)
+    action: Optional[str] = ""

@@ -9,7 +9,7 @@ MAX_SEED = 10000
 
 @dataclass(frozen=True)
 class Request(CacheSaverRequest):# Clean this up
-    model: str
+    # model: str
     max_completion_tokens: Optional[int]=None
     temperature: Optional[float]=1.0
     top_p: Optional[float]=1.0
