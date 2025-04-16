@@ -38,7 +38,7 @@ class AgentAggregateGame24(Agent):
         for idx, action in enumerate(actions):
             proposals += f'({idx + 1})' + action + '\n'
 
-        prompt = prompts.aggregate.format(input=state.current_state, proposals=proposals, n_select=k)
+        prompt = prompts.aggregate.format(state=state.current_state, proposal=proposals, n_select_sample=k)
 
         responses = await model.request(
             prompt=prompt,
