@@ -3,17 +3,26 @@ from dataclasses import replace
 from typing import TypedDict
 
 from ..tasks.game24.state import GameState_rafa
-from ..typedefs import Algorithm, Model, Agent, Environment, Benchmark
+from ..typedefs import Algorithm, Model, Agent, Environment, Benchmark, DecodingParameters, Request
 
 
 class AgentDictRAFA_tot(TypedDict):
     agent_act: Agent
     agent_eval: Agent
+    model_params: DecodingParameters
 
-class framework_rafa_settings:
-    max_step=1
 
-class model_settings
+class ActKwargs_rafa(TypedDict, total=False):  # total=False makes keys optional
+    n_generate_sample: int
+    request_params: Request
+    request_id: str
+    namespace: str
+
+class EvalKwargs_rafa(TypedDict, total=False):  # total=False makes keys optional
+    feedback_print: bool
+    action:str
+
+
 
 class AlgorithmRAFA_tot(Algorithm):
 
@@ -23,26 +32,29 @@ class AlgorithmRAFA_tot(Algorithm):
                  env: Environment,
                  n_generate_sample: int,
                  n_evaluate_sample: int,
+                 max_step: int,
                  n_select_sample: int):
         super().__init__(model, agents, env)
         # self.agent_eval = None
         self.agent_act = agents['agent_act']
         self.agent_eval = agents['agent_eval']
+        self.model_params = agents['model_params']
 
+        self.max_step = max_step
         self.n_generate_sample = n_generate_sample
         self.n_evaluate_sample = n_evaluate_sample
         self.n_select_sample = n_select_sample
         self.value_cache = {}  # todo utilize
 
-    async def solve(self, puzzle_idx: int, state: GameState_rafa, namespace: str, seed: int = 0,
+    async def solve(self, idx: int, state: GameState_rafa, namespace: str, seed: int = 0,
                     value_cache: dict = None,
                     step_cache: dict = None):
         # Initial state
-        initial_state = self.reset_rafa(state.puzzle)  # todo verify puzzle is accessible
+        # initial_state = self.reset_rafa(state.puzzle)  # todo verify puzzle is accessible
 
         # Set up log
         logs = []
-        log = {'idx': puzzle_idx,
+        log = {'idx': idx,
                'state_act': [],
                'action_act': [],
                'agent_info_act': [],
@@ -54,9 +66,15 @@ class AlgorithmRAFA_tot(Algorithm):
                'state_update': []}
 
         done = False
+        i = 0
         while not done:
-            state, action, agent_info = await self.agent_act.act(state=state, environment=self.environment,
-                                                                 config=self.config)
+            i += 1
+            state, action, agent_info = await self.agent_act.act(state=state,
+                                                                 n_generate_sample=self.n_generate_sample,
+                                                                 model=self.model,
+                                                                 request_params=self.model_params,
+                                                                 namespace=namespace,
+                                                                 request_id=f"idx{idx}-{hash(state)}-agent{i}")
             log['state_act'].append(state)
             log['action_act'].append(action)
             log['agent_info_act'].append(agent_info)
@@ -71,6 +89,7 @@ class AlgorithmRAFA_tot(Algorithm):
             # state = self.update_rafa(state=state, done=done)
             if done:
                 state = replace(state, reflects=[], value_reflects=[])
+                i = 0
 
             log['state_update'].append(state)
             print(obs)

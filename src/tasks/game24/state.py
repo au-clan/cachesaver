@@ -63,6 +63,11 @@ class GameState_rafa(StateGame24):
     reflects: Optional[list[str]] = field(default_factory=list)
     value_reflects: Optional[list[str]] = field(default_factory=list)
 
-    #these two below have they formatted weird in rafa
+    #these two below have they formatted weird in rafa // also for the reflect
     feedback: Optional[list[str]] = field(default_factory=list)
+
     action: Optional[str] = ""
+
+    feedback_string: Optional[list[str]] = field(default_factory=list)
+    answer_string: Optional[list[str]] = field(default_factory=list)
+
