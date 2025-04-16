@@ -14,13 +14,13 @@ class AgentDictGOT(TypedDict):
 
 class AlgorithmGOT(Algorithm):
     def __init__(self, 
-                 model, 
-                 agents, 
-                 env, 
-                 num_selections, 
-                 num_steps,
-                 num_best,
-                 num_evaluations,
+                 model: Model, 
+                 agents: AgentDictGOT, 
+                 env: Environment, 
+                 num_selections: int, 
+                 num_steps: int,
+                 num_best: int,
+                 num_evaluations: int,
                  ):
         super().__init__(model, agents, env)
 
@@ -37,7 +37,7 @@ class AlgorithmGOT(Algorithm):
         self.num_best = num_best
         self.num_evaluations = num_evaluations
 
-    async def solve(self, idx:int, state: State, namespace: str, value_cache: dict = None):
+    async def solve(self, idx: int, state: State, namespace: str, value_cache: dict = None):
         randomness = idx
         random.seed(randomness)
         states = [state.clone(randomness=random.randint(0, MAX_SEED))]

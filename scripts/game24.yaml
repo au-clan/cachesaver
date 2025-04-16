@@ -16,5 +16,5 @@ tot:
 got:
   num_selections: 5
   num_steps: 4
-  num_evaluations: 3
+  num_evaluations: 1
   num_best: 1

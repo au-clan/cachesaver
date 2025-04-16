@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import List
 import re
 
 from . import prompts as prompts
@@ -30,13 +30,19 @@ class AgentActGame24(Agent):
         return proposals
     
 class AgentAggregateGame24(Agent):
-    """
-    """
-    async def act(model: Model, state: StateGame24, actions: List[str], k: int, n: int, namespace: str, request_id: str, params: DecodingParameters) -> Union[str, List[str]]:
+
+    @staticmethod
+    async def act(model: Model, state: StateGame24, actions: List[str], k: int, n: int, namespace: str, request_id: str, params: DecodingParameters) -> List[str]:
+        """
+        Returns the aggregated actions for the Game of 24 task.
+        """
+        if "left" not in state.steps[-1]:
+            pass
+
         # Format the prompt
         proposals = ''
         for idx, action in enumerate(actions):
-            proposals += f'({idx + 1})' + action + '\n'
+            proposals += f'({idx + 1}) ' + action + '\n'
 
         prompt = prompts.aggregate.format(state=state.current_state, proposal=proposals, n_select_sample=k)
 
@@ -51,9 +57,10 @@ class AgentAggregateGame24(Agent):
         # Parse the response
         pattern = r"\(\d+\)\s(\d+ [+\-*/] \d+ = \d+ \(left: [^)]+\))"
         matchs = re.findall(pattern, responses[0])
+
         if matchs:
-            proposals = [match[0].strip() for match in matchs]
-        return proposals
+            proposal = [match.strip() for match in matchs]
+        return proposal
 
 
 class AgentBfsGame24(Agent):
@@ -63,7 +70,6 @@ class AgentBfsGame24(Agent):
         """
         Returns a list of actions for the Game of 24 task.
         """
-        
         # Format the prompt
         if state.current_state == "24":
             prompt = prompts.cot.format(input=state.puzzle) + "\nSteps:\n" + '\n'.join(state.steps) + "\nAnswer: "
