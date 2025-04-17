@@ -54,15 +54,16 @@ class AgentBfsGame24(Agent):
         )
 
         # Parse the response
-        uncut_proposals = response[0].rpartition(")")[0] + ")"
-        proposals = [r.strip() for r in uncut_proposals.split("\n")]
+        if state.current_state != "24":
+            response = [response[0].rpartition(")")[0] + ")"]
+        proposals = [r.strip() for r in response[0].split("\n")]
         return proposals
 
 
 class AgentEvaluateGame24(Agent):
 
     @staticmethod
-    async def act(model: Model, state: StateGame24, n: int,namespace: str, request_id: str, params: DecodingParameters, cache: dict=None) -> List[float]:
+    async def act(model: Model, state: StateGame24, n: int,namespace: str, request_id: str, params: DecodingParameters, cache: dict=None) -> float:
         """
         Returns a value for the given state
         """

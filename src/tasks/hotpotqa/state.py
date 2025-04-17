@@ -52,4 +52,10 @@ class StateHotpotQA(State):
         """
         return self.randomness
     
+    def __hash__(self) -> int:
+        """
+        Returns a hash of the current state.
+        """
+        return hash(str(self.serialize()))
+    
 
