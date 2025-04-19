@@ -9,8 +9,8 @@ from requests import Response
 
 from . import prompts as prompts
 from .state import StateGame24, GameState_rafa
-from ...algorithms.rafa_tot import ActKwargs_rafa, EvalKwargs_rafa
-from ...typedefs import Request, Agent, Model, DecodingParameters, State
+
+from ...typedefs import Request, Agent, Model, DecodingParameters, State, ActKwargs_rafa, EvalKwargs_rafa
 
 
 # Helper functions
@@ -274,7 +274,7 @@ class AgentRafaGame24_act(Agent):
         return 1
 
     @staticmethod
-    def reflect_prompt_wrap(x: str, y: str, feedback: str):#todo removed type
+    def reflect_prompt_wrap(x: str, y: str, feedback: str):  # todo removed type
 
         return (prompts.reflect_prompt.format(input=x,
                                               answer=y,
@@ -359,10 +359,10 @@ class AgentRafaGame24_act(Agent):
         return state, total_feedback, rewards
 
     @staticmethod
-    async def gpt_with_history(model: Model, request_params: Request, prompt, state, n, namespace,
+    async def gpt_with_history(model: Model, request_params: Request, prompt, history, n, namespace,
                                request_id) -> Response:
         messages = []
-        for h in state.history:
+        for h in history:
             if 'answer' in h:
                 messages.extend([{"role": "assistant", "content": h["answer"]}])
             if 'feedback' in h:
@@ -397,14 +397,15 @@ class AgentRafaGame24_act(Agent):
         return response
 
     @staticmethod
-    async def get_value(model: Model, request_params: Request,  state, y,  namespace, request_id,cache_value,value_cache,
+    async def get_value(model: Model, history, request_params: Request, state, y, namespace, request_id, cache_value,
+                        value_cache,
                         n_evaluate_sample: int):
         value_prompt = AgentRafaGame24_act.value_prompt_wrap(state.puzzle, y)
 
         if cache_value and value_prompt in value_cache:
             return AgentRafaGame24_act.value_cache[value_prompt]  # todo cache values in future
         value_outputs = await AgentRafaGame24_act.gpt_with_history(prompt=value_prompt,
-                                                                   state=state,
+                                                                   history=history,
                                                                    model=model,
                                                                    request_params=request_params,
                                                                    n=n_evaluate_sample,
@@ -419,8 +420,8 @@ class AgentRafaGame24_act(Agent):
         return value
 
     @staticmethod
-    async def get_values(state, ys, cache_value, request_id, namespace, model: Model,
-                         request_params: Request, value_cache,n_evaluate_sample):
+    async def get_values(state, ys, history, cache_value, request_id, namespace, model: Model,
+                         request_params: Request, value_cache, n_evaluate_sample):
         values = []
         local_value_cache = {}
         for y in ys:  # each partial output
@@ -430,6 +431,7 @@ class AgentRafaGame24_act(Agent):
                 # value = get_value(env, history, x, y, n_evaluate_sample, cache_value=cache_value)
                 value = await AgentRafaGame24_act.get_value(state=state,
                                                             y=y,
+                                                            history=history,
                                                             request_params=request_params,
                                                             model=model,
                                                             cache_value=cache_value,
@@ -442,16 +444,17 @@ class AgentRafaGame24_act(Agent):
             values.append(value)
         return values
 
-    @staticmethod
-    async def get_proposals(model: Model, state, y,n_propose_sample , namespace, request_id, request_params: Request, ):
-        propose_prompt = AgentRafaGame24_act.propose_prompt_wrap(state.puzzle, y)
+    @staticmethod  # todo confirm this impl the gpt_with_history is both method and a global variable in their impl
+    async def get_proposals(model: Model, puzzle, history, y, n_propose_sample, namespace, request_id,
+                            request_params: Request, ):
+        propose_prompt = AgentRafaGame24_act.propose_prompt_wrap(puzzle, y)
         result = await AgentRafaGame24_act.gpt_with_history(prompt=propose_prompt,
-                                                            state=state,
+                                                            history=history,
                                                             n=1,
                                                             model=model,
                                                             namespace=namespace,
                                                             request_params=request_params,
-                                                            request_id=request_id)
+                                                            request_id=request_id)  # todo stop token
 
         proposal_list = [x.split('\n') for x in result]  # todo the stop token
         proposals = []
@@ -461,9 +464,11 @@ class AgentRafaGame24_act(Agent):
         return [y + _ + '\n' for _ in proposals]
 
     @staticmethod
-    async def plan_rafa(state, n_propose_sample, n_select_sample):
+    async def plan_rafa(model: Model, state: GameState_rafa, n_propose_sample, n_select_sample, to_print, cache_value,
+                        value_cache, n_evaluate_sample,
+                        request_parameters):
 
-        history = state.history
+        history = state.env_history
         ys = ["\n".join(history) + "\n"] if len(history) else [""]  # current output candidates
         infos = []
         prompt = "Now we would like to play a game of 24. That is, given 4 numbers, try to use "
@@ -471,31 +476,45 @@ class AgentRafaGame24_act(Agent):
         obs = [{"feedback": prompt},
                {"feedback": "What you have learned about the puzzle are summarized below.\n" + "\n".join(
                    state.reflects)}]
+
         value_obs = [prompt,
                      dict(feedback="What you have learned about the puzzle are summarized below.\n" + "\n".join(
                          state.value_reflects))]
         for step in range(4 - len(history)):
             # generation
             coroutines = [
-                AgentRafaGame24_act.get_proposals(state=state, y=y, n_propose_sample=n_propose_sample,
+                AgentRafaGame24_act.get_proposals(puzzle=state.puzzle,
+                                                  history=obs,
+                                                  y=y,
+                                                  n_propose_sample=n_propose_sample,
                                                   namespace=str(state.index),
-                                                  request_id=f"step-{str(state.index)}-{step}-{y}-{hash(state)}")
+                                                  request_id=f"step-{str(state.index)}-{step}-{y}-{hash(state)}",
+                                                  model=model,
+                                                  request_params=request_parameters)
                 for y in ys]
             new_ys = await asyncio.gather(*coroutines)
 
             new_ys = list(itertools.chain(*new_ys))
             ids = list(range(len(new_ys)))
             # evaluation
-            values = await AgentRafaGame24_act.get_values(env=value_obs, state=state, ys=new_ys, config=config,
+            values = await AgentRafaGame24_act.get_values(state=state,
+                                                          history=value_obs,
+                                                          ys=new_ys,
                                                           namespace=str(state.index),
-                                                          request_id=f"step-{str(state.index)}-{step}-{step}-{hash(state)}")  # todo step twice, not sure if safe
+                                                          request_id=f"step-{str(state.index)}-{step}-{step}-{hash(state)}",
+                                                          model=model,
+                                                          request_params=request_parameters,
+                                                          cache_value=cache_value,
+                                                          value_cache=value_cache,
+                                                          n_evaluate_sample=n_evaluate_sample
+                                                          )  # todo step twice, not sure if safe
 
             # selection
             select_ids = sorted(ids, key=lambda x: values[x], reverse=True)[:n_select_sample]
             select_new_ys = [new_ys[select_id] for select_id in select_ids]
 
             # log
-            if config.run.to_print:
+            if to_print:
                 sorted_new_ys, sorted_values = zip(*sorted(zip(new_ys, values), key=lambda x: x[1], reverse=True))
                 print(
                     f'-- new_ys --: {sorted_new_ys}\n-- sol values --: {sorted_values}\n-- choices --: {select_new_ys}\n')
@@ -505,7 +524,7 @@ class AgentRafaGame24_act(Agent):
                  'select_new_ys': select_new_ys})
             ys = select_new_ys
 
-        if config.run.to_print:
+        if to_print:
             print(ys)
 
         ys_list = [y.split('\n')[len(history):] for y in ys]
@@ -513,10 +532,11 @@ class AgentRafaGame24_act(Agent):
         return state, res_ys, {'steps': infos}
 
     @staticmethod
-    async def reflect_rafa(state: GameState_rafa, n_generate_sample, model: Model, request_params: Request, namespace, request_id):
-        y = state.answer_string
+    async def reflect_rafa(state: GameState_rafa, n_generate_sample, model: Model, request_params: Request, namespace,
+                           request_id):
+        y = state.obs_answer
 
-        feedback = state.feedback_string
+        feedback = state.obs_feedback
         reflect_prompt, value_reflect_prompt = AgentRafaGame24_act.reflect_prompt_wrap(state.puzzle, y, feedback)
         reflects = await AgentRafaGame24_act.gpt(prompt=reflect_prompt,
                                                  n=n_generate_sample,
@@ -525,21 +545,20 @@ class AgentRafaGame24_act(Agent):
                                                  namespace=namespace,
                                                  request_id=request_id)
 
-        value_reflects = AgentRafaGame24_act.gpt(prompt=value_reflect_prompt,
-                                                 n=n_generate_sample,
-                                                 request_params=request_params,
-                                                 model=model,
-                                                 namespace=namespace,
-                                                 request_id=request_id)
-
+        value_reflects = await AgentRafaGame24_act.gpt(prompt=value_reflect_prompt,
+                                                       n=n_generate_sample,
+                                                       request_params=request_params,
+                                                       model=model,
+                                                       namespace=namespace,
+                                                       request_id=request_id)
+        # todo confirm the right types
         state = replace(state, reflects=reflects, value_reflects=value_reflects)
 
         return state
 
     @staticmethod
-    # async def act(model: Model, state: GameState_rafa, n_generate_sample, request_params:Request,request_id,namespace) -> Any:
     async def act(model: Model, state: GameState_rafa, **kwargs) -> Any:
-        required_keys = ["n_generate_sample", "request_params", "request_id", "namespace"]
+        required_keys = ["n_generate_sample", "request_params", "request_id", "namespace","n_propose_sample","n_select_sample","to_print","cache_value"]
 
         for key in required_keys:
             if key not in kwargs or kwargs[key] is None:
@@ -551,21 +570,40 @@ class AgentRafaGame24_act(Agent):
         request_params = typed_kwargs["request_params"]
         request_id = typed_kwargs["request_id"]
         namespace = typed_kwargs["namespace"]
-
-        if len(state.feedback) >= 1:
+        n_propose_sample=typed_kwargs["n_propose_sample"]
+        n_select_sample=typed_kwargs["n_select_sample"]
+        to_print=typed_kwargs["to_print"]
+        cache_value=typed_kwargs["cache_value"]
+        puzzle=state.puzzle
+        state = GameState_rafa()
+        state= replace(state, puzzle=puzzle)
+        if len(state.obs_feedback) >= 1:
             state = await AgentRafaGame24_act.reflect_rafa(state=state,
                                                            n_generate_sample=n_generate_sample,
                                                            model=model,
                                                            request_params=request_params,
                                                            namespace=namespace,
                                                            request_id=request_id)
-        state, action, info = await AgentRafaGame24_act.plan_rafa(state=state, )
+
+            # model: Model, state: GameState_rafa, n_propose_sample, n_select_sample, to_print, cache_value,
+            # value_cache, n_evaluate_sample,
+            # request_parameters
+
+        state, action, info = await AgentRafaGame24_act.plan_rafa(
+            model=model,
+            state=state,
+            n_propose_sample=n_propose_sample,
+            n_select_sample=n_select_sample,
+            to_print=to_print,
+            cache_value=cache_value,
+            request_parameters=request_params
+        )
         return state, action, info
 
 
 class AgentRafaGame24_eval(Agent):
     @staticmethod
-    def step_rafa(config, action, state: GameState_rafa, feedback_print: bool):
+    def step_rafa(action, state: GameState_rafa, feedback_print: bool, max_step):
         state = replace(state, cur_step=state.cur_step + 1)
         prev_len = len(state.history)
         generated_state, feedback, reward = AgentRafaGame24_act.generate_feedback_rafa(action=action,
@@ -575,7 +613,7 @@ class AgentRafaGame24_eval(Agent):
         new_len = len(state.history)
         delta = new_len - prev_len + 1 if new_len < 4 else new_len - prev_len
         assert delta > 0
-        done = (reward >= 10) or (generated_state.cur_step > config.framework.max_step)
+        done = (reward >= 10) or (generated_state.cur_step > max_step)
         answer = [f"Step {i + 1}: {x}" for i, x in enumerate(action.split('\n')[:delta]) if x != ""]
         answer = "Attempt answer: " + "\n".join(answer)
         if generated_state.feedback:
@@ -587,7 +625,7 @@ class AgentRafaGame24_eval(Agent):
         return generated_state, obs, reward, done, info
 
     @staticmethod
-    def act(model: Model, state: GameState_rafa,**kwargs: Any) -> Any:
+    def act(model: Model, state: GameState_rafa, **kwargs: Any) -> Any:
         required_keys = ["feedback_print", "action"]
 
         for key in required_keys:
@@ -599,4 +637,6 @@ class AgentRafaGame24_eval(Agent):
         feedback_print = typed_kwargs["feedback_print"]
         action = typed_kwargs["action"]
 
-        return AgentRafaGame24_eval.step_rafa(action=action, state=state, feedback_print=feedback_print)
+        return AgentRafaGame24_eval.step_rafa(action=action,
+                                              state=state,
+                                              feedback_print=feedback_print)

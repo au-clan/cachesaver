@@ -2,8 +2,9 @@
 from dataclasses import replace
 from typing import TypedDict
 
-from ..tasks.game24.state import GameState_rafa
-from ..typedefs import Algorithm, Model, Agent, Environment, Benchmark, DecodingParameters, Request
+from ..algorithm_options.rafa import RAFAOptions
+from ..typedefs import Algorithm, Model, Agent, Environment, Benchmark, DecodingParameters, State, \
+    RequestOptions
 
 
 class AgentDictRAFA_tot(TypedDict):
@@ -12,90 +13,74 @@ class AgentDictRAFA_tot(TypedDict):
     model_params: DecodingParameters
 
 
-class ActKwargs_rafa(TypedDict, total=False):  # total=False makes keys optional
-    n_generate_sample: int
-    request_params: Request
-    request_id: str
-    namespace: str
-
-class EvalKwargs_rafa(TypedDict, total=False):  # total=False makes keys optional
-    feedback_print: bool
-    action:str
-
-
-
 class AlgorithmRAFA_tot(Algorithm):
 
     def __init__(self,
                  model: Model,
                  agents: AgentDictRAFA_tot,
                  env: Environment,
-                 n_generate_sample: int,
-                 n_evaluate_sample: int,
-                 max_step: int,
-                 n_select_sample: int):
+                 rafa_options:RAFAOptions):
+
         super().__init__(model, agents, env)
-        # self.agent_eval = None
+
         self.agent_act = agents['agent_act']
         self.agent_eval = agents['agent_eval']
         self.model_params = agents['model_params']
 
-        self.max_step = max_step
-        self.n_generate_sample = n_generate_sample
-        self.n_evaluate_sample = n_evaluate_sample
-        self.n_select_sample = n_select_sample
+        self.rafa_options = rafa_options
+
+        self.feedback_print = False
+        # This value_cache should be used as a caching mechanism
         self.value_cache = {}  # todo utilize
 
-    async def solve(self, idx: int, state: GameState_rafa, namespace: str, seed: int = 0,
-                    value_cache: dict = None,
-                    step_cache: dict = None):
+    async def solve(self, idx: int, state: State, namespace: str, value_cache: dict = None):
         # Initial state
         # initial_state = self.reset_rafa(state.puzzle)  # todo verify puzzle is accessible
 
-        # Set up log
-        logs = []
-        log = {'idx': idx,
-               'state_act': [],
-               'action_act': [],
-               'agent_info_act': [],
-               'state_step': [],
-               'obs_step': [],
-               'reward_step': [],
-               'done_step': [],
-               'env_info_step': [],
-               'state_update': []}
+
+
+        request_options = RequestOptions(max_completion_tokens=200,
+                                         temperature=1.0,
+                                         top_p=1.0,
+                                         logprobs=False)
 
         done = False
         i = 0
         while not done:
             i += 1
+            #todo this should return the cache_value dict if it should be stored across puzzles...
             state, action, agent_info = await self.agent_act.act(state=state,
-                                                                 n_generate_sample=self.n_generate_sample,
                                                                  model=self.model,
+                                                                 request_options=request_options,
                                                                  request_params=self.model_params,
                                                                  namespace=namespace,
-                                                                 request_id=f"idx{idx}-{hash(state)}-agent{i}")
-            log['state_act'].append(state)
-            log['action_act'].append(action)
-            log['agent_info_act'].append(agent_info)
-            state, obs, reward, done, env_info = self.agent_eval.act(config=self.config, action=action,
-                                                                     state=state, environment=self.environment)
 
-            log['state_step'].append(state)
-            log['obs_step'].append(obs)
-            log['reward_step'].append(reward)
-            log['done_step'].append(done)
-            log['env_info_step'].append(env_info)
+                                                                 cache_value=self.value_cache,
+                                                                 request_id=f"idx{idx}-{hash(state)}-agent{i}")
+            # log['state_act'].append(state)
+            # log['action_act'].append(action)
+            # log['agent_info_act'].append(agent_info)
+            state, obs, reward, done, env_info = self.agent_eval.act(state=state,
+                                                                     model=self.model,
+                                                                     feedback_print=self.feedback_print,
+                                                                     action=action,
+                                                                     )
+
+            # log['state_step'].append(state)
+            # log['obs_step'].append(obs)
+            # log['reward_step'].append(reward)
+            # log['done_step'].append(done)
+            # log['env_info_step'].append(env_info)
             # state = self.update_rafa(state=state, done=done)
             if done:
                 state = replace(state, reflects=[], value_reflects=[])
                 i = 0
 
-            log['state_update'].append(state)
+            # log['state_update'].append(state)
             print(obs)
             print(reward, done, env_info)
 
-            logs = logs + [log]
+            # logs = logs + [log]
         # return logs
 
         correct = 0

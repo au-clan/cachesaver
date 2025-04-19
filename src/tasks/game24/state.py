@@ -52,22 +52,33 @@ class StateGame24(State):
         return hash(str(self.serialize()))
 
 @dataclass(frozen=True)
-class GameState_rafa(StateGame24):
-    index: Optional[int] = None
-
-    history: Optional[list[str]] = field(default_factory=list)
-    feedbacks: Optional[list[str]] = field(default_factory=list)
+class GameState_rafa():
+    # index: Optional[int] = None
+    #
+    # history: Optional[list[str]] = field(default_factory=list)
+    # feedbacks: Optional[list[str]] = field(default_factory=list)
     cur_step: Optional[int] = 0
 
     #these two should maybe be shared across runs?
+    # reflects: Optional[list[str]] = field(default_factory=list)
+    # value_reflects: Optional[list[str]] = field(default_factory=list)
+
+    # #these two below have they formatted weird in rafa // also for the reflect
+    # feedback: Optional[list[str]] = field(default_factory=list)
+    #
+    # action: Optional[str] = ""
+    #
+    # feedback_string: Optional[list[str]] = field(default_factory=list)
+    # answer_string: Optional[list[str]] = field(default_factory=list)
+    puzzle: Optional[str] = None
+    ##used attributes
+    obs_feedback:Optional[str]=""
+    obs_answer:Optional[str]=""
+
     reflects: Optional[list[str]] = field(default_factory=list)
     value_reflects: Optional[list[str]] = field(default_factory=list)
 
-    #these two below have they formatted weird in rafa // also for the reflect
-    feedback: Optional[list[str]] = field(default_factory=list)
+    obs_history: Optional[list[dict[str, str]]] = field(default_factory=list)
+    env_history: Optional[list[str]] = field(default_factory=list)
 
-    action: Optional[str] = ""
-
-    feedback_string: Optional[list[str]] = field(default_factory=list)
-    answer_string: Optional[list[str]] = field(default_factory=list)
-
+    history: Optional[list[str]] = field(default_factory=list)

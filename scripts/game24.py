@@ -10,6 +10,7 @@ from openai import AsyncOpenAI
 from together import AsyncTogether
 
 from client_wrapper.groq_wrapper import GroqModel
+from src.algorithm_options.rafa import RAFAOptions
 from src.algorithms.rafa_tot import AgentDictRAFA_tot, AlgorithmRAFA_tot
 
 logger = logging.getLogger(__name__)
@@ -22,7 +23,8 @@ from src.utils import tokens2cost
 from src.algorithms import *
 from src.models import OnlineLLM, API
 from src.typedefs import DecodingParameters
-from src.tasks.game24 import EnvironmentGame24, BenchmarkGame24, AgentBfsGame24, AgentEvaluateGame24, AgentActGame24
+from src.tasks.game24 import EnvironmentGame24, BenchmarkGame24, AgentBfsGame24, AgentEvaluateGame24, AgentActGame24, \
+    AgentRafaGame24_eval, AgentRafaGame24_act
 
 cache = Cache(f"caches/game24")
 
@@ -70,7 +72,7 @@ async def run(args):
     )
 
     # Config
-    config = OmegaConf.load(args.conf_path)
+    config = OmegaConf.load(r"C:\Users\Oskar\PycharmProjects\AUCLAN\cachesaver\scripts\game24.yaml")
 
     # Setup the method
     ## We can create a method factory for this
@@ -111,23 +113,26 @@ async def run(args):
         )
     elif args.method == "rafa":
         agents = AgentDictRAFA_tot(
-            step=AgentBfsGame24,
-            evaluate=AgentEvaluateGame24,
-            step_params=params,
-            eval_params=params,
+            agent_act=AgentRafaGame24_act(),
+            agent_eval=AgentRafaGame24_eval(),
+            model_params=params,
         )
         method = AlgorithmRAFA_tot(
-            model=api,
+            model=api,#todo lint complain about type... should be fixed
             agents=agents,
-            env=EnvironmentGame24,
-            num_selections=config.tot.num_selections,
-            num_steps=config.tot.num_steps,
-            num_evaluations=config.tot.num_evaluations
+            env=EnvironmentGame24(),
+            rafa_options=RAFAOptions(n_propose_sample=1,
+                                     n_generate_sample=1,
+                                     n_evaluate_sample=1,
+                                     max_step=1,
+                                     n_select_sample=1)
+
         )
     else:
         raise NotImplementedError("Method not implemented yet.")
 
-    benchmark = BenchmarkGame24(path=args.dataset_path, split=args.split)
+    benchmark = BenchmarkGame24(path=r"C:\Users\Oskar\PycharmProjects\AUCLAN\cachesaver\datasets\dataset_game24.csv.gz",
+                                split=args.split)
     results = await method.benchmark(
         benchmark=benchmark,
         share_ns=args.share_ns,
@@ -156,8 +161,8 @@ async def run(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Solve Game 24 using LLMs.")
-    parser.add_argument("--provider", type=str, help="LLM Provider", choices=["openai", "together", "local"],
-                        default="openai")
+    parser.add_argument("--provider", type=str, help="LLM Provider", choices=["openai", "together", "local", "groq"],
+                        default="groq")
     parser.add_argument("--model", type=str, help="LLM Model", default="gpt-4o-mini")
     parser.add_argument("--batch_size", type=int, help="CacheSaver's batch size", default=300)
     parser.add_argument("--timeout", type=float, help="CacheSaver's timeout", default=0.05)
@@ -170,10 +175,14 @@ if __name__ == "__main__":
     parser.add_argument("--split", type=str, help="Split of the dataset",
                         choices=["mini", "train", "validation", "test"], default="mini")
     parser.add_argument("--share_ns", action="store_true", help="Share namespace between puzzles")
-    parser.add_argument("--method", type=str, help="Method to use", choices=["foa", "tot"], default="foa")
+    parser.add_argument("--method", type=str, help="Method to use", choices=["foa", "tot", "rafa"], default="rafa")
     parser.add_argument("--conf_path", type=str, help="Path to corresponding config")
     parser.add_argument("--value_cache", action="store_true", help="Use value cache")
     args = parser.parse_args()
+
+    # Create the directory if it doesn't exist
+    log_dir = "logs/game24"
+    os.makedirs(log_dir, exist_ok=True)
 
     logging.basicConfig(level=logging.INFO, filename=f"logs/game24/{args.method}.log", filemode="w")
 
