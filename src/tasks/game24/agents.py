@@ -32,19 +32,21 @@ class AgentActGame24(Agent):
 class AgentAggregateGame24(Agent):
 
     @staticmethod
-    async def act(model: Model, state: StateGame24, actions: List[str], k: int, n: int, namespace: str, request_id: str, params: DecodingParameters) -> List[str]:
+    async def act(model: Model, states: List[StateGame24], k: int, n: int, namespace: str, request_id: str, params: DecodingParameters) -> List[str]:
         """
         Returns the aggregated actions for the Game of 24 task.
         """
-        if "left" not in state.steps[-1]:
-            pass
-
+        if "left" not in states[0].steps[-1]:
+            return [state.steps[-1] for state in states]
+        
+        print(f"Aggregating {len(states)} states")
         # Format the prompt
         proposals = ''
-        for idx, action in enumerate(actions):
-            proposals += f'({idx + 1}) ' + action + '\n'
+        for idx, state in enumerate(states):
+            print(state.steps[-1])
+            proposals += f'({idx + 1}) ' + state.steps[-1] + '\n'
 
-        prompt = prompts.aggregate.format(state=state.current_state, proposal=proposals, n_select_sample=k)
+        prompt = prompts.aggregate.format(state=states[0].current_state, proposal=proposals, n_select_sample=k)
 
         responses = await model.request(
             prompt=prompt,
@@ -58,8 +60,7 @@ class AgentAggregateGame24(Agent):
         pattern = r"\(\d+\)\s(\d+ [+\-*/] \d+ = \d+ \(left: [^)]+\))"
         matchs = re.findall(pattern, responses[0])
 
-        if matchs:
-            proposal = [match.strip() for match in matchs]
+        proposal = [match.strip() for match in matchs]
         return proposal
 
 
@@ -71,7 +72,7 @@ class AgentBfsGame24(Agent):
         Returns a list of actions for the Game of 24 task.
         """
         # Format the prompt
-        if state.current_state == "24":
+        if len(state.current_state.strip().split(' ')) == "24":
             prompt = prompts.cot.format(input=state.puzzle) + "\nSteps:\n" + '\n'.join(state.steps) + "\nAnswer: "
         else:
             current_numbers = get_current_numbers(state)
