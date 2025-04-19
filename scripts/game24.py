@@ -33,7 +33,7 @@ async def run(args):
         client = AsyncTogether()
     elif args.provider == "groq":
         # client = AsyncKeyHandler(secret.GROQ_API_KEYS, AsyncGroq)
-        client = AsyncGroq()
+        client = AsyncGroq(api_key=secret.GROQ_API_KEYS[1])
     else:
         raise ValueError(f"Invalid provider: {args.provider}. Choose 'openai', 'together' or 'groq'.")
     

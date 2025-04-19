@@ -57,31 +57,29 @@ class AlgorithmGOT(Algorithm):
             ]
             actions = await asyncio.gather(*action_coroutines)
 
-            state_proposals = []
-            for state, action in zip(states, actions):
-                for action in action:
-                    state_proposals.append(self.env.step(state, action))
-
             # Aggregate actions
-            aggregate_coroutines = [self.aggregate_agent.act(
+            aggregate_coroutines = [
+                self.aggregate_agent.act(
                     model=self.model,
-                    states=state_proposals,
+                    state=state,
+                    actions=action,
                     k=self.num_selections,
                     n = 1,
                     namespace=namespace,
                     request_id=f"idx{idx}-aggregate{step}-{hash(state)}",
                     params=self.aggregate_params,
-                )]
+                )
+                for state, action in zip(states, actions)
+            ]
 
             actions = await asyncio.gather(*aggregate_coroutines)
 
             # Execute actions on environment
-            state_proposals = []
+            proposed_states = []
             for state, actions in zip(states, actions):
                 for action in actions:
-                    state_proposals.append(self.env.step(state, action))
-
-            print(state_proposals)
+                    proposed_states.append(self.env.step(state, action))
+    
             # Evaluate all proposals
             value_coroutines = [
                 self.eval_agent.act(
@@ -93,12 +91,12 @@ class AlgorithmGOT(Algorithm):
                     params=self.eval_params,
                     cache=value_cache
                 )
-                for state in state_proposals
+                for state in proposed_states
             ]
             values = await asyncio.gather(*value_coroutines)
-            print(values)
+
             # Choose the best states based on their value
-            state_value_pairs = list(zip(state_proposals, values))
+            state_value_pairs = list(zip(proposed_states, values))
             sorted_pairs = sorted(state_value_pairs, key=lambda x: x[1], reverse=True)
             states, values = map(list, zip(*sorted_pairs[:self.num_best]))
         
