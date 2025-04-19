@@ -5,6 +5,8 @@ from cachesaver.typedefs import Batch, Response, SingleRequestModel, BatchReques
 from cachesaver.typedefs import Request as CacheSaverRequest
 from torch.utils.data import Dataset
 
+from src.algorithm_options.rafa import RafaRequest
+
 MAX_SEED = 10000
 
 
@@ -19,15 +21,6 @@ class Request(CacheSaverRequest):  # Clean this up
     messages: Optional[list[str]] = None
 
 
-@dataclass(frozen=True)
-class RequestOptions:  # Clean this up
-    # model: str
-    max_completion_tokens: Optional[int] = None
-    temperature: Optional[float] = 1.0
-    top_p: Optional[float] = 1.0
-    # stop: Optional[str] = None
-    logprobs: Optional[bool] = False
-    # messages: Optional[list[str]] = None
 
 
 
@@ -44,7 +37,7 @@ class Model(SingleRequestModel, BatchRequestModel):
         pass
 
     @abstractmethod
-    async def request(self, request: Request) -> Response:
+    async def request(self, request: RafaRequest) -> Response:
         pass
 
     @abstractmethod
@@ -132,17 +125,3 @@ class Algorithm(ABC):
         pass
 
 
-class ActKwargs_rafa(TypedDict, total=False):  # total=False makes keys optional
-    n_generate_sample: int
-    request_params: Request
-    request_id: str
-    namespace: str
-    n_propose_sample: str
-    n_select_sample: str
-    to_print: bool
-    cache_value: str
-
-
-class EvalKwargs_rafa(TypedDict, total=False):  # total=False makes keys optional
-    feedback_print: bool
-    action: str

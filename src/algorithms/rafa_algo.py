@@ -2,15 +2,13 @@
 from dataclasses import replace
 from typing import TypedDict
 
-from ..algorithm_options.rafa import RAFAOptions
-from ..typedefs import Algorithm, Model, Agent, Environment, Benchmark, DecodingParameters, State, \
-    RequestOptions
-
+from ..algorithm_options.rafa import RAFAOptions, RequestOptions
+from ..typedefs import Algorithm, Model, Agent, Environment, Benchmark, DecodingParameters, State
 
 class AgentDictRAFA_tot(TypedDict):
     agent_act: Agent
     agent_eval: Agent
-    model_params: DecodingParameters
+    # model_params: DecodingParameters
 
 
 class AlgorithmRAFA_tot(Algorithm):
@@ -19,19 +17,20 @@ class AlgorithmRAFA_tot(Algorithm):
                  model: Model,
                  agents: AgentDictRAFA_tot,
                  env: Environment,
-                 rafa_options:RAFAOptions):
+                 rafa_options:RAFAOptions,
+                 value_cache:dict=None):
 
         super().__init__(model, agents, env)
 
         self.agent_act = agents['agent_act']
         self.agent_eval = agents['agent_eval']
-        self.model_params = agents['model_params']
+        # self.model_params = agents['model_params']
 
         self.rafa_options = rafa_options
 
-        self.feedback_print = False
+
         # This value_cache should be used as a caching mechanism
-        self.value_cache = {}  # todo utilize
+        self.value_cache = value_cache  # todo utilize if it is None it means we dont want to cache values
 
     async def solve(self, idx: int, state: State, namespace: str, value_cache: dict = None):
         # Initial state
@@ -42,24 +41,22 @@ class AlgorithmRAFA_tot(Algorithm):
         request_options = RequestOptions(max_completion_tokens=200,
                                          temperature=1.0,
                                          top_p=1.0,
-                                         logprobs=False)
+                                         logprobs=False,
+                                         request_id=f"idx{idx}-step{0}-{hash(state)}-agent{0}",
+                                         namespace=namespace)
 
         done = False
         i = 0
         while not done:
+            request_options.request_id=f"idx{idx}-step{i}-{hash(state)}-agent{0}"
             i += 1
             #todo this should return the cache_value dict if it should be stored across puzzles...
             state, action, agent_info = await self.agent_act.act(state=state,
                                                                  model=self.model,
                                                                  request_options=request_options,
-                                                                 request_params=self.model_params,
-                                                                 namespace=namespace,
-
                                                                  cache_value=self.value_cache,
-                                                                 request_id=f"idx{idx}-{hash(state)}-agent{i}")
-            # log['state_act'].append(state)
-            # log['action_act'].append(action)
-            # log['agent_info_act'].append(agent_info)
+                                                                 )
+
             state, obs, reward, done, env_info = self.agent_eval.act(state=state,
                                                                      model=self.model,
                                                                      feedback_print=self.feedback_print,
@@ -89,7 +86,7 @@ class AlgorithmRAFA_tot(Algorithm):
         #     # if is_correct:
         #     #     correct += 1
         # # verifications = [self.environment.verify(state) for state in states]
-        return logs, correct
+        return  correct
 
     # async def solve(self, idx:int, state: State, namespace: str, value_cache: dict = None):
     #     self.run()

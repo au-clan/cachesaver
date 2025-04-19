@@ -11,7 +11,7 @@ from together import AsyncTogether
 
 from client_wrapper.groq_wrapper import GroqModel
 from src.algorithm_options.rafa import RAFAOptions
-from src.algorithms.rafa_tot import AgentDictRAFA_tot, AlgorithmRAFA_tot
+from src.algorithms.rafa_algo import AgentDictRAFA_tot, AlgorithmRAFA_tot
 
 logger = logging.getLogger(__name__)
 
@@ -115,7 +115,7 @@ async def run(args):
         agents = AgentDictRAFA_tot(
             agent_act=AgentRafaGame24_act(),
             agent_eval=AgentRafaGame24_eval(),
-            model_params=params,
+            # model_params=params,
         )
         method = AlgorithmRAFA_tot(
             model=api,#todo lint complain about type... should be fixed
