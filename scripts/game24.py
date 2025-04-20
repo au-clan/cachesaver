@@ -26,7 +26,6 @@ from src.models import OnlineLLM, API
 from src.typedefs import DecodingParameters
 from src.tasks.game24 import EnvironmentGame24, BenchmarkGame24, AgentBfsGame24, AgentEvaluateGame24, AgentActGame24
 
-
 cache = Cache(f"caches/game24")
 
 
@@ -118,10 +117,10 @@ async def run(args):
         agents = AgentDictRAFA_tot(
             agent_act=AgentRafaGame24_act(),
             agent_eval=AgentRafaGame24_eval(),
-            # model_params=params,
+
         )
         method = AlgorithmRAFA_tot(
-            model=api,#todo lint complain about type... should be fixed
+            model=api,  # todo lint complain about type... should be fixed
             agents=agents,
             env=EnvironmentGame24(),
             rafa_options=RAFAOptions(n_propose_sample=1,

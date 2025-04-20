@@ -1,6 +1,7 @@
-from typing import List, Tuple, Any, NamedTuple, Optional, TypedDict
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from typing import List, Tuple, Any, NamedTuple, Optional
+
 from cachesaver.typedefs import Batch, Response, SingleRequestModel, BatchRequestModel
 from cachesaver.typedefs import Request as CacheSaverRequest
 from torch.utils.data import Dataset

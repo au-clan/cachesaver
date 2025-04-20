@@ -9,7 +9,6 @@ from ..typedefs import Algorithm, Model, Agent, Environment, Benchmark, State
 class AgentDictRAFA_tot(TypedDict):
     agent_act: Agent
     agent_eval: Agent
-    # model_params: DecodingParameters
 
 
 class AlgorithmRAFA_tot(Algorithm):
@@ -25,7 +24,7 @@ class AlgorithmRAFA_tot(Algorithm):
 
         self.agent_act = agents['agent_act']
         self.agent_eval = agents['agent_eval']
-        # self.model_params = agents['model_params']
+
 
         self.rafa_options = rafa_options
 
@@ -84,10 +83,9 @@ class AlgorithmRAFA_tot(Algorithm):
         #     # if is_correct:
         #     #     correct += 1
         # # verifications = [self.environment.verify(state) for state in states]
-        return correct
+        return correct ##todo we should return the correct format and not just 0 aorn
 
-    # async def solve(self, idx:int, state: State, namespace: str, value_cache: dict = None):
-    #     self.run()
+
 
     async def benchmark(self, benchmark: Benchmark, share_ns: bool = False, cache: bool = True):
         cache = {} if cache else None

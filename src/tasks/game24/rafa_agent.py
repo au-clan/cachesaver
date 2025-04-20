@@ -2,13 +2,13 @@
 import itertools
 import re
 from dataclasses import replace
-from typing import Any, cast
+from typing import Any
 
 import sympy
 
 from . import prompts as prompts
-from .state import GameState_rafa, StateGame24
-from ...algorithm_options.rafa import RequestOptions, RafaRequest, RAFAOptions
+from .state import StateGame24
+from ...algorithm_options.rafa import RequestOptions, RafaRequest, RAFAOptions, GameState_rafa
 from ...typedefs import Agent, Model, DecodingParameters
 
 

@@ -1,7 +1,8 @@
 import random
 from typing import List
-import numpy as np 
-from collections import namedtuple
+
+import numpy as np
+
 
 def tokens2cost(tokens: dict, model_name: str) -> dict:
     catalog = {

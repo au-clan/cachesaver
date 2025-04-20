@@ -2,14 +2,13 @@
 from typing import TypedDict, Literal, List, Optional
 
 
-
 @dataclass(frozen=True)
 class RAFAOptions:
-    max_step:int
+    max_step: int
     n_generate_sample: int
-    n_evaluate_sample:int
-    n_select_sample:int
-    n_propose_sample:int
+    n_evaluate_sample: int
+    n_select_sample: int
+    n_propose_sample: int
 
 
 ##For the requests
@@ -21,8 +20,8 @@ class Message(TypedDict):
 @dataclass
 class RequestOptions:
     ## These two are for the request / namespace option in cacheSaver
-    namespace:str
-    request_id:str
+    namespace: str
+    request_id: str
     ##Standard settings below
     max_completion_tokens: Optional[int] = None
     temperature: Optional[float] = 1.0
@@ -30,8 +29,6 @@ class RequestOptions:
     seed: Optional[int] = None
     logprobs: Optional[bool] = False
     top_logprobs: Optional[float] = None
-
-
 
 
 @dataclass
@@ -60,7 +57,24 @@ class ActKwargs_rafa(TypedDict, total=False):  # total=False makes keys optional
     request_options: RequestOptions
 
 
-
 class EvalKwargs_rafa(TypedDict, total=False):  # total=False makes keys optional
     feedback_print: bool
     action: str
+
+
+@dataclass(frozen=True)
+class GameState_rafa:
+    cur_step: Optional[int] = 0
+
+    puzzle: Optional[str] = None
+    ##used attributes
+    obs_feedback: Optional[str] = ""
+    obs_answer: Optional[str] = ""
+
+    reflects: Optional[list[str]] = field(default_factory=list)
+    value_reflects: Optional[list[str]] = field(default_factory=list)
+
+    obs_history: Optional[list[dict[str, str]]] = field(default_factory=list)
+    env_history: Optional[list[str]] = field(default_factory=list)
+
+    history: Optional[list[str]] = field(default_factory=list)
