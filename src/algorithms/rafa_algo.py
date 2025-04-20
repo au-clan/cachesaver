@@ -32,6 +32,7 @@ class AlgorithmRAFA_tot(Algorithm):
         self.agent_plan = agents['agent_plan']
         self.agent_plan_evaluate = agents['agent_plan_evaluate']
         self.agent_generate_feedback = agents['agent_generate_feedback']
+        self.agent_while_loop_evaluate = agents['agent_while_loop_evaluate']
 
         self.rafa_options = rafa_options
 
@@ -83,6 +84,7 @@ class AlgorithmRAFA_tot(Algorithm):
 
             # plan and eval plan
             ys = ["\n".join(state.env_history) + "\n"] if len(state.env_history) else [""]  # current output candidates
+            infos = []
             for step in range(4 - len(state.env_history)):
                 # get proposals (plan suggestions)
                 coroutines = [
@@ -99,18 +101,50 @@ class AlgorithmRAFA_tot(Algorithm):
                 new_ys = list(itertools.chain(*new_ys))
                 ids = list(range(len(new_ys)))
                 # Evaluate proposals(evaluate plan suggestions)
+                # todo for sure this isnot correct arguments but fix later
+                values = await self.agent_plan_evaluate.act(puzzle=state.puzzle,
+                                                            new_ys=new_ys,
+                                                            rafa_options=self.rafa_options,
+                                                            request_options=request_options,
+                                                            model=self.model, )
+                select_ids = sorted(ids, key=lambda x: values[x], reverse=True)[:self.rafa_options.n_select_sample]
+                select_new_ys = [new_ys[select_id] for select_id in select_ids]
+                infos.append(
+                    {'step': step, 'x': state.puzzle, 'ys': ys, 'new_ys': new_ys, 'values': values,
+                     'select_new_ys': select_new_ys})
+                ys = select_new_ys
 
-                # 2: reflect
+            ys_list = [y.split('\n')[len(state.history):] for y in ys]
+            res_ys = ["\n".join(ys) for ys in ys_list][0]
+            # return state, res_ys, {'steps': infos}#todo this is not correct format
+            state = state
+            res_ys = res_ys
+            env_info = {'steps': infos}
 
-            puzzle = state.puzzle
-            state = GameState_rafa()
-            state = replace(state, puzzle=puzzle)
-            if len(state.obs_feedback) >= 1:
-                state = await self.agent_reflect.act(state=state,
-                                                     model=self.model,
-                                                     request_options=request_options,
-                                                     cache_value=value_cache,
-                                                     rafa_options=self.rafa_options)
+            ##Generating feedback for the progress so far(last step in the old structure)
+            #todo do we want it to be agent if it doesnt prompt? it is somewhat task specific
+            state, obs, reward, done, env_info = self.agent_eval.act(state=state,
+                                                                     model=self.model,
+                                                                     action=action,
+                                                                     )
+
+
+
+
+
+
+            ##----------------------------------------------------------
+            # 2: reflect
+
+            # puzzle = state.puzzle
+            # state = GameState_rafa()
+            # state = replace(state, puzzle=puzzle)
+            # if len(state.obs_feedback) >= 1:
+            #     state = await self.agent_reflect.act(state=state,
+            #                                          model=self.model,
+            #                                          request_options=request_options,
+            #                                          cache_value=value_cache,
+            #                                          rafa_options=self.rafa_options)
 
             ###]]]]
 
