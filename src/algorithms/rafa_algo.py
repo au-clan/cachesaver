@@ -127,9 +127,6 @@ class AlgorithmRAFA_tot(Algorithm):
                                                                      action=res_ys,
                                                                      )
 
-            ##----------------------------------------------------------
-            # 2: reflect
-
             if done:
                 state = replace(state, reflects=[], value_reflects=[])
                 i = 0
