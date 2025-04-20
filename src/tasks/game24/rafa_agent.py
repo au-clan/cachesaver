@@ -311,7 +311,7 @@ class AgentRafaGame24_act(Agent):
     @staticmethod
     async def get_value(model: Model, history, state, y, cache_value,
                         value_cache,
-                        puzzle, request_options: RequestOptions,
+                        request_options: RequestOptions,
                         rafa_options: RAFAOptions):
 
         value_prompt = AgentRafaGame24_act.value_prompt_wrap(state.puzzle, y)
@@ -327,17 +327,9 @@ class AgentRafaGame24_act(Agent):
             if 'feedback' in h:
                 history_messages.add_user_message(h["feedback"])
         history_messages.add_user_message(value_prompt)
-        history_messages.request_id = f"step-{str(puzzle)}-{1}-{y}-{hash(1)}"  # todo this shpould be done properly at some point
+        history_messages.request_id = f"step-{str(state.puzzle)}-{1}-{y}-{hash(1)}"  # todo this shpould be done properly at some point
         value_outputs = await model.request(history_messages)
 
-        # ]
-        # value_outputs = await AgentRafaGame24_act.gpt_with_history(prompt=value_prompt,
-        #                                                            history=history,
-        #                                                            model=model,
-        #                                                            request_params=request_params,
-        #                                                            n=n_evaluate_sample,
-        #                                                            namespace=namespace,
-        #                                                            request_id=request_id)  # todo could simply use the state.puzzle_index as the namespace as that is what it is...
 
         value = AgentRafaGame24_act.value_outputs_unwrap(state.puzzle, y, value_outputs)  # todo fix types
         if cache_value:
@@ -361,13 +353,12 @@ class AgentRafaGame24_act(Agent):
                 value = await AgentRafaGame24_act.get_value(state=state,
                                                             y=y,
                                                             history=history,
-                                                            request_params=request_params,
+                                                            request_options=request_options,
+                                                            rafa_options=rafa_options,
                                                             model=model,
                                                             cache_value=cache_value,
-                                                            value_cache=value_cache,
-                                                            namespace=namespace,
-                                                            request_id=request_id,
-                                                            n_evaluate_sample=n_evaluate_sample)
+                                                            value_cache=value_cache
+                                                            )
                 if cache_value:  # todo check if null -> if not none then add to cache as pass along
                     local_value_cache[y] = value
             values.append(value)
