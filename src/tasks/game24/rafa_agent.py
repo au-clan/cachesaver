@@ -239,74 +239,8 @@ class AgentRafaGame24_act(Agent):
         total_feedback = " ".join(feedbacks) if feedback_print else None
         return state, total_feedback, rewards
 
-    @staticmethod
-    async def gpt_with_history(model: Model, prompt, history, n, request_options: RequestOptions) -> Response:
 
-        history_messages = RafaRequest.from_request_options(request_options=request_options,
-                                                            n=n)
-        for h in history:
-            if 'answer' in h:
-                history_messages.add_assistant_message(h["answer"])
-            if 'feedback' in h:
-                history_messages.add_user_message(h["feedback"])
-        history_messages.add_user_message(prompt)
-        # todo add some unique request id for better tracking ...not urgent for my purpose
-        response = await model.request(history_messages)
-        return response
-        ### old below
 
-    # messages = []
-    # for h in history:
-    #     if 'answer' in h:
-    #         messages.extend([{"role": "assistant", "content": h["answer"]}])
-    #     if 'feedback' in h:
-    #         messages.extend([{"role": "user", "content": h["feedback"]}])
-    # messages.append({"role": "user", "content": prompt})
-    #
-    # response = await AgentRafaGame24_act.chatgpt(messages=messages, prompt=prompt, n=n, namespace=namespace,
-    #                                              request_id=request_id, request_params=request_params, model=model)
-    # return response
-
-    # @staticmethod
-    # async def gpt(prompt, n, namespace, request_id, model: Model, request_params: Request, ) -> Response:
-    #     messages = [{"role": "user", "content": prompt}]
-    #     return await AgentRafaGame24_act.chatgpt(messages=messages, prompt=prompt, n=n, namespace=namespace,
-    #                                              request_id=request_id, model=model, request_params=request_params)
-
-    @staticmethod
-    async def chatgpt(model: Model, request: RafaRequest) -> Response:
-        response = await model.request(request)
-        # response = await model.request(Request(  # todo smth smart with the prompot/m,essage no neeed for double
-        #     prompt=prompt,
-        #     messages=messages,
-        #     n=n,
-        #     request_id=request_id,
-        #     namespace=namespace,
-        #     max_completion_tokens=request_params.max_completion_tokens,
-        #     temperature=request_params.temperature,
-        #     top_p=request_params.top_p,
-        #     stop=request_params.stop,
-        #     logprobs=request_params.logprobs
-        # )
-        # )
-        return response
-
-    # @staticmethod
-    # async def chatgpt(model: Model, request_params: Request, messages, prompt, n, namespace, request_id) -> Response:
-    #     response = await model.request(Request(  # todo smth smart with the prompot/m,essage no neeed for double
-    #         prompt=prompt,
-    #         messages=messages,
-    #         n=n,
-    #         request_id=request_id,
-    #         namespace=namespace,
-    #         max_completion_tokens=request_params.max_completion_tokens,
-    #         temperature=request_params.temperature,
-    #         top_p=request_params.top_p,
-    #         stop=request_params.stop,
-    #         logprobs=request_params.logprobs
-    #     )
-    #     )
-    #     return response
 
     @staticmethod
     async def get_value(model: Model, history, state, y, cache_value,
