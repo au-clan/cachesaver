@@ -8,7 +8,10 @@ from ..typedefs import Algorithm, Model, Agent, Environment, Benchmark, State
 
 
 class AgentDictRAFA_tot(TypedDict):
-    agent_act: Agent
+    agent_reflect: Agent
+    agent_reflect_value: Agent
+    agent_plan: Agent
+    agent_plan_evaluate: Agent
     agent_eval: Agent
 
 
@@ -23,18 +26,22 @@ class AlgorithmRAFA_tot(Algorithm):
 
         super().__init__(model, agents, env)
 
-        self.agent_act = agents['agent_act']
-        self.agent_eval = agents['agent_eval']
-
-        #
-        self.agent_reflect = agents['agent_reflect']
-        self.agent_reflect_value = agents['agent_reflect_value']
-        self.agent_plan = agents['agent_plan']
-        self.agent_plan_evaluate = agents['agent_plan_evaluate']
-        self.agent_generate_feedback = agents['agent_generate_feedback']
-        self.agent_while_loop_evaluate = agents['agent_while_loop_evaluate']
-
         self.rafa_options = rafa_options
+
+        # the agent to reflect: agent_reflect
+        self.agent_reflect = agents['agent_reflect']
+
+        # the agent to evaluate each reflect:agent_reflect_value
+        self.agent_reflect_value = agents['agent_reflect_value']
+
+        # the agent to plan:agent_plan
+        self.agent_plan = agents['agent_plan']
+
+        # the agent to evaluate the plan: agent_plan_evaluate
+        self.agent_plan_evaluate = agents['agent_plan_evaluate']
+
+        # the agent that evaluate after each loop in the while loop: agent_eval
+        self.agent_eval = agents['agent_eval']
 
         # This value_cache should be used as a caching mechanism
         self.value_cache = value_cache  # todo utilize if it is None it means we dont want to cache values
@@ -56,13 +63,14 @@ class AlgorithmRAFA_tot(Algorithm):
             request_options.request_id = f"idx{idx}-step{i}-{hash(state)}-agent{0}"
             i += 1
             # todo this should return the cache_value dict if it should be stored across puzzles...
-            state, action, agent_info = await self.agent_act.act(state=state,
-                                                                 model=self.model,
-                                                                 request_options=request_options,
-                                                                 value_cache=self.value_cache,
-                                                                 rafa_options=self.rafa_options
-                                                                 )
+            # state, action, agent_info = await self.agent_act.act(state=state,
+            #                                                      model=self.model,
+            #                                                      request_options=request_options,
+            #                                                      value_cache=self.value_cache,
+            #                                                      rafa_options=self.rafa_options
+            #                                                      )
             ##inside these brackets is the new agent structure[[
+
             puzzle = state.puzzle
             state = GameState_rafa()
             state = replace(state, puzzle=puzzle)
@@ -106,7 +114,7 @@ class AlgorithmRAFA_tot(Algorithm):
                                                             new_ys=new_ys,
                                                             rafa_options=self.rafa_options,
                                                             request_options=request_options,
-                                                            model=self.model )
+                                                            model=self.model)
                 select_ids = sorted(ids, key=lambda x: values[x], reverse=True)[:self.rafa_options.n_select_sample]
                 select_new_ys = [new_ys[select_id] for select_id in select_ids]
                 infos.append(
@@ -122,36 +130,14 @@ class AlgorithmRAFA_tot(Algorithm):
             env_info = {'steps': infos}
 
             ##Generating feedback for the progress so far(last step in the old structure)
-            #todo do we want it to be agent if it doesnt prompt? it is somewhat task specific
+            # todo do we want it to be agent if it doesnt prompt? it is somewhat task specific
             state, obs, reward, done, env_info = self.agent_eval.act(state=state,
                                                                      model=self.model,
-                                                                     action=action,
+                                                                     action=res_ys,
                                                                      )
-
-
-
-
-
 
             ##----------------------------------------------------------
             # 2: reflect
-
-            # puzzle = state.puzzle
-            # state = GameState_rafa()
-            # state = replace(state, puzzle=puzzle)
-            # if len(state.obs_feedback) >= 1:
-            #     state = await self.agent_reflect.act(state=state,
-            #                                          model=self.model,
-            #                                          request_options=request_options,
-            #                                          cache_value=value_cache,
-            #                                          rafa_options=self.rafa_options)
-
-            ###]]]]
-
-            # state, obs, reward, done, env_info = self.agent_eval.act(state=state,
-            #                                                          model=self.model,
-            #                                                          action=action,
-            #                                                          )
 
             if done:
                 state = replace(state, reflects=[], value_reflects=[])
@@ -169,7 +155,7 @@ class AlgorithmRAFA_tot(Algorithm):
         #     # if is_correct:
         #     #     correct += 1
         # # verifications = [self.environment.verify(state) for state in states]
-        return state #todo refactor to old state type
+        return state  # todo refactor to old state type
         # return correct  ##todo we should return the correct format and not just 0 aorn
 
     async def benchmark(self, benchmark: Benchmark, share_ns: bool = False, cache: bool = True):
