@@ -163,13 +163,14 @@ class AlgorithmRAFA_tot(Algorithm):
             # logs = logs + [log]
         # return logs
 
-        correct = 0
+        # correct = 0
         # for i in range(len(logs)):
         #     # is_correct = self.verification_helper(logs[i]['obs_step'][-1]['answer'])
         #     # if is_correct:
         #     #     correct += 1
         # # verifications = [self.environment.verify(state) for state in states]
-        return correct  ##todo we should return the correct format and not just 0 aorn
+        return state #todo refactor to old state type
+        # return correct  ##todo we should return the correct format and not just 0 aorn
 
     async def benchmark(self, benchmark: Benchmark, share_ns: bool = False, cache: bool = True):
         cache = {} if cache else None
