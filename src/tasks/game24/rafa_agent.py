@@ -309,20 +309,35 @@ class AgentRafaGame24_act(Agent):
     #     return response
 
     @staticmethod
-    async def get_value(model: Model, history, request_params: Request, state, y, namespace, request_id, cache_value,
+    async def get_value(model: Model, history, state, y, cache_value,
                         value_cache,
-                        n_evaluate_sample: int):
+                        puzzle, request_options: RequestOptions,
+                        rafa_options: RAFAOptions):
+
         value_prompt = AgentRafaGame24_act.value_prompt_wrap(state.puzzle, y)
 
-        if cache_value and value_prompt in value_cache:
+        if cache_value and value_prompt in value_cache: #todo the caching is so poorly done in rafa.. should rly consider what to do either remove or do it right
             return AgentRafaGame24_act.value_cache[value_prompt]  # todo cache values in future
-        value_outputs = await AgentRafaGame24_act.gpt_with_history(prompt=value_prompt,
-                                                                   history=history,
-                                                                   model=model,
-                                                                   request_params=request_params,
-                                                                   n=n_evaluate_sample,
-                                                                   namespace=namespace,
-                                                                   request_id=request_id)  # todo could simply use the state.puzzle_index as the namespace as that is what it is...
+        ##in these brackets is old gpt with history :[
+        history_messages = RafaRequest.from_request_options(request_options=request_options,
+                                                            n=rafa_options.n_evaluate_sample)
+        for h in history:
+            if 'answer' in h:
+                history_messages.add_assistant_message(h["answer"])
+            if 'feedback' in h:
+                history_messages.add_user_message(h["feedback"])
+        history_messages.add_user_message(value_prompt)
+        history_messages.request_id = f"step-{str(puzzle)}-{1}-{y}-{hash(1)}"  # todo this shpould be done properly at some point
+        value_outputs = await model.request(history_messages)
+
+        # ]
+        # value_outputs = await AgentRafaGame24_act.gpt_with_history(prompt=value_prompt,
+        #                                                            history=history,
+        #                                                            model=model,
+        #                                                            request_params=request_params,
+        #                                                            n=n_evaluate_sample,
+        #                                                            namespace=namespace,
+        #                                                            request_id=request_id)  # todo could simply use the state.puzzle_index as the namespace as that is what it is...
 
         value = AgentRafaGame24_act.value_outputs_unwrap(state.puzzle, y, value_outputs)  # todo fix types
         if cache_value:
@@ -333,11 +348,13 @@ class AgentRafaGame24_act(Agent):
 
     @staticmethod
     async def get_values(state, ys, history, cache_value, request_id, namespace, model: Model,
-                         request_params: Request, value_cache, n_evaluate_sample):
+                         request_params: Request, value_cache, n_evaluate_sample, puzzle, y,
+                         request_options: RequestOptions,
+                         rafa_options: RAFAOptions):
         values = []
         local_value_cache = {}
         for y in ys:  # each partial output
-            if y in local_value_cache and cache_value:  # avoid duplicate candidates
+            if y in local_value_cache and cache_value:  # avoid duplicate candidates #todo fix the caching
                 value = local_value_cache[y]
             else:
                 # value = get_value(env, history, x, y, n_evaluate_sample, cache_value=cache_value)
@@ -351,36 +368,29 @@ class AgentRafaGame24_act(Agent):
                                                             namespace=namespace,
                                                             request_id=request_id,
                                                             n_evaluate_sample=n_evaluate_sample)
-                if cache_value:
+                if cache_value:  # todo check if null -> if not none then add to cache as pass along
                     local_value_cache[y] = value
             values.append(value)
         return values
 
     @staticmethod  # todo confirm this impl the gpt_with_history is both method and a global variable in their impl
-    async def get_proposals(model: Model, puzzle, history, y, n, request_options: RequestOptions,
-                            rafa_options: RAFAOptions, ):
+    async def get_proposals(model: Model, puzzle, history, y, request_options: RequestOptions,
+                            rafa_options: RAFAOptions):
         propose_prompt = AgentRafaGame24_act.propose_prompt_wrap(puzzle, y)
 
         ##todo this is the old gpt with history in these brackets {{
         history_messages = RafaRequest.from_request_options(request_options=request_options,
-                                                            n=n)
+                                                            n=rafa_options.n_generate_sample)  # todo maybe n just
         for h in history:
             if 'answer' in h:
                 history_messages.add_assistant_message(h["answer"])
             if 'feedback' in h:
                 history_messages.add_user_message(h["feedback"])
         history_messages.add_user_message(propose_prompt)
+        history_messages.request_id = f"step-{str(puzzle)}-{1}-{y}-{hash(1)}"
         # todo add some unique request id for better tracking ...not urgent for my purpose
         result = await model.request(history_messages)
-
-        ###}}}
-        # result = await AgentRafaGame24_act.gpt_with_history(prompt=propose_prompt,
-        #                                                     history=history,
-        #                                                     n=1,
-        #                                                     model=model,
-        #                                                     namespace=namespace,
-        #                                                     request_params=request_params,
-        #                                                     request_id=request_id)  # todo stop token
+        ##]]]
 
         proposal_list = [x.split('\n') for x in result]  # todo the stop token
         proposals = []
@@ -411,11 +421,10 @@ class AgentRafaGame24_act(Agent):
                 AgentRafaGame24_act.get_proposals(puzzle=state.puzzle,
                                                   history=obs,
                                                   y=y,
-                                                  n_propose_sample=rafa_options.n_propose_sample,
-                                                  namespace=str(state.index),
-                                                  request_id=f"step-{str(state.index)}-{step}-{y}-{hash(state)}",
+                                                  rafa_options=rafa_options,
+                                                  request_options=request_options,
                                                   model=model,
-                                                  request_params=request_parameters)
+                                                  )
                 for y in ys]
             new_ys = await asyncio.gather(*coroutines)
 
