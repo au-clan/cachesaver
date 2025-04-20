@@ -8,15 +8,15 @@ from ...typedefs import State
 @dataclass(frozen=True)
 class StateGame24(State):
     # The initial puzzle to solve
-    puzzle: Optional[str] = None
+    puzzle: str
 
     # Current state towards solving the puzzle
-    current_state: Optional[str] = None
+    current_state: str
 
     # Steps taken towards solving the puzzle
-    steps: Optional[List[str]] = field(default_factory=list)
+    steps: List[str]
     # A random number associated with the state
-    randomness: Optional[int] = None
+    randomness: int
 
 
 
