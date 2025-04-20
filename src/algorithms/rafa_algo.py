@@ -5,6 +5,7 @@ from typing import TypedDict
 from ..algorithm_options.rafa import RAFAOptions, RequestOptions
 from ..typedefs import Algorithm, Model, Agent, Environment, Benchmark, DecodingParameters, State
 
+
 class AgentDictRAFA_tot(TypedDict):
     agent_act: Agent
     agent_eval: Agent
@@ -17,8 +18,8 @@ class AlgorithmRAFA_tot(Algorithm):
                  model: Model,
                  agents: AgentDictRAFA_tot,
                  env: Environment,
-                 rafa_options:RAFAOptions,
-                 value_cache:dict=None):
+                 rafa_options: RAFAOptions,
+                 value_cache: dict = None):
 
         super().__init__(model, agents, env)
 
@@ -28,15 +29,12 @@ class AlgorithmRAFA_tot(Algorithm):
 
         self.rafa_options = rafa_options
 
-
         # This value_cache should be used as a caching mechanism
         self.value_cache = value_cache  # todo utilize if it is None it means we dont want to cache values
 
     async def solve(self, idx: int, state: State, namespace: str, value_cache: dict = None):
         # Initial state
         # initial_state = self.reset_rafa(state.puzzle)  # todo verify puzzle is accessible
-
-
 
         request_options = RequestOptions(max_completion_tokens=200,
                                          temperature=1.0,
@@ -48,9 +46,9 @@ class AlgorithmRAFA_tot(Algorithm):
         done = False
         i = 0
         while not done:
-            request_options.request_id=f"idx{idx}-step{i}-{hash(state)}-agent{0}"
+            request_options.request_id = f"idx{idx}-step{i}-{hash(state)}-agent{0}"
             i += 1
-            #todo this should return the cache_value dict if it should be stored across puzzles...
+            # todo this should return the cache_value dict if it should be stored across puzzles...
             state, action, agent_info = await self.agent_act.act(state=state,
                                                                  model=self.model,
                                                                  request_options=request_options,
@@ -60,7 +58,6 @@ class AlgorithmRAFA_tot(Algorithm):
 
             state, obs, reward, done, env_info = self.agent_eval.act(state=state,
                                                                      model=self.model,
-                                                                     feedback_print=self.feedback_print,
                                                                      action=action,
                                                                      )
 
@@ -87,7 +84,7 @@ class AlgorithmRAFA_tot(Algorithm):
         #     # if is_correct:
         #     #     correct += 1
         # # verifications = [self.environment.verify(state) for state in states]
-        return  correct
+        return correct
 
     # async def solve(self, idx:int, state: State, namespace: str, value_cache: dict = None):
     #     self.run()

@@ -5,12 +5,11 @@ from dataclasses import replace
 from typing import Any, cast
 
 import sympy
-from requests import Response
 
 from . import prompts as prompts
 from .state import GameState_rafa, StateGame24
 from ...algorithm_options.rafa import RequestOptions, RafaRequest, RAFAOptions
-from ...typedefs import Request, Agent, Model, State
+from ...typedefs import Agent, Model
 
 
 class AgentRafaGame24_act(Agent):
@@ -127,16 +126,17 @@ class AgentRafaGame24_act(Agent):
             prompt = prompts.propose_prompt.format(input=current_numbers)
         return prompt
 
-    @staticmethod
-    def validation_prompt_wrap(x: str, y: str) -> str or None:
-        last_line = y.strip().split('\n')[-1]
-        if 'left: ' not in last_line:  # last step
-            return
-        if len(y.strip().split('\n')) > 1:
-            prev_line = AgentRafaGame24_act.get_current_numbers(y.strip().split('\n')[-2])
-        else:
-            prev_line = x
-        return prompts.validation_prompt.format(input=prev_line, formula=last_line)
+    # todo this method is unused in rafa a AORN
+    # @staticmethod
+    # def validation_prompt_wrap(x: str, y: str) -> str or None:
+    #     last_line = y.strip().split('\n')[-1]
+    #     if 'left: ' not in last_line:  # last step
+    #         return
+    #     if len(y.strip().split('\n')) > 1:
+    #         prev_line = AgentRafaGame24_act.get_current_numbers(y.strip().split('\n')[-2])
+    #     else:
+    #         prev_line = x
+    #     return prompts.validation_prompt.format(input=prev_line, formula=last_line)
 
     @staticmethod
     def value_prompt_wrap(x: str, y: str) -> str:
@@ -147,12 +147,13 @@ class AgentRafaGame24_act(Agent):
         current_numbers = AgentRafaGame24_act.get_current_numbers(y)
         return prompts.value_prompt.format(input=current_numbers)
 
-    @staticmethod
-    def validation_outputs_unwrap(x: str, y: str, value_outputs: list) -> float:
-        validations = [_.split('\n')[-1] for _ in value_outputs]
-        if "invalid" in validations:
-            return 0
-        return 1
+    # #todo this method is unused in rafa a AORN
+    # @staticmethod
+    # def validation_outputs_unwrap(x: str, y: str, value_outputs: list) -> float:
+    #     validations = [_.split('\n')[-1] for _ in value_outputs]
+    #     if "invalid" in validations:
+    #         return 0
+    #     return 1
 
     @staticmethod
     def reflect_prompt_wrap(x: str, y: str, feedback: str):  # todo removed type
@@ -239,9 +240,6 @@ class AgentRafaGame24_act(Agent):
         total_feedback = " ".join(feedbacks) if feedback_print else None
         return state, total_feedback, rewards
 
-
-
-
     @staticmethod
     async def get_value(model: Model, history, state, y, cache_value,
                         value_cache,
@@ -250,7 +248,7 @@ class AgentRafaGame24_act(Agent):
 
         value_prompt = AgentRafaGame24_act.value_prompt_wrap(state.puzzle, y)
 
-        if cache_value and value_prompt in value_cache: #todo the caching is so poorly done in rafa.. should rly consider what to do either remove or do it right
+        if cache_value and value_prompt in value_cache:  # todo the caching is so poorly done in rafa.. should rly consider what to do either remove or do it right
             return AgentRafaGame24_act.value_cache[value_prompt]  # todo cache values in future
         ##in these brackets is old gpt with history :[
         history_messages = RafaRequest.from_request_options(request_options=request_options,
@@ -264,7 +262,6 @@ class AgentRafaGame24_act(Agent):
         history_messages.request_id = f"step-{str(state.puzzle)}-{1}-{y}-{hash(1)}"  # todo this shpould be done properly at some point
         value_outputs = await model.request(history_messages)
 
-
         value = AgentRafaGame24_act.value_outputs_unwrap(state.puzzle, y, value_outputs)  # todo fix types
         if cache_value:
             # environment.Prompter.value_cache[value_prompt] = value
@@ -273,8 +270,8 @@ class AgentRafaGame24_act(Agent):
         return value
 
     @staticmethod
-    async def get_values(state, ys, history, cache_value, request_id, namespace, model: Model,
-                         request_params: Request, value_cache, n_evaluate_sample, puzzle, y,
+    async def get_values(state, ys, history, cache_value, model: Model,
+                         value_cache,
                          request_options: RequestOptions,
                          rafa_options: RAFAOptions):
         values = []
@@ -326,7 +323,7 @@ class AgentRafaGame24_act(Agent):
 
     @staticmethod
     async def plan_rafa(state: GameState_rafa, model: Model, request_options: RequestOptions,
-                        rafa_options: RAFAOptions, cache_value: dict):
+                        rafa_options: RAFAOptions, cache_value: dict, value_cache: dict):
 
         history = state.env_history
         ys = ["\n".join(history) + "\n"] if len(history) else [""]  # current output candidates
@@ -359,17 +356,16 @@ class AgentRafaGame24_act(Agent):
             values = await AgentRafaGame24_act.get_values(state=state,
                                                           history=value_obs,
                                                           ys=new_ys,
-                                                          namespace=str(state.index),
-                                                          request_id=f"step-{str(state.index)}-{step}-{step}-{hash(state)}",
+                                                          rafa_options=rafa_options,
+                                                          request_options=request_options,
                                                           model=model,
-                                                          request_params=request_parameters,
                                                           cache_value=cache_value,
                                                           value_cache=value_cache,
-                                                          n_evaluate_sample=n_evaluate_sample
+
                                                           )  # todo step twice, not sure if safe
 
             # selection
-            select_ids = sorted(ids, key=lambda x: values[x], reverse=True)[:n_select_sample]
+            select_ids = sorted(ids, key=lambda x: values[x], reverse=True)[:rafa_options.n_select_sample]
             select_new_ys = [new_ys[select_id] for select_id in select_ids]
 
             # log
@@ -452,8 +448,9 @@ class AgentRafaGame24_act(Agent):
             state=state,
             model=model,
             request_options=request_options,
-            cache_value=value_cache,
-            rafa_options=rafa_options
+            cache_value=value_cache,  # todo passed twice
+            rafa_options=rafa_options,
+            value_cache=value_cache
         )
         return state, action, info
 
@@ -482,18 +479,21 @@ class AgentRafaGame24_eval(Agent):
         return generated_state, obs, reward, done, info
 
     @staticmethod
-    def act(model: Model, state: GameState_rafa, **kwargs: Any) -> Any:
-        required_keys = ["feedback_print", "action"]
+    def act(model: Model, state: GameState_rafa, **kwargs) -> Any:
+        if "rafa_options" not in kwargs:
+            raise ValueError("Missing required parameter: 'rafa_options'")
 
-        for key in required_keys:
-            if key not in kwargs or kwargs[key] is None:
-                raise ValueError(f"Missing required parameter: '{key}'")
+        if "action" not in kwargs:
+            raise ValueError("Missing required parameter: 'action'")
 
-        typed_kwargs = cast(EvalKwargs_rafa, kwargs)
-
-        feedback_print = typed_kwargs["feedback_print"]
-        action = typed_kwargs["action"]
+        rafa_options = kwargs["rafa_options"]  # to sample etc
+        action = kwargs["action"]  # to sample etc
+        if not isinstance(rafa_options, RAFAOptions):
+            raise TypeError("rafa_options must be of type RAFAOptions")
 
         return AgentRafaGame24_eval.step_rafa(action=action,
                                               state=state,
-                                              feedback_print=feedback_print)
+                                              max_step=rafa_options.max_step,
+                                              feedback_print=False
+                                              # todo this should be removed completly both in function and as argument
+                                              )
