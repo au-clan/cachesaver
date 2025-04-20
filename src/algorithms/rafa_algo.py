@@ -148,10 +148,10 @@ class AlgorithmRAFA_tot(Algorithm):
 
             ###]]]]
 
-            state, obs, reward, done, env_info = self.agent_eval.act(state=state,
-                                                                     model=self.model,
-                                                                     action=action,
-                                                                     )
+            # state, obs, reward, done, env_info = self.agent_eval.act(state=state,
+            #                                                          model=self.model,
+            #                                                          action=action,
+            #                                                          )
 
             if done:
                 state = replace(state, reflects=[], value_reflects=[])
