@@ -64,7 +64,7 @@ class AlgorithmRAFA_tot(Algorithm):
             state = GameState_rafa()
             state = replace(state, puzzle=puzzle)
 
-            #reflect
+            # reflect
             if len(state.obs_feedback) >= 1:
                 reflects = await self.agent_reflect.act(state=state,
                                                         model=self.model,
@@ -76,11 +76,26 @@ class AlgorithmRAFA_tot(Algorithm):
                                                                      request_options=request_options,
                                                                      value_cache=self.value_cache,
                                                                      rafa_options=self.rafa_options)
-                #collet results in state
+                # collet results in state
                 state = replace(state, reflects=reflects, value_reflects=value_reflects)
 
-            # plan
+            # plan and eval plan
+            ys = ["\n".join(state.env_history) + "\n"] if len(state.env_history) else [""]  # current output candidates
+            for step in range(4 - len(state.env_history)):
+                # get proposals (plan suggestions)
+                coroutines = [
+                    #todo confirm the right attributes passed
+                    self.agent_plan.act(puzzle=state.puzzle,
+                                        history=obs,
+                                        y=y,
+                                        rafa_options=self.rafa_options,
+                                        request_options=request_options,
+                                        model=self.model,
+                                        )
+                    for y in ys]
+                new_ys = await asyncio.gather(*coroutines)
 
+                # Evaluate proposals(evaluate plan suggestions)
                 # 2: reflect
 
             puzzle = state.puzzle

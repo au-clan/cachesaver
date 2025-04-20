@@ -586,7 +586,7 @@ class AgentRAFA_reflect(Agent):
 
 
 class AgentRAFA_reflect_value(Agent):
-    @staticmethod #todo this is 1:1 with reflect except the prompt is value here
+    @staticmethod  # todo this is 1:1 with reflect except the prompt is value here
     async def act(model: Model, state: GameState_rafa, **kwargs) -> Any:
         if "request_options" not in kwargs:
             raise ValueError("Missing required parameter: 'request_options'")
@@ -624,10 +624,65 @@ class AgentRAFA_reflect_value(Agent):
 
 class AgentRAFA_plan(Agent):
     @staticmethod
-    def act(model: Model, state: GameState_rafa, **kwargs) -> Any:
-        # this is the old generate feedback
+    async def act(model: Model, state: GameState_rafa, **kwargs) -> Any:
+        if "request_options" not in kwargs:
+            raise ValueError("Missing required parameter: 'request_options'")
+        if "y" not in kwargs:
+            raise ValueError("Missing required parameter: 'y'")
 
-        return ""
+
+        if "rafa_options" not in kwargs:
+            raise ValueError("Missing required parameter: 'rafa_options'")
+        request_options = kwargs["request_options"]
+        value_cache = kwargs["value_cache"]  # If it is None it means we dont want to cache
+        rafa_options = kwargs["rafa_options"]  # to sample etc
+        y = kwargs["y"]
+
+        prompt = "Now we would like to play a game of 24. That is, given 4 numbers, try to use "
+        "them with arithmetic operations (+ - * /) to get 24. "
+
+        history = [{"feedback": prompt},
+               {"feedback": "What you have learned about the puzzle are summarized below.\n" + "\n".join(
+                   state.reflects)}]
+
+        # this is the old generate feedback
+        current_numbers = AgentRafaGame24_act.get_current_numbers(y if y else state.puzzle)
+        if current_numbers == '24':
+            prompt = prompts.cot.format(input=state.puzzle) + 'Steps:\n' + y
+        else:
+            prompt = prompts.propose_prompt.format(input=current_numbers)
+        propose_prompt = prompt
+        history_messages = RafaRequest.from_request_options(request_options=request_options,
+                                                            n=rafa_options.n_generate_sample)
+
+        for h in history:
+            if 'answer' in h:
+                history_messages.add_assistant_message(h["answer"])
+            if 'feedback' in h:
+                history_messages.add_user_message(h["feedback"])
+        history_messages.add_user_message(propose_prompt)
+        history_messages.request_id = f"step-{str(state.puzzle)}-{1}-{y}-{hash(1)}"
+        # todo add some unique request id for better tracking ...not urgent for my purpose
+        result = await model.request(history_messages,
+                                     n=history_messages.n,
+                                     request_id=history_messages.request_id,
+                                     namespace=history_messages.namespace,
+                                     params=DecodingParameters(
+                                         max_completion_tokens=history_messages.max_completion_tokens,
+                                         temperature=history_messages.temperature,
+                                         top_p=history_messages.top_p,
+                                         stop=history_messages.stop_token,
+                                         logprobs=history_messages.logprobs,
+                                     )
+                                     )
+        ##]]]
+
+        proposal_list = [x.split('\n') for x in result]  # todo the stop token
+        proposals = []
+        for p in proposal_list:
+            proposals.extend(p)
+        proposals = proposals[:min(len(proposals), rafa_options.n_propose_sample)]
+        return [y + _ + '\n' for _ in proposals]
 
 
 class AgentRAFA_generate_feedback(Agent):
