@@ -3,7 +3,7 @@ from dataclasses import replace
 from typing import TypedDict
 
 from ..algorithm_options.rafa import RAFAOptions, RequestOptions
-from ..typedefs import Algorithm, Model, Agent, Environment, Benchmark, DecodingParameters, State
+from ..typedefs import Algorithm, Model, Agent, Environment, Benchmark, State
 
 
 class AgentDictRAFA_tot(TypedDict):
@@ -52,7 +52,7 @@ class AlgorithmRAFA_tot(Algorithm):
             state, action, agent_info = await self.agent_act.act(state=state,
                                                                  model=self.model,
                                                                  request_options=request_options,
-                                                                 cache_value=self.value_cache,
+                                                                 value_cache=self.value_cache,
                                                                  rafa_options=self.rafa_options
                                                                  )
 

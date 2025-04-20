@@ -9,7 +9,7 @@ import sympy
 from . import prompts as prompts
 from .state import GameState_rafa, StateGame24
 from ...algorithm_options.rafa import RequestOptions, RafaRequest, RAFAOptions
-from ...typedefs import Agent, Model
+from ...typedefs import Agent, Model, DecodingParameters
 
 
 class AgentRafaGame24_act(Agent):
@@ -260,7 +260,18 @@ class AgentRafaGame24_act(Agent):
                 history_messages.add_user_message(h["feedback"])
         history_messages.add_user_message(value_prompt)
         history_messages.request_id = f"step-{str(state.puzzle)}-{1}-{y}-{hash(1)}"  # todo this shpould be done properly at some point
-        value_outputs = await model.request(history_messages)
+        value_outputs = await model.request(history_messages,#TODO THIS IS TOTALLY BS WHY TF DO WE WRAP LIKE THIS?!?!?!?!?!!?!?!?!?!??!?
+                                     n=history_messages.n,
+                                     request_id=history_messages.request_id,
+                                     namespace=history_messages.namespace,
+                                     params=DecodingParameters(
+                                         max_completion_tokens=history_messages.max_completion_tokens,
+                                         temperature=history_messages.temperature,
+                                         top_p=history_messages.top_p,
+                                         stop=history_messages.stop_token,
+                                         logprobs=history_messages.logprobs,
+                                     )
+                                     )
 
         value = AgentRafaGame24_act.value_outputs_unwrap(state.puzzle, y, value_outputs)  # todo fix types
         if cache_value:
@@ -311,7 +322,18 @@ class AgentRafaGame24_act(Agent):
         history_messages.add_user_message(propose_prompt)
         history_messages.request_id = f"step-{str(puzzle)}-{1}-{y}-{hash(1)}"
         # todo add some unique request id for better tracking ...not urgent for my purpose
-        result = await model.request(history_messages)
+        result = await model.request(history_messages,#TODO THIS IS TOTALLY BS WHY TF DO WE WRAP LIKE THIS?!?!?!?!?!!?!?!?!?!??!?
+                                     n=history_messages.n,
+                                     request_id=history_messages.request_id,
+                                     namespace=history_messages.namespace,
+                                     params=DecodingParameters(
+                                         max_completion_tokens=history_messages.max_completion_tokens,
+                                         temperature=history_messages.temperature,
+                                         top_p=history_messages.top_p,
+                                         stop=history_messages.stop_token,
+                                         logprobs=history_messages.logprobs,
+                                     )
+                                     )
         ##]]]
 
         proposal_list = [x.split('\n') for x in result]  # todo the stop token
@@ -401,7 +423,18 @@ class AgentRafaGame24_act(Agent):
         ##should prob make log enabling unique request id
         reflect_messages.request_id = "some new request id goes here should read from previous request id.."
         reflects = await model.request(
-            request=reflect_messages)  # todo namespace and request id should maybe be set here
+            request=reflect_messages,#TODO THIS IS TOTALLY BS WHY TF DO WE WRAP LIKE THIS?!?!?!?!?!!?!?!?!?!??!?
+                                     n=reflect_messages.n,
+                                     request_id=reflect_messages.request_id,
+                                     namespace=reflect_messages.namespace,
+                                     params=DecodingParameters(
+                                         max_completion_tokens=reflect_messages.max_completion_tokens,
+                                         temperature=reflect_messages.temperature,
+                                         top_p=reflect_messages.top_p,
+                                         stop=reflect_messages.stop_token,
+                                         logprobs=reflect_messages.logprobs,
+                                     )
+                                     )
 
         ##todo from here old###
 
@@ -409,7 +442,18 @@ class AgentRafaGame24_act(Agent):
                                                                    n=rafa_options.n_propose_sample)
         value_reflects_messages.add_user_message(value_reflect_prompt)
         value_reflects_messages.request_id = "some new request id goes here should read from previous request id.."
-        value_reflects = await model.request(request=value_reflects_messages)
+        value_reflects = await model.request(request=value_reflects_messages,#TODO THIS IS TOTALLY BS WHY TF DO WE WRAP LIKE THIS?!?!?!?!?!!?!?!?!?!??!?
+                                     n=value_reflects_messages.n,
+                                     request_id=value_reflects_messages.request_id,
+                                     namespace=value_reflects_messages.namespace,
+                                     params=DecodingParameters(
+                                         max_completion_tokens=value_reflects_messages.max_completion_tokens,
+                                         temperature=value_reflects_messages.temperature,
+                                         top_p=value_reflects_messages.top_p,
+                                         stop=value_reflects_messages.stop_token,
+                                         logprobs=value_reflects_messages.logprobs,
+                                     )
+                                     )
 
         # todo confirm the right types
         state = replace(state, reflects=reflects, value_reflects=value_reflects)

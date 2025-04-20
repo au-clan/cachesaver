@@ -7,6 +7,7 @@ from cachesaver.typedefs import Request as BaseRequest, Batch
 from cachesaver.typedefs import Response
 from groq import AsyncGroq, RateLimitError
 
+from src.algorithm_options.rafa import RafaRequest
 from src.typedefs import Model as ModelBasic
 
 
@@ -65,9 +66,9 @@ class GroqModel(ModelBasic):
 
         return responses
 
-    async def request(self, request: BaseRequest) -> Response:
+    async def request(self, request: RafaRequest) -> Response:
 
-        responses = await asyncio.gather(*(self.single_request(request) for _ in range(request.n)))
+        responses = await asyncio.gather(*(self.single_request(request.prompt) for _ in range(request.n)))
         # todo format here, request count, input tokens and output tokens math should go here
         merged_data = [item for r in responses for item in r.data]
         merged_response = Response(
@@ -75,7 +76,7 @@ class GroqModel(ModelBasic):
         )
         return merged_response
 
-    async def single_request(self, request: BaseRequest) -> Response:
+    async def single_request(self, request: RafaRequest) -> Response:
         await self.obey_rate_limits()
         async with self.rate_limit_lock:
             if self.rpm_remaining > 0:
@@ -91,7 +92,7 @@ class GroqModel(ModelBasic):
                     n=1,
                     max_tokens=request.max_completion_tokens or None,  # or None not needed but just to be explicit
                     temperature=request.temperature or 1,
-                    stop=request.stop or None,
+                    stop=request.stop_token or None,
                     top_p=request.top_p or 1,
                     seed=request.seed or None,
                     logprobs=request.logprobs or False,

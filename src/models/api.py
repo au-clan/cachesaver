@@ -26,7 +26,6 @@ class API(SingleRequestModel):
             n=n,
             request_id=request_id,
             namespace=namespace,
-            model=self.model,
             max_completion_tokens=params.max_completion_tokens,
             temperature=params.temperature,
             top_p=params.top_p,

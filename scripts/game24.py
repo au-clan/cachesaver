@@ -12,6 +12,7 @@ from together import AsyncTogether
 from client_wrapper.groq_wrapper import GroqModel
 from src.algorithm_options.rafa import RAFAOptions
 from src.algorithms.rafa_algo import AgentDictRAFA_tot, AlgorithmRAFA_tot
+from src.tasks.game24.rafa_agent import AgentRafaGame24_act, AgentRafaGame24_eval
 
 logger = logging.getLogger(__name__)
 
@@ -23,8 +24,8 @@ from src.utils import tokens2cost
 from src.algorithms import *
 from src.models import OnlineLLM, API
 from src.typedefs import DecodingParameters
-from src.tasks.game24 import EnvironmentGame24, BenchmarkGame24, AgentBfsGame24, AgentEvaluateGame24, AgentActGame24, \
-    AgentRafaGame24_eval, AgentRafaGame24_act
+from src.tasks.game24 import EnvironmentGame24, BenchmarkGame24, AgentBfsGame24, AgentEvaluateGame24, AgentActGame24
+
 
 cache = Cache(f"caches/game24")
 
@@ -43,8 +44,10 @@ async def run(args):
         raise ValueError("Invalid provider. Choose 'openai', 'together', or 'local'.")
 
     # CacheSaver model layer
-    if args.provider in ["openai", "together", "groq"]:
+    if args.provider in ["openai", "together"]:
         model = OnlineLLM(client=client)
+    elif args.provider == "groq":
+        model = GroqModel(api_key=os.getenv("GROQ_API_KEY"), model="gemma2-9b-it")
     else:
         raise NotImplementedError("Local model is not implemented yet.")
 
