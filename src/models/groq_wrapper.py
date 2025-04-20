@@ -97,6 +97,7 @@ class GroqModel(ModelBasic):
                     seed=request.seed or None,
                     logprobs=request.logprobs or False,
                     top_logprobs=request.top_logprobs or None,
+
                 )
 
                 async with self.rate_limit_lock:

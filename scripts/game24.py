@@ -38,7 +38,9 @@ async def run(args):
     elif args.provider == "local":
         raise NotImplementedError("Local client is not implemented yet.")
     elif args.provider == "groq":
-        client = GroqModel(api_key=os.getenv("GROQ_API_KEY"), model="gemma2-9b-it")
+        # client = GroqModel(api_key=os.getenv("GROQ_API_KEY"), model="gemma2-9b-it")#todo load from arg.model
+        #todo revisit the way we create clients, why not do it in model?
+        pass
     else:
         raise ValueError("Invalid provider. Choose 'openai', 'together', or 'local'.")
 
@@ -46,7 +48,7 @@ async def run(args):
     if args.provider in ["openai", "together"]:
         model = OnlineLLM(client=client)
     elif args.provider == "groq":
-        model = GroqModel(api_key=os.getenv("GROQ_API_KEY"), model="gemma2-9b-it")
+        model = GroqModel(api_key=os.getenv("GROQ_API_KEY"), model=args.model)
     else:
         raise NotImplementedError("Local model is not implemented yet.")
 
@@ -123,7 +125,7 @@ async def run(args):
             model=api,  # todo lint complain about type... should be fixed
             agents=agents,
             env=EnvironmentGame24(),
-            rafa_options=RAFAOptions(n_propose_sample=1,
+            rafa_options=RAFAOptions(n_propose_sample=1,#todo all of these configs shouldnt be hardcoded
                                      n_generate_sample=1,
                                      n_evaluate_sample=1,
                                      max_step=1,
@@ -165,7 +167,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Solve Game 24 using LLMs.")
     parser.add_argument("--provider", type=str, help="LLM Provider", choices=["openai", "together", "local", "groq"],
                         default="groq")
-    parser.add_argument("--model", type=str, help="LLM Model", default="gpt-4o-mini")
+    parser.add_argument("--model", type=str, help="LLM Model", default="gemma2-9b-it")
     parser.add_argument("--batch_size", type=int, help="CacheSaver's batch size", default=300)
     parser.add_argument("--timeout", type=float, help="CacheSaver's timeout", default=0.05)
     parser.add_argument("--temperature", type=float, help="Temperature for the model", default=1.0)
