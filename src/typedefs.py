@@ -13,16 +13,12 @@ MAX_SEED = 10000
 
 @dataclass(frozen=True)
 class Request(CacheSaverRequest):  # Clean this up
-    # model: str
+    model: str
     max_completion_tokens: Optional[int] = None
     temperature: Optional[float] = 1.0
     top_p: Optional[float] = 1.0
     stop: Optional[str] = None
     logprobs: Optional[bool] = False
-    messages: Optional[list[str]] = None
-
-
-
 
 
 class DecodingParameters(NamedTuple):
@@ -124,5 +120,3 @@ class Algorithm(ABC):
     @abstractmethod
     async def benchmark(self, benchmark: Benchmark) -> List[List[State]]:
         pass
-
-
