@@ -541,3 +541,23 @@ class AgentRafaGame24_eval(Agent):
                                               feedback_print=False
                                               # todo this should be removed completly both in function and as argument
                                               )
+class AgentRAFA_reflect(Agent):
+    @staticmethod
+    def act(model: Model, state: GameState_rafa, **kwargs) -> Any:
+        #this is the old generate feedback
+
+        return ""
+
+class AgentRAFA_plan(Agent):
+    @staticmethod
+    def act(model: Model, state: GameState_rafa, **kwargs) -> Any:
+        # this is the old generate feedback
+
+        return ""
+
+class AgentRAFA_generate_feedback(Agent):
+    @staticmethod
+    def act(model: Model, state: GameState_rafa, **kwargs) -> Any:
+        # this is the old generate feedback
+
+        return ""

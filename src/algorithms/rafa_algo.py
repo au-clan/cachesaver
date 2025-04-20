@@ -60,17 +60,11 @@ class AlgorithmRAFA_tot(Algorithm):
                                                                      action=action,
                                                                      )
 
-            # log['state_step'].append(state)
-            # log['obs_step'].append(obs)
-            # log['reward_step'].append(reward)
-            # log['done_step'].append(done)
-            # log['env_info_step'].append(env_info)
-            # state = self.update_rafa(state=state, done=done)
             if done:
                 state = replace(state, reflects=[], value_reflects=[])
                 i = 0
 
-            # log['state_update'].append(state)
+
             print(obs)
             print(reward, done, env_info)
 
