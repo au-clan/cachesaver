@@ -3,7 +3,7 @@ import re
 import time
 from typing import List
 
-from cachesaver.typedefs import Request as BaseRequest, Batch
+from cachesaver.typedefs import Batch
 from cachesaver.typedefs import Response
 from groq import AsyncGroq, RateLimitError
 

@@ -9,7 +9,7 @@ from omegaconf import OmegaConf
 from openai import AsyncOpenAI
 from together import AsyncTogether
 
-from client_wrapper.groq_wrapper import GroqModel
+from src.models.groq_wrapper import GroqModel
 from src.algorithm_options.rafa import RAFAOptions
 from src.algorithms.rafa_algo import AgentDictRAFA_tot, AlgorithmRAFA_tot
 from src.tasks.game24.rafa_agent import AgentRafaGame24_act, AgentRafaGame24_eval
