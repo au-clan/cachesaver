@@ -55,6 +55,7 @@ class AlgorithmRAFA_tot(Algorithm):
                                                                  model=self.model,
                                                                  request_options=request_options,
                                                                  cache_value=self.value_cache,
+                                                                 rafa_options=self.rafa_options
                                                                  )
 
             state, obs, reward, done, env_info = self.agent_eval.act(state=state,

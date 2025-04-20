@@ -254,11 +254,11 @@ class AgentRafaGame24_act(Agent):
                                                      request_id=request_id, request_params=request_params, model=model)
         return response
 
-    @staticmethod
-    async def gpt(prompt, n, namespace, request_id, model: Model, request_params: Request, ) -> Response:
-        messages = [{"role": "user", "content": prompt}]
-        return await AgentRafaGame24_act.chatgpt(messages=messages, prompt=prompt, n=n, namespace=namespace,
-                                                 request_id=request_id, model=model, request_params=request_params)
+    # @staticmethod
+    # async def gpt(prompt, n, namespace, request_id, model: Model, request_params: Request, ) -> Response:
+    #     messages = [{"role": "user", "content": prompt}]
+    #     return await AgentRafaGame24_act.chatgpt(messages=messages, prompt=prompt, n=n, namespace=namespace,
+    #                                              request_id=request_id, model=model, request_params=request_params)
 
     @staticmethod
     async def chatgpt(model: Model, request: RafaRequest) -> Response:
@@ -363,9 +363,8 @@ class AgentRafaGame24_act(Agent):
         return [y + _ + '\n' for _ in proposals]
 
     @staticmethod
-    async def plan_rafa(model: Model, state: GameState_rafa, n_propose_sample, n_select_sample, to_print, cache_value,
-                        value_cache, n_evaluate_sample,
-                        request_parameters):
+    async def plan_rafa(state: GameState_rafa, model: Model, request_options: RequestOptions,
+                           rafa_options: RAFAOptions, cache_value: dict):
 
         history = state.env_history
         ys = ["\n".join(history) + "\n"] if len(history) else [""]  # current output candidates
@@ -385,7 +384,7 @@ class AgentRafaGame24_act(Agent):
                 AgentRafaGame24_act.get_proposals(puzzle=state.puzzle,
                                                   history=obs,
                                                   y=y,
-                                                  n_propose_sample=n_propose_sample,
+                                                  n_propose_sample=rafa_options.n_propose_sample,
                                                   namespace=str(state.index),
                                                   request_id=f"step-{str(state.index)}-{step}-{y}-{hash(state)}",
                                                   model=model,
@@ -413,18 +412,18 @@ class AgentRafaGame24_act(Agent):
             select_new_ys = [new_ys[select_id] for select_id in select_ids]
 
             # log
-            if to_print:
-                sorted_new_ys, sorted_values = zip(*sorted(zip(new_ys, values), key=lambda x: x[1], reverse=True))
-                print(
-                    f'-- new_ys --: {sorted_new_ys}\n-- sol values --: {sorted_values}\n-- choices --: {select_new_ys}\n')
+            # if to_print:
+            #     sorted_new_ys, sorted_values = zip(*sorted(zip(new_ys, values), key=lambda x: x[1], reverse=True))
+            #     print(
+            #         f'-- new_ys --: {sorted_new_ys}\n-- sol values --: {sorted_values}\n-- choices --: {select_new_ys}\n')
 
             infos.append(
                 {'step': step, 'x': state.puzzle, 'ys': ys, 'new_ys': new_ys, 'values': values,
                  'select_new_ys': select_new_ys})
             ys = select_new_ys
 
-        if to_print:
-            print(ys)
+        # if to_print:
+        #     print(ys)
 
         ys_list = [y.split('\n')[len(history):] for y in ys]
         res_ys = ["\n".join(ys) for ys in ys_list][0]
@@ -442,16 +441,18 @@ class AgentRafaGame24_act(Agent):
         reflect_messages = RafaRequest.from_request_options(request_options=request_options,
                                                             n=rafa_options.n_propose_sample)
         reflect_messages.add_user_message(reflect_prompt)
-        ##Not asking gpt but doing chatgpq
-        reflects = await model.request(request=reflect_messages)#todo namespace and request id should maybe be set here
+        ##should prob make log enabling unique request id
+        reflect_messages.request_id = "some new request id goes here should read from previous request id.."
+        reflects = await model.request(
+            request=reflect_messages)  # todo namespace and request id should maybe be set here
 
         ##todo from here old###
 
         value_reflects_messages = RafaRequest.from_request_options(request_options=request_options,
-                                                            n=rafa_options.n_propose_sample)
+                                                                   n=rafa_options.n_propose_sample)
         value_reflects_messages.add_user_message(value_reflect_prompt)
-        value_reflects=await model.request(request=value_reflects_messages)
-
+        value_reflects_messages.request_id = "some new request id goes here should read from previous request id.."
+        value_reflects = await model.request(request=value_reflects_messages)
 
         # todo confirm the right types
         state = replace(state, reflects=reflects, value_reflects=value_reflects)
@@ -463,11 +464,18 @@ class AgentRafaGame24_act(Agent):
         if "request_options" not in kwargs:
             raise ValueError("Missing required parameter: 'request_options'")
 
+        if "rafa_options" not in kwargs:
+            raise ValueError("Missing required parameter: 'rafa_options'")
+
         request_options = kwargs["request_options"]
         value_cache = kwargs["value_cache"]  # If it is None it means we dont want to cache
+        rafa_options = kwargs["rafa_options"]  # to sample etc
 
         if not isinstance(request_options, RequestOptions):
             raise TypeError("request_options must be of type RequestOptions")
+
+        if not isinstance(rafa_options, RAFAOptions):
+            raise TypeError("rafa_options must be of type RAFAOptions")
 
         puzzle = state.puzzle
         state = GameState_rafa()
@@ -476,16 +484,15 @@ class AgentRafaGame24_act(Agent):
             state = await AgentRafaGame24_act.reflect_rafa(state=state,
                                                            model=model,
                                                            request_options=request_options,
-                                                           cache_value=value_cache)
+                                                           cache_value=value_cache,
+                                                           rafa_options=rafa_options)
 
         state, action, info = await AgentRafaGame24_act.plan_rafa(
-            model=model,
             state=state,
-            n_propose_sample=n_propose_sample,
-            n_select_sample=n_select_sample,
-            to_print=to_print,
-            cache_value=cache_value,
-            request_parameters=request_params
+            model=model,
+            request_options=request_options,
+            cache_value=value_cache,
+            rafa_options=rafa_options
         )
         return state, action, info
 
