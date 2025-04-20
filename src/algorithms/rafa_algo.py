@@ -48,7 +48,6 @@ class AlgorithmRAFA_tot(Algorithm):
 
     async def solve(self, idx: int, state: State, namespace: str, value_cache: dict = None):
         # Initial state
-        # initial_state = self.reset_rafa(state.puzzle)  # todo verify puzzle is accessible
 
         request_options = RequestOptions(max_completion_tokens=200,
                                          temperature=1.0,
@@ -62,14 +61,6 @@ class AlgorithmRAFA_tot(Algorithm):
         while not done:
             request_options.request_id = f"idx{idx}-step{i}-{hash(state)}-agent{0}"
             i += 1
-            # todo this should return the cache_value dict if it should be stored across puzzles...
-            # state, action, agent_info = await self.agent_act.act(state=state,
-            #                                                      model=self.model,
-            #                                                      request_options=request_options,
-            #                                                      value_cache=self.value_cache,
-            #                                                      rafa_options=self.rafa_options
-            #                                                      )
-            ##inside these brackets is the new agent structure[[
 
             puzzle = state.puzzle
             state = GameState_rafa()
@@ -130,7 +121,7 @@ class AlgorithmRAFA_tot(Algorithm):
             env_info = {'steps': infos}
 
             ##Generating feedback for the progress so far(last step in the old structure)
-            # todo do we want it to be agent if it doesnt prompt? it is somewhat task specific
+
             state, obs, reward, done, env_info = self.agent_eval.act(state=state,
                                                                      model=self.model,
                                                                      action=res_ys,
@@ -146,17 +137,7 @@ class AlgorithmRAFA_tot(Algorithm):
             print(obs)
             print(reward, done, env_info)
 
-            # logs = logs + [log]
-        # return logs
-
-        # correct = 0
-        # for i in range(len(logs)):
-        #     # is_correct = self.verification_helper(logs[i]['obs_step'][-1]['answer'])
-        #     # if is_correct:
-        #     #     correct += 1
-        # # verifications = [self.environment.verify(state) for state in states]
         return state  # todo refactor to old state type
-        # return correct  ##todo we should return the correct format and not just 0 aorn
 
     async def benchmark(self, benchmark: Benchmark, share_ns: bool = False, cache: bool = True):
         cache = {} if cache else None

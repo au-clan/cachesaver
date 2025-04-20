@@ -99,6 +99,7 @@ class AgentRafaGame24_eval(Agent):
             print(e)
             return False, "It is not a valid formula."
         return False, ""
+
     @staticmethod
     def check_step_rafa(state: GameState_rafa, action):
         try:
@@ -162,14 +163,15 @@ class AgentRafaGame24_eval(Agent):
 
         total_feedback = " ".join(feedbacks) if feedback_print else None
         return state, total_feedback, rewards
+
     @staticmethod
     def step_rafa(action, state: GameState_rafa, feedback_print: bool, max_step):
         state = replace(state, cur_step=state.cur_step + 1)
         prev_len = len(state.history)
         generated_state, feedback, reward = AgentRafaGame24_eval.generate_feedback_rafa(action=action,
-                                                                                       state=state,
-                                                                                       feedback_print=feedback_print,
-                                                                                       )
+                                                                                        state=state,
+                                                                                        feedback_print=feedback_print,
+                                                                                        )
         new_len = len(state.history)
         delta = new_len - prev_len + 1 if new_len < 4 else new_len - prev_len
         assert delta > 0
@@ -404,16 +406,7 @@ class AgentRAFA_plan_evaluate(Agent):
             if y in local_value_cache and cache_value:  # avoid duplicate candidates #todo fix the caching
                 value = local_value_cache[y]
             else:
-                # value = get_value(env, history, x, y, n_evaluate_sample, cache_value=cache_value)
-                # value = await AgentRafaGame24_act.get_value(state=state,
-                #                                             y=y,
-                #                                             history=history,
-                #                                             request_options=request_options,
-                #                                             rafa_options=rafa_options,
-                #                                             model=model,
-                #                                             cache_value=cache_value,
-                #                                             value_cache=value_cache
-                #                                             )
+
                 value_prompt = AgentRAFA_plan_evaluate.value_prompt_wrap(state.puzzle, y)
 
                 if cache_value and value_prompt in value_cache:  # todo the caching is so poorly done in rafa.. should rly consider what to do either remove or do it right
@@ -451,11 +444,3 @@ class AgentRAFA_plan_evaluate(Agent):
                     local_value_cache[y] = value
             values.append(value)
         return values
-
-
-class AgentRAFA_generate_feedback(Agent):
-    @staticmethod
-    def act(model: Model, state: GameState_rafa, **kwargs) -> Any:
-        # this is the old generate feedback
-
-        return ""
