@@ -260,7 +260,7 @@ class AgentRafaGame24_act(Agent):
                 history_messages.add_user_message(h["feedback"])
         history_messages.add_user_message(value_prompt)
         history_messages.request_id = f"step-{str(state.puzzle)}-{1}-{y}-{hash(1)}"  # todo this shpould be done properly at some point
-        value_outputs = await model.request(history_messages,#TODO THIS IS TOTALLY BS WHY TF DO WE WRAP LIKE THIS?!?!?!?!?!!?!?!?!?!??!?
+        value_outputs = await model.request(history_messages,
                                      n=history_messages.n,
                                      request_id=history_messages.request_id,
                                      namespace=history_messages.namespace,
@@ -322,7 +322,7 @@ class AgentRafaGame24_act(Agent):
         history_messages.add_user_message(propose_prompt)
         history_messages.request_id = f"step-{str(puzzle)}-{1}-{y}-{hash(1)}"
         # todo add some unique request id for better tracking ...not urgent for my purpose
-        result = await model.request(history_messages,#TODO THIS IS TOTALLY BS WHY TF DO WE WRAP LIKE THIS?!?!?!?!?!!?!?!?!?!??!?
+        result = await model.request(history_messages,
                                      n=history_messages.n,
                                      request_id=history_messages.request_id,
                                      namespace=history_messages.namespace,
@@ -423,7 +423,7 @@ class AgentRafaGame24_act(Agent):
         ##should prob make log enabling unique request id
         reflect_messages.request_id = "some new request id goes here should read from previous request id.."
         reflects = await model.request(
-            request=reflect_messages,#TODO THIS IS TOTALLY BS WHY TF DO WE WRAP LIKE THIS?!?!?!?!?!!?!?!?!?!??!?
+            request=reflect_messages,
                                      n=reflect_messages.n,
                                      request_id=reflect_messages.request_id,
                                      namespace=reflect_messages.namespace,
@@ -442,7 +442,7 @@ class AgentRafaGame24_act(Agent):
                                                                    n=rafa_options.n_propose_sample)
         value_reflects_messages.add_user_message(value_reflect_prompt)
         value_reflects_messages.request_id = "some new request id goes here should read from previous request id.."
-        value_reflects = await model.request(request=value_reflects_messages,#TODO THIS IS TOTALLY BS WHY TF DO WE WRAP LIKE THIS?!?!?!?!?!!?!?!?!?!??!?
+        value_reflects = await model.request(request=value_reflects_messages,
                                      n=value_reflects_messages.n,
                                      request_id=value_reflects_messages.request_id,
                                      namespace=value_reflects_messages.namespace,
