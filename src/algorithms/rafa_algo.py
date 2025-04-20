@@ -2,7 +2,7 @@
 from dataclasses import replace
 from typing import TypedDict
 
-from ..algorithm_options.rafa import RAFAOptions, RequestOptions
+from ..algorithm_options.rafa import RAFAOptions, RequestOptions, GameState_rafa
 from ..typedefs import Algorithm, Model, Agent, Environment, Benchmark, State
 
 
@@ -25,6 +25,11 @@ class AlgorithmRAFA_tot(Algorithm):
         self.agent_act = agents['agent_act']
         self.agent_eval = agents['agent_eval']
 
+        #
+        self.agent_reflect = agents['agent_reflect']
+        self.agent_reflect_value = agents['agent_reflect_value']
+        self.agent_plan = agents['agent_plan']
+        self.agent_generate_feedback = agents['agent_generate_feedback']
 
         self.rafa_options = rafa_options
 
@@ -54,6 +59,41 @@ class AlgorithmRAFA_tot(Algorithm):
                                                                  value_cache=self.value_cache,
                                                                  rafa_options=self.rafa_options
                                                                  )
+            ##inside these brackets is the new agent structure[[
+            puzzle = state.puzzle
+            state = GameState_rafa()
+            state = replace(state, puzzle=puzzle)
+
+            #reflect
+            if len(state.obs_feedback) >= 1:
+                reflects = await self.agent_reflect.act(state=state,
+                                                        model=self.model,
+                                                        request_options=request_options,
+                                                        value_cache=self.value_cache,
+                                                        rafa_options=self.rafa_options)
+                value_reflects = await  self.agent_reflect_value.act(state=state,
+                                                                     model=self.model,
+                                                                     request_options=request_options,
+                                                                     value_cache=self.value_cache,
+                                                                     rafa_options=self.rafa_options)
+                #collet results in state
+                state = replace(state, reflects=reflects, value_reflects=value_reflects)
+
+            # plan
+
+                # 2: reflect
+
+            puzzle = state.puzzle
+            state = GameState_rafa()
+            state = replace(state, puzzle=puzzle)
+            if len(state.obs_feedback) >= 1:
+                state = await self.agent_reflect.act(state=state,
+                                                     model=self.model,
+                                                     request_options=request_options,
+                                                     cache_value=value_cache,
+                                                     rafa_options=self.rafa_options)
+
+            ###]]]]
 
             state, obs, reward, done, env_info = self.agent_eval.act(state=state,
                                                                      model=self.model,
@@ -63,7 +103,6 @@ class AlgorithmRAFA_tot(Algorithm):
             if done:
                 state = replace(state, reflects=[], value_reflects=[])
                 i = 0
-
 
             print(obs)
             print(reward, done, env_info)
@@ -77,9 +116,7 @@ class AlgorithmRAFA_tot(Algorithm):
         #     # if is_correct:
         #     #     correct += 1
         # # verifications = [self.environment.verify(state) for state in states]
-        return correct ##todo we should return the correct format and not just 0 aorn
-
-
+        return correct  ##todo we should return the correct format and not just 0 aorn
 
     async def benchmark(self, benchmark: Benchmark, share_ns: bool = False, cache: bool = True):
         cache = {} if cache else None

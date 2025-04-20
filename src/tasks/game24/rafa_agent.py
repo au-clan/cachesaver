@@ -261,17 +261,17 @@ class AgentRafaGame24_act(Agent):
         history_messages.add_user_message(value_prompt)
         history_messages.request_id = f"step-{str(state.puzzle)}-{1}-{y}-{hash(1)}"  # todo this shpould be done properly at some point
         value_outputs = await model.request(history_messages,
-                                     n=history_messages.n,
-                                     request_id=history_messages.request_id,
-                                     namespace=history_messages.namespace,
-                                     params=DecodingParameters(
-                                         max_completion_tokens=history_messages.max_completion_tokens,
-                                         temperature=history_messages.temperature,
-                                         top_p=history_messages.top_p,
-                                         stop=history_messages.stop_token,
-                                         logprobs=history_messages.logprobs,
-                                     )
-                                     )
+                                            n=history_messages.n,
+                                            request_id=history_messages.request_id,
+                                            namespace=history_messages.namespace,
+                                            params=DecodingParameters(
+                                                max_completion_tokens=history_messages.max_completion_tokens,
+                                                temperature=history_messages.temperature,
+                                                top_p=history_messages.top_p,
+                                                stop=history_messages.stop_token,
+                                                logprobs=history_messages.logprobs,
+                                            )
+                                            )
 
         value = AgentRafaGame24_act.value_outputs_unwrap(state.puzzle, y, value_outputs)  # todo fix types
         if cache_value:
@@ -424,17 +424,17 @@ class AgentRafaGame24_act(Agent):
         reflect_messages.request_id = "some new request id goes here should read from previous request id.."
         reflects = await model.request(
             request=reflect_messages,
-                                     n=reflect_messages.n,
-                                     request_id=reflect_messages.request_id,
-                                     namespace=reflect_messages.namespace,
-                                     params=DecodingParameters(
-                                         max_completion_tokens=reflect_messages.max_completion_tokens,
-                                         temperature=reflect_messages.temperature,
-                                         top_p=reflect_messages.top_p,
-                                         stop=reflect_messages.stop_token,
-                                         logprobs=reflect_messages.logprobs,
-                                     )
-                                     )
+            n=reflect_messages.n,
+            request_id=reflect_messages.request_id,
+            namespace=reflect_messages.namespace,
+            params=DecodingParameters(
+                max_completion_tokens=reflect_messages.max_completion_tokens,
+                temperature=reflect_messages.temperature,
+                top_p=reflect_messages.top_p,
+                stop=reflect_messages.stop_token,
+                logprobs=reflect_messages.logprobs,
+            )
+        )
 
         ##todo from here old###
 
@@ -443,17 +443,17 @@ class AgentRafaGame24_act(Agent):
         value_reflects_messages.add_user_message(value_reflect_prompt)
         value_reflects_messages.request_id = "some new request id goes here should read from previous request id.."
         value_reflects = await model.request(request=value_reflects_messages,
-                                     n=value_reflects_messages.n,
-                                     request_id=value_reflects_messages.request_id,
-                                     namespace=value_reflects_messages.namespace,
-                                     params=DecodingParameters(
-                                         max_completion_tokens=value_reflects_messages.max_completion_tokens,
-                                         temperature=value_reflects_messages.temperature,
-                                         top_p=value_reflects_messages.top_p,
-                                         stop=value_reflects_messages.stop_token,
-                                         logprobs=value_reflects_messages.logprobs,
-                                     )
-                                     )
+                                             n=value_reflects_messages.n,
+                                             request_id=value_reflects_messages.request_id,
+                                             namespace=value_reflects_messages.namespace,
+                                             params=DecodingParameters(
+                                                 max_completion_tokens=value_reflects_messages.max_completion_tokens,
+                                                 temperature=value_reflects_messages.temperature,
+                                                 top_p=value_reflects_messages.top_p,
+                                                 stop=value_reflects_messages.stop_token,
+                                                 logprobs=value_reflects_messages.logprobs,
+                                             )
+                                             )
 
         # todo confirm the right types
         state = replace(state, reflects=reflects, value_reflects=value_reflects)
@@ -541,12 +541,86 @@ class AgentRafaGame24_eval(Agent):
                                               feedback_print=False
                                               # todo this should be removed completly both in function and as argument
                                               )
+
+
 class AgentRAFA_reflect(Agent):
     @staticmethod
-    def act(model: Model, state: GameState_rafa, **kwargs) -> Any:
-        #this is the old generate feedback
+    async def act(model: Model, state: GameState_rafa, **kwargs) -> Any:
+        if "request_options" not in kwargs:
+            raise ValueError("Missing required parameter: 'request_options'")
 
-        return ""
+        if "rafa_options" not in kwargs:
+            raise ValueError("Missing required parameter: 'rafa_options'")
+        request_options = kwargs["request_options"]
+        value_cache = kwargs["value_cache"]  # If it is None it means we dont want to cache
+        rafa_options = kwargs["rafa_options"]  # to sample etc
+
+        y = state.obs_answer
+        feedback = state.obs_feedback
+
+        reflect_prompt = prompts.reflect_prompt.format(input=state.puzzle,
+                                                       answer=y,
+                                                       feedback=feedback
+                                                       )
+
+        reflect_messages = RafaRequest.from_request_options(request_options=request_options,
+                                                            n=rafa_options.n_propose_sample)
+        reflect_messages.add_user_message(reflect_prompt)
+        ##should prob make log enabling unique request id
+        reflect_messages.request_id = "some new request id goes here should read from previous request id.."
+        reflects = await model.request(
+            request=reflect_messages,
+            n=reflect_messages.n,
+            request_id=reflect_messages.request_id,
+            namespace=reflect_messages.namespace,
+            params=DecodingParameters(
+                max_completion_tokens=reflect_messages.max_completion_tokens,
+                temperature=reflect_messages.temperature,
+                top_p=reflect_messages.top_p,
+                stop=reflect_messages.stop_token,
+                logprobs=reflect_messages.logprobs,
+            )
+        )
+
+        return reflects
+
+
+class AgentRAFA_reflect_value(Agent):
+    @staticmethod #todo this is 1:1 with reflect except the prompt is value here
+    async def act(model: Model, state: GameState_rafa, **kwargs) -> Any:
+        if "request_options" not in kwargs:
+            raise ValueError("Missing required parameter: 'request_options'")
+
+        if "rafa_options" not in kwargs:
+            raise ValueError("Missing required parameter: 'rafa_options'")
+        request_options = kwargs["request_options"]
+        value_cache = kwargs["value_cache"]  # If it is None it means we dont want to cache
+        rafa_options = kwargs["rafa_options"]  # to sample etc
+
+        y = state.obs_answer
+        feedback = state.obs_feedback
+
+        value_reflect_prompt = prompts.value_reflect_prompt.format(input=state.puzzle,
+                                                                   answer=y,
+                                                                   feedback=feedback)
+        value_reflects_messages = RafaRequest.from_request_options(request_options=request_options,
+                                                                   n=rafa_options.n_propose_sample)
+        value_reflects_messages.add_user_message(value_reflect_prompt)
+        value_reflects_messages.request_id = "some new request id goes here should read from previous request id.."
+        value_reflects = await model.request(request=value_reflects_messages,
+                                             n=value_reflects_messages.n,
+                                             request_id=value_reflects_messages.request_id,
+                                             namespace=value_reflects_messages.namespace,
+                                             params=DecodingParameters(
+                                                 max_completion_tokens=value_reflects_messages.max_completion_tokens,
+                                                 temperature=value_reflects_messages.temperature,
+                                                 top_p=value_reflects_messages.top_p,
+                                                 stop=value_reflects_messages.stop_token,
+                                                 logprobs=value_reflects_messages.logprobs,
+                                             )
+                                             )
+        return value_reflects
+
 
 class AgentRAFA_plan(Agent):
     @staticmethod
@@ -554,6 +628,7 @@ class AgentRAFA_plan(Agent):
         # this is the old generate feedback
 
         return ""
+
 
 class AgentRAFA_generate_feedback(Agent):
     @staticmethod
