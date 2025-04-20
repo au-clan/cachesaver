@@ -9,7 +9,7 @@ import sympy
 from . import prompts as prompts
 from .state import StateGame24
 from ...algorithm_options.rafa import RequestOptions, RafaRequest, RAFAOptions, GameState_rafa
-from ...typedefs import Agent, Model, DecodingParameters
+from ...typedefs import Agent, Model, DecodingParameters, State
 
 
 class AgentRafaGame24_act(Agent):
@@ -630,7 +630,6 @@ class AgentRAFA_plan(Agent):
         if "y" not in kwargs:
             raise ValueError("Missing required parameter: 'y'")
 
-
         if "rafa_options" not in kwargs:
             raise ValueError("Missing required parameter: 'rafa_options'")
         request_options = kwargs["request_options"]
@@ -642,8 +641,8 @@ class AgentRAFA_plan(Agent):
         "them with arithmetic operations (+ - * /) to get 24. "
 
         history = [{"feedback": prompt},
-               {"feedback": "What you have learned about the puzzle are summarized below.\n" + "\n".join(
-                   state.reflects)}]
+                   {"feedback": "What you have learned about the puzzle are summarized below.\n" + "\n".join(
+                       state.reflects)}]
 
         # this is the old generate feedback
         current_numbers = AgentRafaGame24_act.get_current_numbers(y if y else state.puzzle)
@@ -683,6 +682,85 @@ class AgentRAFA_plan(Agent):
             proposals.extend(p)
         proposals = proposals[:min(len(proposals), rafa_options.n_propose_sample)]
         return [y + _ + '\n' for _ in proposals]
+
+
+class AgentRAFA__plan_evaluate(Agent):
+
+    @staticmethod
+    async def act(model: Model, state: State, **kwargs) -> Any:
+        if "request_options" not in kwargs:
+            raise ValueError("Missing required parameter: 'request_options'")
+        if "new_ys" not in kwargs:
+            raise ValueError("Missing required parameter: 'new_ys'")
+        if "y" not in kwargs:
+            raise ValueError("Missing required parameter: 'y'")
+
+        if "rafa_options" not in kwargs:
+            raise ValueError("Missing required parameter: 'rafa_options'")
+        request_options = kwargs["request_options"]
+        value_cache = kwargs["value_cache"]  # If it is None it means we dont want to cache
+        rafa_options = kwargs["rafa_options"]  # to sample etc
+        ys = kwargs["new_ys"]  # to sample etc
+        cache_value = kwargs["cache_value"]  # to sample etc
+
+        prompt = "Now we would like to play a game of 24. That is, given 4 numbers, try to use "
+        "them with arithmetic operations (+ - * /) to get 24. "
+        history = [prompt,
+                   dict(feedback="What you have learned about the puzzle are summarized below.\n" + "\n".join(
+                       state.value_reflects))]
+        values = []
+        local_value_cache = {}
+        for y in ys:  # each partial output
+            if y in local_value_cache and cache_value:  # avoid duplicate candidates #todo fix the caching
+                value = local_value_cache[y]
+            else:
+                # value = get_value(env, history, x, y, n_evaluate_sample, cache_value=cache_value)
+                # value = await AgentRafaGame24_act.get_value(state=state,
+                #                                             y=y,
+                #                                             history=history,
+                #                                             request_options=request_options,
+                #                                             rafa_options=rafa_options,
+                #                                             model=model,
+                #                                             cache_value=cache_value,
+                #                                             value_cache=value_cache
+                #                                             )
+                value_prompt = AgentRafaGame24_act.value_prompt_wrap(state.puzzle, y)
+
+                if cache_value and value_prompt in value_cache:  # todo the caching is so poorly done in rafa.. should rly consider what to do either remove or do it right
+                    return AgentRafaGame24_act.value_cache[value_prompt]  # todo cache values in future
+                ##in these brackets is old gpt with history :[
+                history_messages = RafaRequest.from_request_options(request_options=request_options,
+                                                                    n=rafa_options.n_evaluate_sample)
+                for h in history:
+                    if 'answer' in h:
+                        history_messages.add_assistant_message(h["answer"])
+                    if 'feedback' in h:
+                        history_messages.add_user_message(h["feedback"])
+                history_messages.add_user_message(value_prompt)
+                history_messages.request_id = f"step-{str(state.puzzle)}-{1}-{y}-{hash(1)}"  # todo this shpould be done properly at some point
+                value_outputs = await model.request(history_messages,
+                                                    n=history_messages.n,
+                                                    request_id=history_messages.request_id,
+                                                    namespace=history_messages.namespace,
+                                                    params=DecodingParameters(
+                                                        max_completion_tokens=history_messages.max_completion_tokens,
+                                                        temperature=history_messages.temperature,
+                                                        top_p=history_messages.top_p,
+                                                        stop=history_messages.stop_token,
+                                                        logprobs=history_messages.logprobs,
+                                                    )
+                                                    )
+
+                value1 = AgentRafaGame24_act.value_outputs_unwrap(state.puzzle, y, value_outputs)  # todo fix types
+                if cache_value:
+                    # environment.Prompter.value_cache[value_prompt] = value
+                    # todo fix the caching
+                    print("cache not impl yet")
+                value = value1
+                if cache_value:  # todo check if null -> if not none then add to cache as pass along
+                    local_value_cache[y] = value
+            values.append(value)
+        return values
 
 
 class AgentRAFA_generate_feedback(Agent):

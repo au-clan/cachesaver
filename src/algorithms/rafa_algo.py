@@ -1,4 +1,5 @@
 ﻿import asyncio
+import itertools
 from dataclasses import replace
 from typing import TypedDict
 
@@ -29,6 +30,7 @@ class AlgorithmRAFA_tot(Algorithm):
         self.agent_reflect = agents['agent_reflect']
         self.agent_reflect_value = agents['agent_reflect_value']
         self.agent_plan = agents['agent_plan']
+        self.agent_plan_evaluate = agents['agent_plan_evaluate']
         self.agent_generate_feedback = agents['agent_generate_feedback']
 
         self.rafa_options = rafa_options
@@ -84,9 +86,8 @@ class AlgorithmRAFA_tot(Algorithm):
             for step in range(4 - len(state.env_history)):
                 # get proposals (plan suggestions)
                 coroutines = [
-                    #todo confirm the right attributes passed
+                    # todo confirm the right attributes passed cache prob missing
                     self.agent_plan.act(puzzle=state.puzzle,
-                                        history=obs,
                                         y=y,
                                         rafa_options=self.rafa_options,
                                         request_options=request_options,
@@ -95,7 +96,10 @@ class AlgorithmRAFA_tot(Algorithm):
                     for y in ys]
                 new_ys = await asyncio.gather(*coroutines)
 
+                new_ys = list(itertools.chain(*new_ys))
+                ids = list(range(len(new_ys)))
                 # Evaluate proposals(evaluate plan suggestions)
+
                 # 2: reflect
 
             puzzle = state.puzzle
