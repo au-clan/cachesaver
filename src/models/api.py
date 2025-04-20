@@ -23,6 +23,7 @@ class API(SingleRequestModel):
         """
         request = Request(
             prompt=prompt,
+            model=self.model,
             n=n,
             request_id=request_id,
             namespace=namespace,
