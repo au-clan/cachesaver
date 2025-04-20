@@ -6,8 +6,6 @@ from cachesaver.typedefs import Batch, Response, SingleRequestModel, BatchReques
 from cachesaver.typedefs import Request as CacheSaverRequest
 from torch.utils.data import Dataset
 
-from src.algorithm_options.rafa import RafaRequest
-
 MAX_SEED = 10000
 
 
@@ -34,7 +32,7 @@ class Model(SingleRequestModel, BatchRequestModel):
         pass
 
     @abstractmethod
-    async def request(self, request: RafaRequest) -> Response:
+    async def request(self, request: Request) -> Response:
         pass
 
     @abstractmethod
