@@ -65,6 +65,7 @@ class EvalKwargs_rafa(TypedDict, total=False):  # total=False makes keys optiona
 @dataclass(frozen=True)
 class GameState_rafa:
     cur_step: Optional[int] = 0
+    index:int=0
 
     puzzle: Optional[str] = None
     ##used attributes

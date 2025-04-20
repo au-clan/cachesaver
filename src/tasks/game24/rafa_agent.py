@@ -1,5 +1,4 @@
 ﻿import itertools
-import itertools
 import re
 from dataclasses import replace
 from typing import Any
@@ -9,7 +8,6 @@ import sympy
 from . import prompts as prompts
 from ...algorithm_options.rafa import RafaRequest, RAFAOptions, GameState_rafa
 from ...typedefs import Agent, Model, DecodingParameters, State
-
 
 
 class AgentRafaGame24_eval(Agent):
