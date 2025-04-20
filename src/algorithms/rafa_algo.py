@@ -106,7 +106,7 @@ class AlgorithmRAFA_tot(Algorithm):
                                                             new_ys=new_ys,
                                                             rafa_options=self.rafa_options,
                                                             request_options=request_options,
-                                                            model=self.model, )
+                                                            model=self.model )
                 select_ids = sorted(ids, key=lambda x: values[x], reverse=True)[:self.rafa_options.n_select_sample]
                 select_new_ys = [new_ys[select_id] for select_id in select_ids]
                 infos.append(
