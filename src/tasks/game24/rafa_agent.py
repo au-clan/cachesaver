@@ -240,19 +240,32 @@ class AgentRafaGame24_act(Agent):
         return state, total_feedback, rewards
 
     @staticmethod
-    async def gpt_with_history(model: Model, request_params: Request, prompt, history, n, namespace,
-                               request_id) -> Response:
-        messages = []
+    async def gpt_with_history(model: Model, prompt, history, n, request_options: RequestOptions) -> Response:
+
+        history_messages = RafaRequest.from_request_options(request_options=request_options,
+                                                            n=n)
         for h in history:
             if 'answer' in h:
-                messages.extend([{"role": "assistant", "content": h["answer"]}])
+                history_messages.add_assistant_message(h["answer"])
             if 'feedback' in h:
-                messages.extend([{"role": "user", "content": h["feedback"]}])
-        messages.append({"role": "user", "content": prompt})
-
-        response = await AgentRafaGame24_act.chatgpt(messages=messages, prompt=prompt, n=n, namespace=namespace,
-                                                     request_id=request_id, request_params=request_params, model=model)
+                history_messages.add_user_message(h["feedback"])
+        history_messages.add_user_message(prompt)
+        # todo add some unique request id for better tracking ...not urgent for my purpose
+        response = await model.request(history_messages)
         return response
+        ### old below
+
+    # messages = []
+    # for h in history:
+    #     if 'answer' in h:
+    #         messages.extend([{"role": "assistant", "content": h["answer"]}])
+    #     if 'feedback' in h:
+    #         messages.extend([{"role": "user", "content": h["feedback"]}])
+    # messages.append({"role": "user", "content": prompt})
+    #
+    # response = await AgentRafaGame24_act.chatgpt(messages=messages, prompt=prompt, n=n, namespace=namespace,
+    #                                              request_id=request_id, request_params=request_params, model=model)
+    # return response
 
     # @staticmethod
     # async def gpt(prompt, n, namespace, request_id, model: Model, request_params: Request, ) -> Response:
@@ -344,27 +357,41 @@ class AgentRafaGame24_act(Agent):
         return values
 
     @staticmethod  # todo confirm this impl the gpt_with_history is both method and a global variable in their impl
-    async def get_proposals(model: Model, puzzle, history, y, n_propose_sample, namespace, request_id,
-                            request_params: Request, ):
+    async def get_proposals(model: Model, puzzle, history, y, n, request_options: RequestOptions,
+                            rafa_options: RAFAOptions, ):
         propose_prompt = AgentRafaGame24_act.propose_prompt_wrap(puzzle, y)
-        result = await AgentRafaGame24_act.gpt_with_history(prompt=propose_prompt,
-                                                            history=history,
-                                                            n=1,
-                                                            model=model,
-                                                            namespace=namespace,
-                                                            request_params=request_params,
-                                                            request_id=request_id)  # todo stop token
+
+        ##todo this is the old gpt with history in these brackets {{
+        history_messages = RafaRequest.from_request_options(request_options=request_options,
+                                                            n=n)
+        for h in history:
+            if 'answer' in h:
+                history_messages.add_assistant_message(h["answer"])
+            if 'feedback' in h:
+                history_messages.add_user_message(h["feedback"])
+        history_messages.add_user_message(propose_prompt)
+        # todo add some unique request id for better tracking ...not urgent for my purpose
+        result = await model.request(history_messages)
+
+        ###}}}
+        # result = await AgentRafaGame24_act.gpt_with_history(prompt=propose_prompt,
+        #                                                     history=history,
+        #                                                     n=1,
+        #                                                     model=model,
+        #                                                     namespace=namespace,
+        #                                                     request_params=request_params,
+        #                                                     request_id=request_id)  # todo stop token
 
         proposal_list = [x.split('\n') for x in result]  # todo the stop token
         proposals = []
         for p in proposal_list:
             proposals.extend(p)
-        proposals = proposals[:min(len(proposals), n_propose_sample)]
+        proposals = proposals[:min(len(proposals), rafa_options.n_propose_sample)]
         return [y + _ + '\n' for _ in proposals]
 
     @staticmethod
     async def plan_rafa(state: GameState_rafa, model: Model, request_options: RequestOptions,
-                           rafa_options: RAFAOptions, cache_value: dict):
+                        rafa_options: RAFAOptions, cache_value: dict):
 
         history = state.env_history
         ys = ["\n".join(history) + "\n"] if len(history) else [""]  # current output candidates
