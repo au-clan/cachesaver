@@ -53,19 +53,10 @@ class RafaRequest(RequestOptions):
         return cls(**vars(request_options), **kwargs)
 
 
-class ActKwargs_rafa(TypedDict, total=False):  # total=False makes keys optional
-    request_options: RequestOptions
-
-
-class EvalKwargs_rafa(TypedDict, total=False):  # total=False makes keys optional
-    feedback_print: bool
-    action: str
-
-
 @dataclass(frozen=True)
 class GameState_rafa:
     cur_step: Optional[int] = 0
-    index:int=0
+    index: int = 0
 
     puzzle: Optional[str] = None
     ##used attributes
