@@ -7,7 +7,7 @@ from ..algorithm_options.rafa import RAFAOptions, RequestOptions, GameState_rafa
 from ..typedefs import Algorithm, Model, Agent, Environment, Benchmark, State
 
 
-class AgentDictRAFA_tot(TypedDict):
+class AgentDictRAFA(TypedDict):
     agent_reflect: Agent
     agent_reflect_value: Agent
     agent_plan: Agent
@@ -15,11 +15,11 @@ class AgentDictRAFA_tot(TypedDict):
     agent_eval: Agent
 
 
-class AlgorithmRAFA_tot(Algorithm):
+class AlgorithmRAFA(Algorithm):
 
     def __init__(self,
                  model: Model,
-                 agents: AgentDictRAFA_tot,
+                 agents: AgentDictRAFA,
                  env: Environment,
                  rafa_options: RAFAOptions,
                  value_cache: dict = None):
@@ -68,11 +68,14 @@ class AlgorithmRAFA_tot(Algorithm):
 
             # reflect
             if len(state.obs_feedback) >= 1:
+                request_options.request_id = f"idx{idx}-step{i}-{hash(state)}-reflect{i}"
                 reflects = await self.agent_reflect.act(state=state,
                                                         model=self.model,
                                                         request_options=request_options,
                                                         value_cache=self.value_cache,
                                                         rafa_options=self.rafa_options)
+
+                request_options.request_id = f"idx{idx}-step{i}-{hash(state)}-reflect_value{i}"
                 value_reflects = await  self.agent_reflect_value.act(state=state,
                                                                      model=self.model,
                                                                      request_options=request_options,
@@ -86,22 +89,29 @@ class AlgorithmRAFA_tot(Algorithm):
             infos = []
             for step in range(4 - len(state.env_history)):
                 # get proposals (plan suggestions)
-                coroutines = [
-                    # todo confirm the right attributes passed cache prob missing
-                    self.agent_plan.act(puzzle=state.puzzle,
-                                        y=y,
-                                        rafa_options=self.rafa_options,
-                                        request_options=request_options,
-                                        model=self.model,
-                                        )
-                    for y in ys]
+                coroutines = []
+                for y in enumerate(ys):
+
+                    request_options.request_id = f"idx{idx}-step{i}-{hash(state)}-plan-{y}"
+                    coroutine = self.agent_plan.act(
+                        state=state,
+                        puzzle=state.puzzle,
+                        y=y,
+                        rafa_options=self.rafa_options,
+                        request_options=request_options,
+                        model=self.model,
+                    )
+                    coroutines.append(coroutine)
+
                 new_ys = await asyncio.gather(*coroutines)
 
                 new_ys = list(itertools.chain(*new_ys))
                 ids = list(range(len(new_ys)))
                 # Evaluate proposals(evaluate plan suggestions)
                 # todo for sure this isnot correct arguments but fix later
+                request_options.request_id = f"idx{idx}-step{i}-{hash(state)}-plan_evaluate"
                 values = await self.agent_plan_evaluate.act(puzzle=state.puzzle,
+                                                            state=state,
                                                             new_ys=new_ys,
                                                             rafa_options=self.rafa_options,
                                                             request_options=request_options,
@@ -115,7 +125,7 @@ class AlgorithmRAFA_tot(Algorithm):
 
             ys_list = [y.split('\n')[len(state.history):] for y in ys]
             res_ys = ["\n".join(ys) for ys in ys_list][0]
-            # return state, res_ys, {'steps': infos}#todo this is not correct format
+
             state = state
             res_ys = res_ys
             env_info = {'steps': infos}

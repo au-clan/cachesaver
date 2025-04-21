@@ -9,10 +9,11 @@ from omegaconf import OmegaConf
 from openai import AsyncOpenAI
 from together import AsyncTogether
 
-from src.models.groq_wrapper import GroqModel
 from src.algorithm_options.rafa import RAFAOptions
-from src.algorithms.rafa_algo import AgentDictRAFA_tot, AlgorithmRAFA_tot
-from src.tasks.game24.rafa_agent import AgentRafaGame24_act, AgentRafaGame24_eval
+from src.algorithms.rafa_algo import AgentDictRAFA, AlgorithmRAFA
+from src.models.groq_wrapper import GroqModel
+from src.tasks.game24.rafa_agent import AgentRafaGame24_eval, AgentRAFA_reflect, \
+    AgentRAFA_reflect_value, AgentRAFA_plan, AgentRAFA_plan_evaluate
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +40,7 @@ async def run(args):
         raise NotImplementedError("Local client is not implemented yet.")
     elif args.provider == "groq":
         # client = GroqModel(api_key=os.getenv("GROQ_API_KEY"), model="gemma2-9b-it")#todo load from arg.model
-        #todo revisit the way we create clients, why not do it in model?
+        # todo revisit the way we create clients, why not do it in model?
         pass
     else:
         raise ValueError("Invalid provider. Choose 'openai', 'together', or 'local'.")
@@ -116,16 +117,19 @@ async def run(args):
             num_evaluations=config.tot.num_evaluations,
         )
     elif args.method == "rafa":
-        agents = AgentDictRAFA_tot(
-            agent_act=AgentRafaGame24_act(),
+        agents = AgentDictRAFA(
+            agent_reflect=AgentRAFA_reflect(),
+            agent_reflect_value=AgentRAFA_reflect_value(),
+            agent_plan=AgentRAFA_plan(),
+            agent_plan_evaluate=AgentRAFA_plan_evaluate(),
             agent_eval=AgentRafaGame24_eval(),
 
         )
-        method = AlgorithmRAFA_tot(
+        method = AlgorithmRAFA(
             model=api,  # todo lint complain about type... should be fixed
             agents=agents,
             env=EnvironmentGame24(),
-            rafa_options=RAFAOptions(n_propose_sample=1,#todo all of these configs shouldnt be hardcoded
+            rafa_options=RAFAOptions(n_propose_sample=1,  # todo all of these configs shouldnt be hardcoded
                                      n_generate_sample=1,
                                      n_evaluate_sample=1,
                                      max_step=1,
