@@ -7,6 +7,13 @@ from openai import AsyncOpenAI
 from omegaconf import OmegaConf
 from together import AsyncTogether
 from cachesaver.pipelines import OnlineAPI
+
+from src.algorithm_options.rafa import RAFAOptions
+from src.algorithms.rafa_algo import AlgorithmRAFA, AgentDictRAFA
+from src.models.groq_wrapper import GroqModel
+from src.tasks.hotpotqa.rafa_agent_hotpotqa import AgentRAFA_reflect_hotpot_qa, AgentRAFA_reflect_value_hotpot_qa, \
+    AgentRAFA_plan_hotpot_qa, AgentRAFA_plan_evaluate_hotpot_qa, AgentRafaGame24_eval_hotpot_qa
+
 logger = logging.getLogger(__name__)
 import sys
 sys.path.append(os.getcwd())
@@ -28,12 +35,18 @@ async def run(args):
         client = AsyncTogether()
     elif args.provider == "local":
         raise NotImplementedError("Local client is not implemented yet.")
+    elif args.provider == "groq":
+        # client = GroqModel(api_key=os.getenv("GROQ_API_KEY"), model="gemma2-9b-it")#todo load from arg.model
+        # todo revisit the way we create clients, why not do it in model?
+        pass
     else:
         raise ValueError("Invalid provider. Choose 'openai', 'together', or 'local'.")
     
     # CacheSaver model layer
     if args.provider in ["openai", "together"]:
         model = OnlineLLM(client=client)
+    elif args.provider == "groq":
+        model = GroqModel(api_key=os.getenv("GROQ_API_KEY"), model=args.model)
     else:
         raise NotImplementedError("Local model is not implemented yet.")
 
@@ -61,7 +74,8 @@ async def run(args):
     )
 
     # Config
-    config = OmegaConf.load(args.conf_path)
+    # config = OmegaConf.load(args.conf_path)
+    config = OmegaConf.load(r"C:\Users\Oskar\PycharmProjects\AUCLAN\cachesaver\scripts\game24.yaml")
 
     # Setup the method
     ## We can create a method factory for this
@@ -99,6 +113,26 @@ async def run(args):
             num_selections=config.tot.num_selections,
             num_steps=config.tot.num_steps,
             num_evaluations=config.tot.num_evaluations,
+        )
+    elif args.method == "rafa":
+        agents = AgentDictRAFA(
+            agent_reflect=AgentRAFA_reflect_hotpot_qa(),
+            agent_reflect_value=AgentRAFA_reflect_value_hotpot_qa(),
+            agent_plan=AgentRAFA_plan_hotpot_qa(),
+            agent_plan_evaluate=AgentRAFA_plan_evaluate_hotpot_qa(),
+            agent_eval=AgentRafaGame24_eval_hotpot_qa(),
+
+        )
+        method = AlgorithmRAFA(
+            model=api,  # todo lint complain about type... should be fixed
+            agents=agents,
+            env=EnvironmentHotpotQA(),
+            rafa_options=RAFAOptions(n_propose_sample=1,  # todo all of these configs shouldnt be hardcoded
+                                     n_generate_sample=1,
+                                     n_evaluate_sample=1,
+                                     max_step=1,
+                                     n_select_sample=1)
+
         )
     else:
         raise NotImplementedError("Method not implemented yet.")
