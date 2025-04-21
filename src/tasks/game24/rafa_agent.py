@@ -166,7 +166,7 @@ class AgentRafaGame24_eval(Agent):
 
     @staticmethod
     def step_rafa(action, state: StateGame24, feedback_print: bool, max_step):
-        state = replace(state, cur_step=state.cur_step + 1) #todo this can be calculated as actions in list i think
+        state = replace(state, cur_step=state.cur_step + 1)  # todo this can be calculated as actions in list i think
         prev_len = len(state.history)
         generated_state, feedback, reward = AgentRafaGame24_eval.generate_feedback_rafa(action=action,
                                                                                         state=state,
@@ -200,7 +200,8 @@ class AgentRafaGame24_eval(Agent):
             raise TypeError("rafa_options must be of type RAFAOptions")
 
         return AgentRafaGame24_eval.step_rafa(action=action,
-                                              state=state,#todo the eval prob doesnt match 1:1 yet will look at once sharp again
+                                              state=state,
+                                              # todo the eval prob doesnt match 1:1 yet will look at once sharp again
                                               max_step=rafa_options.max_step,
                                               feedback_print=False
                                               # todo this should be removed completly both in function and as argument
@@ -347,6 +348,7 @@ class AgentRAFA_plan(Agent):
             if 'feedback' in h:
                 history_messages.add_user_message(h["feedback"])
         history_messages.add_user_message(propose_prompt)
+        history_messages.stop_token = ["\n\n"]  # tot_agent.py line 50 in original code
         result = await model.request(history_messages,
                                      n=history_messages.n,
                                      request_id=history_messages.request_id,
