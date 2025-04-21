@@ -7,7 +7,7 @@ import sympy
 
 from . import prompts as prompts, StateGame24
 from ...algorithm_options.rafa import RafaRequest, RAFAOptions, GameState_rafa
-from ...typedefs import Agent, Model, DecodingParameters, State
+from ...typedefs import Agent, Model, DecodingParameters
 
 
 class AgentRafaGame24_eval(Agent):
@@ -165,12 +165,12 @@ class AgentRafaGame24_eval(Agent):
         return state, total_feedback, rewards
 
     @staticmethod
-    def step_rafa(action, state: GameState_rafa, feedback_print: bool, max_step):
-        state = replace(state, cur_step=state.cur_step + 1)
+    def step_rafa(action, state: StateGame24, feedback_print: bool, max_step):
+        state = replace(state, cur_step=state.cur_step + 1) #todo this can be calculated as actions in list i think
         prev_len = len(state.history)
         generated_state, feedback, reward = AgentRafaGame24_eval.generate_feedback_rafa(action=action,
                                                                                         state=state,
-                                                                                        feedback_print=feedback_print,
+                                                                                        feedback_print=feedback_print
                                                                                         )
         new_len = len(state.history)
         delta = new_len - prev_len + 1 if new_len < 4 else new_len - prev_len
@@ -200,7 +200,7 @@ class AgentRafaGame24_eval(Agent):
             raise TypeError("rafa_options must be of type RAFAOptions")
 
         return AgentRafaGame24_eval.step_rafa(action=action,
-                                              state=state,
+                                              state=state,#todo the eval prob doesnt match 1:1 yet will look at once sharp again
                                               max_step=rafa_options.max_step,
                                               feedback_print=False
                                               # todo this should be removed completly both in function and as argument
@@ -306,32 +306,35 @@ class AgentRAFA_plan(Agent):
     async def act(model: Model, state: StateGame24, **kwargs) -> Any:
         if "request_options" not in kwargs:
             raise ValueError("Missing required parameter: 'request_options'")
-        if "y" not in kwargs:
+        if "candidate" not in kwargs:
             raise ValueError("Missing required parameter: 'y'")
         if "n_propose_sample" not in kwargs:
             raise ValueError("Missing required parameter: 'n_propose_sample'")
         if "n_generate_sample" not in kwargs:
             raise ValueError("Missing required parameter: 'n_generate_sample'")
+        if "reflects_list" not in kwargs:
+            raise ValueError("Missing required parameter: 'reflects_list'")
 
         n_propose_sample = kwargs["n_propose_sample"]
         n_generate_sample = kwargs["n_generate_sample"]
+        reflects_list = kwargs["reflects_list"]
 
         request_options = kwargs["request_options"]
         # value_cache = kwargs["value_cache"]  # If it is None it means we dont want to cache
 
-        y = kwargs["y"]
+        candidate = kwargs["candidate"]
 
         prompt = "Now we would like to play a game of 24. That is, given 4 numbers, try to use "
         "them with arithmetic operations (+ - * /) to get 24. "
 
         history = [{"feedback": prompt},
                    {"feedback": "What you have learned about the puzzle are summarized below.\n" + "\n".join(
-                       state.reflects)}]
+                       reflects_list)}]
 
         # this is the old generate feedback
-        current_numbers = AgentRAFA_plan.get_current_numbers(y if y else state.puzzle)
+        current_numbers = AgentRAFA_plan.get_current_numbers(candidate if candidate else state.puzzle)
         if current_numbers == '24':
-            prompt = prompts.cot.format(input=state.puzzle) + 'Steps:\n' + y
+            prompt = prompts.cot.format(input=state.puzzle) + 'Steps:\n' + candidate
         else:
             prompt = prompts.propose_prompt.format(input=current_numbers)
         propose_prompt = prompt
@@ -363,7 +366,7 @@ class AgentRAFA_plan(Agent):
         for p in proposal_list:
             proposals.extend(p)
         proposals = proposals[:min(len(proposals), n_propose_sample)]
-        return [y + _ + '\n' for _ in proposals]
+        return [candidate + _ + '\n' for _ in proposals]
 
 
 class AgentRAFA_plan_evaluate(Agent):
@@ -395,29 +398,30 @@ class AgentRAFA_plan_evaluate(Agent):
     async def act(model: Model, state: StateGame24, **kwargs) -> Any:
         if "request_options" not in kwargs:
             raise ValueError("Missing required parameter: 'request_options'")
-        if "new_ys" not in kwargs:
-            raise ValueError("Missing required parameter: 'new_ys'")
-        if "y" not in kwargs:
-            raise ValueError("Missing required parameter: 'y'")
+        if "new_output_candidates" not in kwargs:
+            raise ValueError("Missing required parameter: 'new_output_candidates'")
+        if "value_reflects" not in kwargs:
+            raise ValueError("Missing required parameter: 'value_reflects'")
 
         if "n_evaluate_sample" not in kwargs:
             raise ValueError("Missing required parameter: 'n_evaluate_sample'")
 
         n_evaluate_sample = kwargs["n_evaluate_sample"]
         request_options = kwargs["request_options"]
+        value_reflects = kwargs["value_reflects"]
         value_cache = kwargs["value_cache"]  # If it is None it means we dont want to cache
 
-        ys = kwargs["new_ys"]  # to sample etc
+        new_output_candidates = kwargs["new_output_candidates"]  # to sample etc
         cache_value = kwargs["cache_value"]  # to sample etc
 
         prompt = "Now we would like to play a game of 24. That is, given 4 numbers, try to use "
         "them with arithmetic operations (+ - * /) to get 24. "
         history = [prompt,
                    dict(feedback="What you have learned about the puzzle are summarized below.\n" + "\n".join(
-                       state.value_reflects))]
+                       value_reflects))]
         values = []
         local_value_cache = {}
-        for y in ys:  # each partial output
+        for y in new_output_candidates:  # each partial output
             if y in local_value_cache and cache_value:  # avoid duplicate candidates #todo fix the caching
                 value = local_value_cache[y]
             else:

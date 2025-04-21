@@ -62,7 +62,6 @@ class AlgorithmRAFA(Algorithm):
             "action": "",
             "feedback": []
         }
-
         reflects_list = []
         value_reflects_list = []
         # these two should be cleared after each puzzle
@@ -98,45 +97,47 @@ class AlgorithmRAFA(Algorithm):
                 value_reflects_list.append(value_reflects)
 
             # -------------------------------------Now the plan begins
-            ys = ["\n".join(state.env_history) + "\n"] if len(state.env_history) else [""]  # current output candidates
+            output_candidates = ["\n".join(state.history) + "\n"] if len(state.history) else [
+                ""]  # current output candidates
             infos = []
-            for step in range(4 - len(state.env_history)):
-                # get proposals (plan suggestions)
+            for step in range(4 - len(state.history)):
+                # get proposals (plan suggestions/generate)
                 coroutines = []
-                for y in enumerate(ys):
-                    request_options.request_id = f"idx{idx}-step{i}-{hash(state)}-plan-{y}"
-                    coroutine = self.agent_plan.act(
-                        state=state,
-                        puzzle=state.puzzle,
-                        y=y,
-                        n_propose_sample=self.rafa_options.n_propose_sample,
-                        n_generate_sample=self.rafa_options.n_generate_sample,
-                        request_options=request_options,
-                        model=self.model,
-                    )
+                for output_candidate in enumerate(output_candidates):
+                    request_options.request_id = f"idx{idx}-step{i}-{hash(state)}-plan-{output_candidate}"
+                    coroutine = self.agent_plan.act(model=self.model,
+                                                    state=state,
+                                                    request_options=request_options,
+                                                    candidate=output_candidate,
+                                                    reflectsreflects=reflects_list,
+                                                    n_propose_sample=self.rafa_options.n_propose_sample,
+                                                    n_generate_sample=self.rafa_options.n_generate_sample
+                                                    )
                     coroutines.append(coroutine)
 
-                new_ys = await asyncio.gather(*coroutines)
+                new_output_candidates = await asyncio.gather(*coroutines)
 
-                new_ys = list(itertools.chain(*new_ys))
-                ids = list(range(len(new_ys)))
-                # Evaluate proposals(evaluate plan suggestions)
-                # todo for sure this isnot correct arguments but fix later
+                new_output_candidates = list(itertools.chain(*new_output_candidates))
+                ids = list(range(len(new_output_candidates)))
+                # Evaluate proposals(evaluate plan suggestions/evaluate what has been generated)
                 request_options.request_id = f"idx{idx}-step{i}-{hash(state)}-plan_evaluate"
-                values = await self.agent_plan_evaluate.act(puzzle=state.puzzle,
+                values = await self.agent_plan_evaluate.act(model=self.model,
                                                             state=state,
-                                                            new_ys=new_ys,
-                                                            n_evaluate_sample=self.rafa_options.n_evaluate_sample,
                                                             request_options=request_options,
-                                                            model=self.model)
-                select_ids = sorted(ids, key=lambda x: values[x], reverse=True)[:self.rafa_options.n_select_sample]
-                select_new_ys = [new_ys[select_id] for select_id in select_ids]
-                infos.append(
-                    {'step': step, 'x': state.puzzle, 'ys': ys, 'new_ys': new_ys, 'values': values,
-                     'select_new_ys': select_new_ys})
-                ys = select_new_ys
+                                                            new_output_candidates=new_output_candidates,
+                                                            value_reflects=value_reflects_list,
+                                                            n_evaluate_sample=self.rafa_options.n_evaluate_sample,
 
-            ys_list = [y.split('\n')[len(state.history):] for y in ys]
+                                                            )
+                select_ids = sorted(ids, key=lambda x: values[x], reverse=True)[:self.rafa_options.n_select_sample]
+                select_new_ys = [new_output_candidates[select_id] for select_id in select_ids]
+                infos.append(
+                    {'step': step, 'x': state.puzzle, 'ys': output_candidates, 'new_ys': new_output_candidates,
+                     'values': values,
+                     'select_new_ys': select_new_ys})
+                output_candidates = select_new_ys
+
+            ys_list = [y.split('\n')[len(state.history):] for y in output_candidates]
             res_ys = ["\n".join(ys) for ys in ys_list][0]
 
             state = state
@@ -145,14 +146,14 @@ class AlgorithmRAFA(Algorithm):
 
             ##Generating feedback for the progress so far(last step in the old structure)
 
-            state, obs, reward, done, env_info = self.agent_eval.act(state=state,
-                                                                     model=self.model,
+            state, obs, reward, done, env_info = self.agent_eval.act(model=self.model,
+                                                                     state=state,
                                                                      action=res_ys,
                                                                      )
-
-            if done:
-                state = replace(state, reflects=[], value_reflects=[])
-                i = 0
+            # todo i think this is where we update with a step if types match, to be checked
+            # if done:
+            #     state = replace(state, reflects=[], value_reflects=[])
+            #     i = 0
 
             print(obs)
             print(reward, done, env_info)

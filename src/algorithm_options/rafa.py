@@ -51,22 +51,3 @@ class RafaRequest(RequestOptions):
     @classmethod
     def from_request_options(cls, request_options: RequestOptions, **kwargs) -> "RafaRequest":
         return cls(**vars(request_options), **kwargs)
-
-
-@dataclass(frozen=True)
-class GameState_rafa:
-    cur_step: Optional[int] = 0
-    index: int = 0
-
-    puzzle: Optional[str] = None
-    ##used attributes
-    obs_feedback: Optional[str] = ""
-    obs_answer: Optional[str] = ""
-
-    reflects: Optional[list[str]] = field(default_factory=list)
-    value_reflects: Optional[list[str]] = field(default_factory=list)
-
-    obs_history: Optional[list[dict[str, str]]] = field(default_factory=list)
-    env_history: Optional[list[str]] = field(default_factory=list)
-
-    history: Optional[list[str]] = field(default_factory=list)
