@@ -151,6 +151,9 @@ class AlgorithmRAFA(Algorithm):
                                                                      action=res_ys,
                                                                      )
             # todo i think this is where we update with a step if types match, to be checked
+            #comment for self, I think this is where the env should be updated...
+            # action = agent.act(state)
+            # new_state = environment.step(state, action)
             # if done:
             #     state = replace(state, reflects=[], value_reflects=[])
             #     i = 0
