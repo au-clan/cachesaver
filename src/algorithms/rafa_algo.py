@@ -22,7 +22,7 @@ class AlgorithmRAFA(Algorithm):
                  agents: AgentDictRAFA,
                  env: Environment,
                  rafa_options: RAFAOptions,
-                 value_cache: dict = None):
+                 use_local_cache: bool = False):
 
         super().__init__(model, agents, env)
 
@@ -44,7 +44,7 @@ class AlgorithmRAFA(Algorithm):
         self.agent_eval = agents['agent_eval']
 
         # This value_cache should be used as a caching mechanism
-        self.value_cache = value_cache  # todo utilize if it is None it means we dont want to cache values
+        self.value_cache = {} if use_local_cache else None
 
     async def solve(self, idx: int, state: State, namespace: str, value_cache: dict = None):
         # Initial state
@@ -73,14 +73,14 @@ class AlgorithmRAFA(Algorithm):
                                                         model=self.model,
                                                         request_options=request_options,
                                                         value_cache=self.value_cache,
-                                                        rafa_options=self.rafa_options)
+                                                        n_propose_sample=self.rafa_options.n_propose_sample)
 
                 request_options.request_id = f"idx{idx}-step{i}-{hash(state)}-reflect_value{i}"
                 value_reflects = await  self.agent_reflect_value.act(state=state,
                                                                      model=self.model,
                                                                      request_options=request_options,
                                                                      value_cache=self.value_cache,
-                                                                     rafa_options=self.rafa_options)
+                                                                     n_propose_sample=self.rafa_options.n_propose_sample)
                 # collet results in state
                 state = replace(state, reflects=reflects, value_reflects=value_reflects)
 
@@ -97,7 +97,8 @@ class AlgorithmRAFA(Algorithm):
                         state=state,
                         puzzle=state.puzzle,
                         y=y,
-                        rafa_options=self.rafa_options,
+                        n_propose_sample=self.rafa_options.n_propose_sample,
+                        n_generate_sample=self.rafa_options.n_generate_sample,
                         request_options=request_options,
                         model=self.model,
                     )
@@ -113,7 +114,7 @@ class AlgorithmRAFA(Algorithm):
                 values = await self.agent_plan_evaluate.act(puzzle=state.puzzle,
                                                             state=state,
                                                             new_ys=new_ys,
-                                                            rafa_options=self.rafa_options,
+                                                            n_evaluate_sample=self.rafa_options.n_evaluate_sample,
                                                             request_options=request_options,
                                                             model=self.model)
                 select_ids = sorted(ids, key=lambda x: values[x], reverse=True)[:self.rafa_options.n_select_sample]

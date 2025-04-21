@@ -213,11 +213,12 @@ class AgentRAFA_reflect(Agent):
         if "request_options" not in kwargs:
             raise ValueError("Missing required parameter: 'request_options'")
 
-        if "rafa_options" not in kwargs:
-            raise ValueError("Missing required parameter: 'rafa_options'")
+        if "n_propose_sample" not in kwargs:
+            raise ValueError("Missing required parameter: 'n_propose_sample'")
+
         request_options = kwargs["request_options"]
-        value_cache = kwargs["value_cache"]  # If it is None it means we dont want to cache
-        rafa_options = kwargs["rafa_options"]  # to sample etc
+        # value_cache = kwargs["value_cache"]  # If it is None it means we dont want to cache
+        n_propose_sample = kwargs["n_propose_sample"]
 
         y = state.obs_answer
         feedback = state.obs_feedback
@@ -228,10 +229,9 @@ class AgentRAFA_reflect(Agent):
                                                        )
 
         reflect_messages = RafaRequest.from_request_options(request_options=request_options,
-                                                            n=rafa_options.n_propose_sample)
+                                                            n=n_propose_sample)
         reflect_messages.add_user_message(reflect_prompt)
-        ##should prob make log enabling unique request id
-        reflect_messages.request_id = "some new request id goes here should read from previous request id.."
+
         reflects = await model.request(
             request=reflect_messages,
             n=reflect_messages.n,
@@ -255,11 +255,11 @@ class AgentRAFA_reflect_value(Agent):
         if "request_options" not in kwargs:
             raise ValueError("Missing required parameter: 'request_options'")
 
-        if "rafa_options" not in kwargs:
-            raise ValueError("Missing required parameter: 'rafa_options'")
+        if "n_propose_sample" not in kwargs:
+            raise ValueError("Missing required parameter: 'n_propose_sample'")
+
         request_options = kwargs["request_options"]
-        value_cache = kwargs["value_cache"]  # If it is None it means we dont want to cache
-        rafa_options = kwargs["rafa_options"]  # to sample etc
+        n_propose_sample = kwargs["n_propose_sample"]
 
         y = state.obs_answer
         feedback = state.obs_feedback
@@ -268,9 +268,8 @@ class AgentRAFA_reflect_value(Agent):
                                                                    answer=y,
                                                                    feedback=feedback)
         value_reflects_messages = RafaRequest.from_request_options(request_options=request_options,
-                                                                   n=rafa_options.n_propose_sample)
+                                                                   n=n_propose_sample)
         value_reflects_messages.add_user_message(value_reflect_prompt)
-        value_reflects_messages.request_id = "some new request id goes here should read from previous request id.."
         value_reflects = await model.request(request=value_reflects_messages,
                                              n=value_reflects_messages.n,
                                              request_id=value_reflects_messages.request_id,
@@ -280,7 +279,7 @@ class AgentRAFA_reflect_value(Agent):
                                                  temperature=value_reflects_messages.temperature,
                                                  top_p=value_reflects_messages.top_p,
                                                  stop=value_reflects_messages.stop_token,
-                                                 logprobs=value_reflects_messages.logprobs,
+                                                 logprobs=value_reflects_messages.logprobs
                                              )
                                              )
         return value_reflects
@@ -298,12 +297,17 @@ class AgentRAFA_plan(Agent):
             raise ValueError("Missing required parameter: 'request_options'")
         if "y" not in kwargs:
             raise ValueError("Missing required parameter: 'y'")
+        if "n_propose_sample" not in kwargs:
+            raise ValueError("Missing required parameter: 'n_propose_sample'")
+        if "n_generate_sample" not in kwargs:
+            raise ValueError("Missing required parameter: 'n_generate_sample'")
 
-        if "rafa_options" not in kwargs:
-            raise ValueError("Missing required parameter: 'rafa_options'")
+        n_propose_sample = kwargs["n_propose_sample"]
+        n_generate_sample = kwargs["n_generate_sample"]
+
         request_options = kwargs["request_options"]
-        value_cache = kwargs["value_cache"]  # If it is None it means we dont want to cache
-        rafa_options = kwargs["rafa_options"]  # to sample etc
+        # value_cache = kwargs["value_cache"]  # If it is None it means we dont want to cache
+
         y = kwargs["y"]
 
         prompt = "Now we would like to play a game of 24. That is, given 4 numbers, try to use "
@@ -321,7 +325,7 @@ class AgentRAFA_plan(Agent):
             prompt = prompts.propose_prompt.format(input=current_numbers)
         propose_prompt = prompt
         history_messages = RafaRequest.from_request_options(request_options=request_options,
-                                                            n=rafa_options.n_generate_sample)
+                                                            n=n_generate_sample)
 
         for h in history:
             if 'answer' in h:
@@ -329,8 +333,6 @@ class AgentRAFA_plan(Agent):
             if 'feedback' in h:
                 history_messages.add_user_message(h["feedback"])
         history_messages.add_user_message(propose_prompt)
-        history_messages.request_id = f"step-{str(state.puzzle)}-{1}-{y}-{hash(1)}"
-        # todo add some unique request id for better tracking ...not urgent for my purpose
         result = await model.request(history_messages,
                                      n=history_messages.n,
                                      request_id=history_messages.request_id,
@@ -349,7 +351,7 @@ class AgentRAFA_plan(Agent):
         proposals = []
         for p in proposal_list:
             proposals.extend(p)
-        proposals = proposals[:min(len(proposals), rafa_options.n_propose_sample)]
+        proposals = proposals[:min(len(proposals), n_propose_sample)]
         return [y + _ + '\n' for _ in proposals]
 
 
@@ -387,11 +389,13 @@ class AgentRAFA_plan_evaluate(Agent):
         if "y" not in kwargs:
             raise ValueError("Missing required parameter: 'y'")
 
-        if "rafa_options" not in kwargs:
-            raise ValueError("Missing required parameter: 'rafa_options'")
+        if "n_evaluate_sample" not in kwargs:
+            raise ValueError("Missing required parameter: 'n_evaluate_sample'")
+
+        n_evaluate_sample = kwargs["n_evaluate_sample"]
         request_options = kwargs["request_options"]
         value_cache = kwargs["value_cache"]  # If it is None it means we dont want to cache
-        rafa_options = kwargs["rafa_options"]  # to sample etc
+
         ys = kwargs["new_ys"]  # to sample etc
         cache_value = kwargs["cache_value"]  # to sample etc
 
@@ -411,9 +415,9 @@ class AgentRAFA_plan_evaluate(Agent):
 
                 if cache_value and value_prompt in value_cache:  # todo the caching is so poorly done in rafa.. should rly consider what to do either remove or do it right
                     return AgentRAFA_plan_evaluate.value_cache[value_prompt]  # todo cache values in future
-                ##in these brackets is old gpt with history :[
+
                 history_messages = RafaRequest.from_request_options(request_options=request_options,
-                                                                    n=rafa_options.n_evaluate_sample)
+                                                                    n=n_evaluate_sample)
                 for h in history:
                     if 'answer' in h:
                         history_messages.add_assistant_message(h["answer"])
