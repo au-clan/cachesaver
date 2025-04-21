@@ -75,7 +75,7 @@ async def run(args):
 
     # Config
     # config = OmegaConf.load(args.conf_path)
-    config = OmegaConf.load(r"C:\Users\Oskar\PycharmProjects\AUCLAN\cachesaver\scripts\game24.yaml")
+    config = OmegaConf.load(r"C:\Users\Oskar\PycharmProjects\AUCLAN\cachesaver\scripts\hotpotqa.yaml")
 
     # Setup the method
     ## We can create a method factory for this
@@ -137,7 +137,8 @@ async def run(args):
     else:
         raise NotImplementedError("Method not implemented yet.")
     
-    benchmark = BenchmarkHotpotQA(path=args.dataset_path, split=args.split)
+    # benchmark = BenchmarkHotpotQA(path=args.dataset_path, split=args.split)
+    benchmark = BenchmarkHotpotQA(path=r"C:\Users\Oskar\PycharmProjects\AUCLAN\cachesaver\datasets\dataset_hotpotqa.csv.gz", split=args.split)
     results = await method.benchmark(
         benchmark=benchmark,
         share_ns=args.share_ns,
@@ -167,7 +168,7 @@ async def run(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Solve HotpotQA using LLMs.")
-    parser.add_argument("--provider", type=str, help="LLM Provider", choices=["openai", "together", "local"], default="openai")
+    parser.add_argument("--provider", type=str, help="LLM Provider", choices=["openai", "together", "local", "groq"], default="groq")
     parser.add_argument("--model", type=str, help="LLM Model",  default="gpt-4o-mini")
     parser.add_argument("--batch_size", type=int, help="CacheSaver's batch size", default=300)
     parser.add_argument("--timeout", type=float, help="CacheSaver's timeout", default=0.05)

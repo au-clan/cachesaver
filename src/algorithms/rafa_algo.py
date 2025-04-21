@@ -3,7 +3,7 @@ import itertools
 from dataclasses import replace
 from typing import TypedDict
 
-from ..algorithm_options.rafa import RAFAOptions, RequestOptions, GameState_rafa
+from ..algorithm_options.rafa import RAFAOptions, RequestOptions
 from ..typedefs import Algorithm, Model, Agent, Environment, Benchmark, State
 
 
