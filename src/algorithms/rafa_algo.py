@@ -57,41 +57,53 @@ class AlgorithmRAFA(Algorithm):
                                          namespace=namespace)
 
         done = False
+        ##-------These two methods are from the obs structure they had
+        observations = {
+            "action": "",
+            "feedback": []
+        }
+
+        reflects_list = []
+        value_reflects_list = []
+        # these two should be cleared after each puzzle
+
+        ##-------
         i = 0
         while not done:
             request_options.request_id = f"idx{idx}-step{i}-{hash(state)}-agent{0}"
             i += 1
 
-            puzzle = state.puzzle
-            state = GameState_rafa()
-            state = replace(state, puzzle=puzzle)
-
-            # reflect
-            if len(state.obs_feedback) >= 1:
+            if len(observations['feedback']) >= 1:
                 request_options.request_id = f"idx{idx}-step{i}-{hash(state)}-reflect{i}"
-                reflects = await self.agent_reflect.act(state=state,
-                                                        model=self.model,
+                reflects = await self.agent_reflect.act(model=self.model,
+                                                        state=state,
                                                         request_options=request_options,
-                                                        value_cache=self.value_cache,
-                                                        n_propose_sample=self.rafa_options.n_propose_sample)
+                                                        n_propose_sample=self.rafa_options.n_propose_sample,
+                                                        observations_answer=observations['answer'],
+                                                        observations_feedback=observations['feedback']
+                                                        )
+                reflects_list.append(reflects)
 
+                # score reflects?
                 request_options.request_id = f"idx{idx}-step{i}-{hash(state)}-reflect_value{i}"
-                value_reflects = await  self.agent_reflect_value.act(state=state,
-                                                                     model=self.model,
+                value_reflects = await  self.agent_reflect_value.act(model=self.model,
+                                                                     state=state,
                                                                      request_options=request_options,
-                                                                     value_cache=self.value_cache,
-                                                                     n_propose_sample=self.rafa_options.n_propose_sample)
-                # collet results in state
-                state = replace(state, reflects=reflects, value_reflects=value_reflects)
+                                                                     n_propose_sample=self.rafa_options.n_propose_sample,
+                                                                     observations_answer=observations['answer'],
+                                                                     observations_feedback=observations['feedback']
 
-            # plan and eval plan
+                                                                     )
+                # update the value reflects
+                value_reflects_list.append(value_reflects)
+
+            # -------------------------------------Now the plan begins
             ys = ["\n".join(state.env_history) + "\n"] if len(state.env_history) else [""]  # current output candidates
             infos = []
             for step in range(4 - len(state.env_history)):
                 # get proposals (plan suggestions)
                 coroutines = []
                 for y in enumerate(ys):
-
                     request_options.request_id = f"idx{idx}-step{i}-{hash(state)}-plan-{y}"
                     coroutine = self.agent_plan.act(
                         state=state,

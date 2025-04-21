@@ -18,6 +18,10 @@ class StateGame24(State):
     # A random number associated with the state
     randomness: int
 
+    #for rafa
+    history = []
+    feedbacks = []
+
 
 
     def serialize(self) -> dict:

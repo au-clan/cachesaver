@@ -5,7 +5,7 @@ from typing import Any
 
 import sympy
 
-from . import prompts as prompts
+from . import prompts as prompts, StateGame24
 from ...algorithm_options.rafa import RafaRequest, RAFAOptions, GameState_rafa
 from ...typedefs import Agent, Model, DecodingParameters, State
 
@@ -101,7 +101,7 @@ class AgentRafaGame24_eval(Agent):
         return False, ""
 
     @staticmethod
-    def check_step_rafa(state: GameState_rafa, action):
+    def check_step_rafa(state: StateGame24, action):
         try:
             if "answer" in action.lower():
                 correct, feedback = AgentRafaGame24_eval.check_answer(state.puzzle, action)
@@ -187,7 +187,7 @@ class AgentRafaGame24_eval(Agent):
         return generated_state, obs, reward, done, info
 
     @staticmethod
-    def act(model: Model, state: GameState_rafa, **kwargs) -> Any:
+    def act(model: Model, state: StateGame24, **kwargs) -> Any:
         if "rafa_options" not in kwargs:
             raise ValueError("Missing required parameter: 'rafa_options'")
 
@@ -209,23 +209,28 @@ class AgentRafaGame24_eval(Agent):
 
 class AgentRAFA_reflect(Agent):
     @staticmethod
-    async def act(model: Model, state: GameState_rafa, **kwargs) -> Any:
+    async def act(model: Model, state: StateGame24, **kwargs) -> Any:
         if "request_options" not in kwargs:
             raise ValueError("Missing required parameter: 'request_options'")
 
         if "n_propose_sample" not in kwargs:
             raise ValueError("Missing required parameter: 'n_propose_sample'")
 
+        if "observations_answer" not in kwargs:
+            raise ValueError("Missing required parameter: 'observations_answer'")
+
+        if "observations_feedback" not in kwargs:
+            raise ValueError("Missing required parameter: 'observations_feedback'")
+
         request_options = kwargs["request_options"]
         # value_cache = kwargs["value_cache"]  # If it is None it means we dont want to cache
         n_propose_sample = kwargs["n_propose_sample"]
-
-        y = state.obs_answer
-        feedback = state.obs_feedback
+        observations_answer = kwargs["observations_answer"]
+        observations_feedback = kwargs["observations_feedback"]
 
         reflect_prompt = prompts.reflect_prompt.format(input=state.puzzle,
-                                                       answer=y,
-                                                       feedback=feedback
+                                                       answer=observations_answer,
+                                                       feedback=observations_feedback
                                                        )
 
         reflect_messages = RafaRequest.from_request_options(request_options=request_options,
@@ -251,22 +256,28 @@ class AgentRAFA_reflect(Agent):
 
 class AgentRAFA_reflect_value(Agent):
     @staticmethod  # todo this is 1:1 with reflect except the prompt is value here
-    async def act(model: Model, state: GameState_rafa, **kwargs) -> Any:
+    async def act(model: Model, state: StateGame24, **kwargs) -> Any:
         if "request_options" not in kwargs:
             raise ValueError("Missing required parameter: 'request_options'")
 
         if "n_propose_sample" not in kwargs:
             raise ValueError("Missing required parameter: 'n_propose_sample'")
 
-        request_options = kwargs["request_options"]
-        n_propose_sample = kwargs["n_propose_sample"]
+        if "observations_answer" not in kwargs:
+            raise ValueError("Missing required parameter: 'observations_answer'")
 
-        y = state.obs_answer
-        feedback = state.obs_feedback
+        if "observations_feedback" not in kwargs:
+            raise ValueError("Missing required parameter: 'observations_feedback'")
+
+        request_options = kwargs["request_options"]
+        # value_cache = kwargs["value_cache"]  # If it is None it means we dont want to cache
+        n_propose_sample = kwargs["n_propose_sample"]
+        observations_answer = kwargs["observations_answer"]
+        observations_feedback = kwargs["observations_feedback"]
 
         value_reflect_prompt = prompts.value_reflect_prompt.format(input=state.puzzle,
-                                                                   answer=y,
-                                                                   feedback=feedback)
+                                                                   answer=observations_answer,
+                                                                   feedback=observations_feedback)
         value_reflects_messages = RafaRequest.from_request_options(request_options=request_options,
                                                                    n=n_propose_sample)
         value_reflects_messages.add_user_message(value_reflect_prompt)
@@ -292,7 +303,7 @@ class AgentRAFA_plan(Agent):
         return last_line.split('left: ')[-1].split(')')[0]
 
     @staticmethod
-    async def act(model: Model, state: GameState_rafa, **kwargs) -> Any:
+    async def act(model: Model, state: StateGame24, **kwargs) -> Any:
         if "request_options" not in kwargs:
             raise ValueError("Missing required parameter: 'request_options'")
         if "y" not in kwargs:
@@ -381,7 +392,7 @@ class AgentRAFA_plan_evaluate(Agent):
         return value
 
     @staticmethod
-    async def act(model: Model, state: State, **kwargs) -> Any:
+    async def act(model: Model, state: StateGame24, **kwargs) -> Any:
         if "request_options" not in kwargs:
             raise ValueError("Missing required parameter: 'request_options'")
         if "new_ys" not in kwargs:
