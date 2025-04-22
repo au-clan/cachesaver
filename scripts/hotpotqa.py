@@ -138,7 +138,8 @@ async def run(args):
         raise NotImplementedError("Method not implemented yet.")
     
     # benchmark = BenchmarkHotpotQA(path=args.dataset_path, split=args.split)
-    benchmark = BenchmarkHotpotQA(path=r"C:\Users\Oskar\PycharmProjects\AUCLAN\cachesaver\datasets\dataset_hotpotqa.csv.gz", split=args.split)
+    # benchmark = BenchmarkHotpotQA(path=r"C:\Users\Oskar\PycharmProjects\AUCLAN\cachesaver\datasets\dataset_hotpotqa.csv.gz", split=args.split)
+    benchmark = BenchmarkHotpotQA(path=r"C:\Users\Oskar\PycharmProjects\AUCLAN\cachesaver\datasets\dataset_hotpotqa.csv.gz", split="single")
     results = await method.benchmark(
         benchmark=benchmark,
         share_ns=args.share_ns,

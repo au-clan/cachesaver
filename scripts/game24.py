@@ -139,8 +139,10 @@ async def run(args):
     else:
         raise NotImplementedError("Method not implemented yet.")
 
+    # benchmark = BenchmarkGame24(path=r"C:\Users\Oskar\PycharmProjects\AUCLAN\cachesaver\datasets\dataset_game24.csv.gz",
+    #                             split=args.split)
     benchmark = BenchmarkGame24(path=r"C:\Users\Oskar\PycharmProjects\AUCLAN\cachesaver\datasets\dataset_game24.csv.gz",
-                                split=args.split)
+                                split="single")
     results = await method.benchmark(
         benchmark=benchmark,
         share_ns=args.share_ns,
