@@ -3,7 +3,7 @@ import asyncio
 import logging
 import os
 
-from cachesaver.pipelines import OnlineAPI
+from cachesaver.pipelines import OnlineAPI, OrderedLocalAPI, LocalAPI
 from diskcache import Cache
 from omegaconf import OmegaConf
 from openai import AsyncOpenAI
@@ -54,7 +54,13 @@ async def run(args):
         raise NotImplementedError("Local model is not implemented yet.")
 
     # CacheSaver Pipeline: Batcher -> Reorderer -> Deduplicator -> Cache -> Model
-    pipeline = OnlineAPI(
+    # pipeline = OnlineAPI(
+    #     model=model,
+    #     cache=cache,
+    #     batch_size=args.batch_size,
+    #     timeout=args.timeout
+    # )
+    pipeline = LocalAPI(
         model=model,
         cache=cache,
         batch_size=args.batch_size,

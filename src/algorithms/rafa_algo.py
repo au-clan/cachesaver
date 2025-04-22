@@ -1,6 +1,5 @@
 ﻿import asyncio
 import itertools
-from dataclasses import replace
 from typing import TypedDict
 
 from ..algorithm_options.rafa import RAFAOptions, RequestOptions
@@ -44,6 +43,7 @@ class AlgorithmRAFA(Algorithm):
         self.agent_eval = agents['agent_eval']
 
     async def solve(self, idx: int, state: State, namespace: str, value_cache: dict = None):
+
         # Initial state
 
         request_options = RequestOptions(max_completion_tokens=200,

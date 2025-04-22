@@ -67,8 +67,13 @@ class GroqModel(ModelBasic):
         return responses
 
     async def request(self, request: RafaRequest) -> Response:
-
-        responses = await asyncio.gather(*(self.single_request(request.prompt) for _ in range(request.n)))
+        coroutines=[]
+        for i in range(request.n):
+            request_with_unique_id=request.prompt
+            request_with_unique_id.request_id=request_with_unique_id.request_id+str(i)
+            coroutines.append(self.single_request(request_with_unique_id))
+        # responses = await asyncio.gather(*(self.single_request(request.prompt) for _ in range(request.n)))
+        responses = await asyncio.gather(*coroutines)
         # todo format here, request count, input tokens and output tokens math should go here
         merged_data = [item for r in responses for item in r.data]
         merged_response = Response(
