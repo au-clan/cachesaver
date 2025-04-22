@@ -223,10 +223,8 @@ class AgentRAFA_reflect(Agent):
         if "observations_feedback" not in kwargs:
             raise ValueError("Missing required parameter: 'observations_feedback'")
 
-        cache = kwargs.get("cache")  # <- optional
-
         request_options = kwargs["request_options"]
-        # value_cache = kwargs["value_cache"]  # If it is None it means we dont want to cache
+
         n_propose_sample = kwargs["n_propose_sample"]
         observations_answer = kwargs["observations_answer"]
         observations_feedback = kwargs["observations_feedback"]
@@ -241,10 +239,6 @@ class AgentRAFA_reflect(Agent):
 
         reflect_messages.add_user_message(reflect_prompt)
 
-        # Check the cache and return if hit
-        if cache is not None and reflect_messages.messages_hash() in cache:
-            return cache[reflect_messages.messages_hash()]
-
         reflects = await model.request(
             request=reflect_messages,
             n=reflect_messages.n,
@@ -258,9 +252,6 @@ class AgentRAFA_reflect(Agent):
                 logprobs=reflect_messages.logprobs,
             )
         )
-        # Store the result in the cache for future use
-        if cache is not None:
-            cache[hash(reflect_prompt)] = reflects
 
         return reflects
 
@@ -280,10 +271,8 @@ class AgentRAFA_reflect_value(Agent):
         if "observations_feedback" not in kwargs:
             raise ValueError("Missing required parameter: 'observations_feedback'")
 
-        cache = kwargs.get("cache")  # <- optional
-
         request_options = kwargs["request_options"]
-        # value_cache = kwargs["value_cache"]  # If it is None it means we dont want to cache
+
         n_propose_sample = kwargs["n_propose_sample"]
         observations_answer = kwargs["observations_answer"]
         observations_feedback = kwargs["observations_feedback"]
@@ -294,10 +283,6 @@ class AgentRAFA_reflect_value(Agent):
         value_reflects_messages = RafaRequest.from_request_options(request_options=request_options,
                                                                    n=n_propose_sample)
         value_reflects_messages.add_user_message(value_reflect_prompt)
-
-        # Check the cache and return if hit
-        if cache is not None and value_reflects_messages.messages_hash() in cache:
-            return cache[value_reflects_messages.messages_hash()]
 
         value_reflects = await model.request(request=value_reflects_messages,
                                              n=value_reflects_messages.n,
@@ -311,9 +296,6 @@ class AgentRAFA_reflect_value(Agent):
                                                  logprobs=value_reflects_messages.logprobs
                                              )
                                              )
-        # Store the result in the cache for future use
-        if cache is not None:
-            cache[hash(value_reflects_messages.messages)] = value_reflects
 
         return value_reflects
 
@@ -337,14 +319,11 @@ class AgentRAFA_plan(Agent):
         if "reflects_list" not in kwargs:
             raise ValueError("Missing required parameter: 'reflects_list'")
 
-        cache = kwargs.get("cache")  # <- optional
-
         n_propose_sample = kwargs["n_propose_sample"]
         n_generate_sample = kwargs["n_generate_sample"]
         reflects_list = kwargs["reflects_list"]
 
         request_options = kwargs["request_options"]
-        # value_cache = kwargs["value_cache"]  # If it is None it means we dont want to cache
 
         candidate = kwargs["candidate"]
 
@@ -373,33 +352,25 @@ class AgentRAFA_plan(Agent):
         history_messages.add_user_message(propose_prompt)
         # history_messages.stop_token = ["\n\n"]  # todo i dont get how their method works with this, in groq it doesnt work
 
-        # Check the cache and return if hit
-        if cache is not None and history_messages.messages_hash() in cache:
-            result = cache[history_messages.messages_hash()]
-        else:
-            result = await model.request(history_messages,
-                                         n=history_messages.n,
-                                         request_id=history_messages.request_id,
-                                         namespace=history_messages.namespace,
-                                         params=DecodingParameters(
-                                             max_completion_tokens=history_messages.max_completion_tokens,
-                                             temperature=history_messages.temperature,
-                                             top_p=history_messages.top_p,
-                                             stop=history_messages.stop_token,
-                                             logprobs=history_messages.logprobs,
-                                         )
-                                         )
-        # Store the result in the cache for future use
-        if cache is not None:
-            cache[history_messages.messages_hash()] = result
-        ##]]]
+        result = await model.request(history_messages,
+                                     n=history_messages.n,
+                                     request_id=history_messages.request_id,
+                                     namespace=history_messages.namespace,
+                                     params=DecodingParameters(
+                                         max_completion_tokens=history_messages.max_completion_tokens,
+                                         temperature=history_messages.temperature,
+                                         top_p=history_messages.top_p,
+                                         stop=history_messages.stop_token,
+                                         logprobs=history_messages.logprobs,
+                                     )
+                                     )
 
         proposal_list = [x.split('\n') for x in result]  # todo the stop token
         proposals = []
         for p in proposal_list:
             proposals.extend(p)
         proposals = proposals[:min(len(proposals), n_propose_sample)]
-        return [candidate + _ + '\n' for _ in proposals], cache
+        return [candidate + _ + '\n' for _ in proposals]
 
 
 class AgentRAFA_plan_evaluate(Agent):
@@ -439,32 +410,22 @@ class AgentRAFA_plan_evaluate(Agent):
         if "n_evaluate_sample" not in kwargs:
             raise ValueError("Missing required parameter: 'n_evaluate_sample'")
 
-        cache = kwargs.get("cache")  # <- optional
-
         n_evaluate_sample = kwargs["n_evaluate_sample"]
         request_options = kwargs["request_options"]
         value_reflects = kwargs["value_reflects"]
-        # value_cache = kwargs["value_cache"]  # If it is None it means we dont want to cache
 
         new_output_candidates = kwargs["new_output_candidates"]  # to sample etc
-        # cache_value = kwargs["cache_value"]  # to sample etc
 
         prompt = "Now we would like to play a game of 24. That is, given 4 numbers, try to use "
         "them with arithmetic operations (+ - * /) to get 24. "
         history = [prompt,
                    dict(feedback="What you have learned about the puzzle are summarized below.\n" + "\n".join(
                        value_reflects))]
-        values = []  # todo remove this
-        # local_value_cache = {} #todo remove this
+        values = []
+
         for y in new_output_candidates:  # each partial output
-            # if y in local_value_cache and cache is not None:  # avoid duplicate candidates #todo fix the caching #todo remove this
-            #     value = local_value_cache[y] #todo remove this
-            # else:
 
             value_prompt = AgentRAFA_plan_evaluate.value_prompt_wrap(state.puzzle, y)
-
-            # if cache_value and value_prompt in value_cache:  # todo the caching is so poorly done in rafa.. should rly consider what to do either remove or do it right
-            #     return AgentRAFA_plan_evaluate.value_cache[value_prompt]  # todo cache values in future
 
             history_messages = RafaRequest.from_request_options(request_options=request_options,
                                                                 n=n_evaluate_sample)
@@ -476,9 +437,6 @@ class AgentRAFA_plan_evaluate(Agent):
             history_messages.add_user_message(value_prompt)
             history_messages.request_id = f"step-{str(state.puzzle)}-{1}-{y}-{hash(1)}"  # todo this shpould be done properly at some point
 
-            # if cache is not None and history_messages.messages_hash() in cache:
-            #     value_outputs = cache[history_messages.messages_hash()]
-            # else:
             value_outputs = await model.request(history_messages,
                                                 n=history_messages.n,
                                                 request_id=history_messages.request_id,
@@ -491,21 +449,9 @@ class AgentRAFA_plan_evaluate(Agent):
                                                     logprobs=history_messages.logprobs,
                                                 )
                                                 )
-            # if cache is not None:
-            #     cache[history_messages.messages_hash()] = str(value_outputs[0]) #todo overwriting if in cache.. fix later
 
-            value1 = AgentRAFA_plan_evaluate.value_outputs_unwrap(state.puzzle, y, value_outputs)  # todo fix types
-            # if cache is not None:
-            #     key=history_messages.messages_hash()
-            #     cache[key] = value1 #todo overwriting if in cache.. fix later
+            value = AgentRAFA_plan_evaluate.value_outputs_unwrap(state.puzzle, y, value_outputs)  # todo fix types
 
-            # if cache_value:
-            #     # environment.Prompter.value_cache[value_prompt] = value
-            #     # todo fix the caching
-            #     print("cache not impl yet")
-            value = value1
-            # if cache is not None:  # todo check if null -> if not none then add to cache as pass along
-            #     local_value_cache[y] = value
             values.append(value)
 
         return values
