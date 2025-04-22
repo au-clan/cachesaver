@@ -43,9 +43,6 @@ class AlgorithmRAFA(Algorithm):
         # the agent that evaluate after each loop in the while loop: agent_eval
         self.agent_eval = agents['agent_eval']
 
-        # This value_cache should be used as a caching mechanism
-        self.value_cache = {} if use_local_cache else None
-
     async def solve(self, idx: int, state: State, namespace: str, value_cache: dict = None):
         # Initial state
 
@@ -64,6 +61,7 @@ class AlgorithmRAFA(Algorithm):
         }
         reflects_list = []
         value_reflects_list = []
+
         # these two should be cleared after each puzzle
 
         ##-------
@@ -80,7 +78,9 @@ class AlgorithmRAFA(Algorithm):
                                                         n_propose_sample=self.rafa_options.n_propose_sample,
                                                         observations_answer=observations['answer'],
                                                         observations_feedback=observations['feedback']
+
                                                         )
+
                 reflects_list.append(reflects)
 
                 # score reflects?
@@ -93,6 +93,7 @@ class AlgorithmRAFA(Algorithm):
                                                                      observations_feedback=observations['feedback']
 
                                                                      )
+
                 # update the value reflects
                 value_reflects_list.append(value_reflects)
 
@@ -103,15 +104,16 @@ class AlgorithmRAFA(Algorithm):
             for step in range(4 - len(state.history)):
                 # get proposals (plan suggestions/generate)
                 coroutines = []
-                for output_candidate in enumerate(output_candidates):
-                    request_options.request_id = f"idx{idx}-step{i}-{hash(state)}-plan-{output_candidate}"
+                for output_candidate in output_candidates:
+                    request_options.request_id = f"idx{idx}-step{i}-step-in-history{step}-{hash(state)}-plan-{output_candidate}"
                     coroutine = self.agent_plan.act(model=self.model,
                                                     state=state,
                                                     request_options=request_options,
                                                     candidate=output_candidate,
-                                                    reflectsreflects=reflects_list,
+                                                    reflects_list=reflects_list,
                                                     n_propose_sample=self.rafa_options.n_propose_sample,
                                                     n_generate_sample=self.rafa_options.n_generate_sample
+
                                                     )
                     coroutines.append(coroutine)
 
@@ -126,7 +128,7 @@ class AlgorithmRAFA(Algorithm):
                                                             request_options=request_options,
                                                             new_output_candidates=new_output_candidates,
                                                             value_reflects=value_reflects_list,
-                                                            n_evaluate_sample=self.rafa_options.n_evaluate_sample,
+                                                            n_evaluate_sample=self.rafa_options.n_evaluate_sample
 
                                                             )
                 select_ids = sorted(ids, key=lambda x: values[x], reverse=True)[:self.rafa_options.n_select_sample]
@@ -151,7 +153,7 @@ class AlgorithmRAFA(Algorithm):
                                                                      action=res_ys,
                                                                      )
             # todo i think this is where we update with a step if types match, to be checked
-            #comment for self, I think this is where the env should be updated...
+            # comment for self, I think this is where the env should be updated...
             # action = agent.act(state)
             # new_state = environment.step(state, action)
             # if done:
@@ -170,7 +172,7 @@ class AlgorithmRAFA(Algorithm):
                 idx=index,
                 state=state,
                 namespace="benchmark" if share_ns else f"benchmark-{index}",
-                value_cache=cache
+                value_cache=cache  # todo i dont think this is needed in rafa
             )
             for index, state in benchmark
         ]

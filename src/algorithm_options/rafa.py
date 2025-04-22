@@ -1,4 +1,6 @@
-﻿from dataclasses import dataclass, field
+﻿import hashlib
+import json
+from dataclasses import dataclass, field
 from typing import TypedDict, Literal, List, Optional
 
 
@@ -51,3 +53,8 @@ class RafaRequest(RequestOptions):
     @classmethod
     def from_request_options(cls, request_options: RequestOptions, **kwargs) -> "RafaRequest":
         return cls(**vars(request_options), **kwargs)
+
+    def messages_hash(self) -> str:
+        """Return a stable hash of the message list."""
+        message_str = json.dumps(self.messages, sort_keys=True)
+        return hashlib.sha256(message_str.encode('utf-8')).hexdigest()
