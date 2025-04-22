@@ -17,6 +17,7 @@ class GroqModel(ModelBasic):
         self.client = AsyncGroq(api_key=api_key)
         self.model = model
 
+
         self.model_limits = {
             "deepseek-r1-distill-llama-70b": (30, 1000, 6000, None),
             "deepseek-r1-distill-qwen-32b": (30, 1000, 6000, None),
