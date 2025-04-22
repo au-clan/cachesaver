@@ -28,8 +28,8 @@ class AgentRafaGame24_eval(Agent):
             return False, "The formula is invalid."
 
     @staticmethod
-    def check_valid_move_rafa(state, cur_step):
-        if state.index == 1:
+    def check_valid_move_rafa(state, cur_step, idx):
+        if idx == 1:
             original_nums = [float(num) for num in state.history[-1].split(" ")]
         else:
             original_nums = [float(num) for num in state.history[-1].split('left:')[-1].strip("()").split(" ") if
@@ -101,33 +101,33 @@ class AgentRafaGame24_eval(Agent):
         return False, ""
 
     @staticmethod
-    def check_step_rafa(state: StateGame24, action):
+    def check_step_rafa(state: StateGame24,idx, action):
         try:
             if "answer" in action.lower():
                 correct, feedback = AgentRafaGame24_eval.check_answer(state.puzzle, action)
                 if not correct:
-                    return f"Step {state.index} tries to give an answer but it is incorrect. {feedback}", 0
-                return f"Step {state.index} is correct. {feedback}", 10
+                    return f"Step {idx} tries to give an answer but it is incorrect. {feedback}", 0
+                return f"Step {idx} is correct. {feedback}", 10
             else:
                 # Check if the step is valid
-                correct, feedback = AgentRafaGame24_eval.check_valid_move_rafa(state, action)
+                correct, feedback = AgentRafaGame24_eval.check_valid_move_rafa(state=state, cur_step=action, idx=idx)
                 if not correct:
-                    return f"Step {state.index} is illegal. {feedback}", 0
+                    return f"Step {idx} is illegal. {feedback}", 0
 
                 formula = action.split('left:')[0].strip("()")
                 correct, feedback = AgentRafaGame24_eval.check_equation(formula)
                 if not correct:
-                    return f"Step {state.index} is not correctly calculated. {feedback}", 0
+                    return f"Step {idx} is not correctly calculated. {feedback}", 0
 
                 correct, feedback = AgentRafaGame24_eval.check_twentyfour(action)
                 if not correct:
-                    return f"Step {state.index} is impossible to lead to 24. {feedback}", 0
+                    return f"Step {idx} is impossible to lead to 24. {feedback}", 0
 
-                return f"Step {state.index} is correct and can lead to 24.", 1
+                return f"Step {idx} is correct and can lead to 24.", 1
 
         except Exception as e:
             print(e)
-            return f"Step {state.index} is invalid.", 0
+            return f"Step {idx} is invalid.", 0
 
     @staticmethod
     def generate_feedback_rafa(action, state: StateGame24, feedback_print: bool):
@@ -149,7 +149,7 @@ class AgentRafaGame24_eval(Agent):
             # print(action)
             if feedback_print:
                 idx += 1
-            feedback, reward = AgentRafaGame24_eval.check_step_rafa(state=state, action=action)
+            feedback, reward = AgentRafaGame24_eval.check_step_rafa(state=state, action=action, idx=idx)
             if feedback_print:
                 state = replace(state, feedbacks=state.feedbacks.append(feedback))
                 feedbacks.append(feedback)
@@ -166,7 +166,8 @@ class AgentRafaGame24_eval(Agent):
 
     @staticmethod
     def step_rafa(action, state: StateGame24, feedback_print: bool, max_step):
-        state = replace(state, cur_step=state.cur_step + 1)  # todo this can be calculated as actions in list i think
+        # state = replace(state, cur_step=state.cur_step + 1)  # todo this can be calculated as actions in list i think
+        state=replace(state, current_state= state.current_step+1)
         prev_len = len(state.history)
         generated_state, feedback, reward = AgentRafaGame24_eval.generate_feedback_rafa(action=action,
                                                                                         state=state,
@@ -175,10 +176,10 @@ class AgentRafaGame24_eval(Agent):
         new_len = len(state.history)
         delta = new_len - prev_len + 1 if new_len < 4 else new_len - prev_len
         assert delta > 0
-        done = (reward >= 10) or (generated_state.cur_step > max_step)
+        done = (reward >= 10) or (state.current_step > max_step)
         answer = [f"Step {i + 1}: {x}" for i, x in enumerate(action.split('\n')[:delta]) if x != ""]
         answer = "Attempt answer: " + "\n".join(answer)
-        if generated_state.feedback:
+        if True: #todo this is default in rafa
             info = {'action': action, 'history': generated_state.history}
             obs = {'answer': answer, 'feedback': feedback}
         else:
@@ -188,21 +189,21 @@ class AgentRafaGame24_eval(Agent):
 
     @staticmethod
     def act(model: Model, state: StateGame24, **kwargs) -> Any:
-        if "rafa_options" not in kwargs:
-            raise ValueError("Missing required parameter: 'rafa_options'")
 
         if "action" not in kwargs:
             raise ValueError("Missing required parameter: 'action'")
+        if "max_step" not in kwargs:
+            raise ValueError("Missing required parameter: 'max_step'")
 
-        rafa_options = kwargs["rafa_options"]  # to sample etc
+
         action = kwargs["action"]  # to sample etc
-        if not isinstance(rafa_options, RAFAOptions):
-            raise TypeError("rafa_options must be of type RAFAOptions")
+        max_step = kwargs["max_step"]  # to sample etc
+
 
         return AgentRafaGame24_eval.step_rafa(action=action,
                                               state=state,
                                               # todo the eval prob doesnt match 1:1 yet will look at once sharp again
-                                              max_step=rafa_options.max_step,
+                                              max_step=max_step,
                                               feedback_print=False
                                               # todo this should be removed completly both in function and as argument
                                               )

@@ -129,11 +129,11 @@ async def run(args):
             model=api,  # todo lint complain about type... should be fixed
             agents=agents,
             env=EnvironmentGame24(),
-            rafa_options=RAFAOptions(n_propose_sample=1,  # todo all of these configs shouldnt be hardcoded
-                                     n_generate_sample=1,
-                                     n_evaluate_sample=1,
-                                     max_step=1,
-                                     n_select_sample=1)
+            rafa_options=RAFAOptions(n_propose_sample=5,  # todo all of these configs shouldnt be hardcoded
+                                     n_generate_sample=5,
+                                     n_evaluate_sample=5,
+                                     max_step=10,
+                                     n_select_sample=3)
 
         )
     else:

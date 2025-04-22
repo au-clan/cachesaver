@@ -21,6 +21,7 @@ class StateGame24(State):
     #for rafa
     history = []
     feedbacks = []
+    current_step=0
 
 
 

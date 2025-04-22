@@ -129,7 +129,6 @@ class AlgorithmRAFA(Algorithm):
                                                             new_output_candidates=new_output_candidates,
                                                             value_reflects=value_reflects_list,
                                                             n_evaluate_sample=self.rafa_options.n_evaluate_sample
-
                                                             )
                 select_ids = sorted(ids, key=lambda x: values[x], reverse=True)[:self.rafa_options.n_select_sample]
                 select_new_ys = [new_output_candidates[select_id] for select_id in select_ids]
@@ -151,6 +150,7 @@ class AlgorithmRAFA(Algorithm):
             state, obs, reward, done, env_info = self.agent_eval.act(model=self.model,
                                                                      state=state,
                                                                      action=res_ys,
+                                                                     max_step=self.rafa_options.max_step,
                                                                      )
             # todo i think this is where we update with a step if types match, to be checked
             # comment for self, I think this is where the env should be updated...
