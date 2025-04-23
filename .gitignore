@@ -6,5 +6,5 @@ local
 .DS_Store
 .venv
 .env
-secret
+secret.py
 __pycache__

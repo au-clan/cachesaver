@@ -1,2 +1,2 @@
 from .api import API
-from .online import OnlineLLM, LazyOnlineLLM
+from .online import OnlineLLM

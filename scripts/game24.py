@@ -6,8 +6,6 @@ from diskcache import Cache
 from openai import AsyncOpenAI
 from omegaconf import OmegaConf
 from together import AsyncTogether
-from groq import AsyncGroq
-from lazykey import AsyncKeyHandler
 from cachesaver.pipelines import OnlineAPI
 logger = logging.getLogger(__name__)
 
@@ -16,11 +14,9 @@ sys.path.append(os.getcwd())
 
 from src.utils import tokens2cost
 from src.algorithms import *
-from src.models import OnlineLLM, LazyOnlineLLM, API
+from src.models import OnlineLLM, API
 from src.typedefs import DecodingParameters
 from src.tasks.game24 import EnvironmentGame24, BenchmarkGame24, AgentActGame24, AgentAggregateGame24, AgentEvaluateGame24, AgentBfsGame24
-
-import secret
 
 cache = Cache(f"caches/game24")
 
@@ -31,17 +27,12 @@ async def run(args):
         client = AsyncOpenAI()
     elif args.provider == "together":
         client = AsyncTogether()
-    elif args.provider == "groq":
-        # client = AsyncKeyHandler(secret.GROQ_API_KEYS, AsyncGroq)
-        client = AsyncGroq(api_key=secret.GROQ_API_KEYS[1])
     else:
-        raise ValueError(f"Invalid provider: {args.provider}. Choose 'openai', 'together' or 'groq'.")
+        raise ValueError(f"Invalid provider: {args.provider}. Choose 'openai' or 'together'.")
     
     # CacheSaver model layer
-    if args.provider in ["openai", "together", "groq"]:
+    if args.provider in ["openai", "together"]:
         model = OnlineLLM(client=client)
-    # elif args.provider in ["groq"]:
-    #     model = LazyOnlineLLM(client=client)
     else:
         NotImplementedError("Local model is not implemented yet.")
 
@@ -156,8 +147,8 @@ async def run(args):
     
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Solve Game 24 using LLMs.")
-    parser.add_argument("--provider", type=str, help="LLM provider", choices=["openai", "together", "groq", "local"], default="together")
-    parser.add_argument("--model", type=str, help="LLM model", default="gpt-4o-mini") # TODO: Either edit this to a free model, or remembe  to parse model arg
+    parser.add_argument("--provider", type=str, help="LLM provider", choices=["openai", "together", "local"], default="openai")
+    parser.add_argument("--model", type=str, help="LLM model", default="gpt-4o-mini")
     parser.add_argument("--batch_size", type=int, help="CacheSaver's batch size", default=300)
     parser.add_argument("--timeout", type=float, help="CacheSaver's timeout", default=0.05)
     parser.add_argument("--temperature", type=float, help="Temperature for the model", default=1.0)
