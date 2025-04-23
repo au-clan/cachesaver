@@ -1,7 +1,9 @@
 import random
+import logging
 import asyncio
 from typing import TypedDict
 from ..typedefs import Algorithm, Model, Agent, Environment, DecodingParameters, State, Benchmark, MAX_SEED
+logger = logging.getLogger(__name__)
 
 class AgentDictTOT(TypedDict):
     step: Agent
@@ -44,10 +46,10 @@ class AlgorithmTOT(Algorithm):
                     model=self.model,
                     state=state,
                     namespace=namespace,
-                    request_id=f"idx{idx}-step{step}-{hash(state)}",
+                    request_id=f"idx{idx}-step{step}-{hash(state)}-agent{i}",
                     params=self.step_params,
                 )
-                for state in states
+                for i, state in enumerate(states)
             ]
             actions = await asyncio.gather(*action_coroutines)
 
@@ -64,11 +66,11 @@ class AlgorithmTOT(Algorithm):
                     state=state,
                     n=self.num_evaluations,
                     namespace=namespace,
-                    request_id=f"idx{idx}-evaluation{step}-{hash(state)}",
+                    request_id=f"idx{idx}-evaluation{step}-{hash(state)}-agent{i}",
                     params=self.eval_params,
                     cache=value_cache
                 )
-                for state in state_proposals
+                for i, state in enumerate(state_proposals)
             ]
             values = await asyncio.gather(*value_coroutines)
 

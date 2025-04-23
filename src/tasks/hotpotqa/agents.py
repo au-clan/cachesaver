@@ -98,10 +98,13 @@ class AgentEvaluateHotpotQA(Agent):
     """
 
     @staticmethod
-    async def act(model: Model, state: StateHotpotQA, n: int, namespace: str, request_id: str, params: DecodingParameters) -> float:
+    async def act(model: Model, state: StateHotpotQA, n: int, namespace: str, request_id: str, params: DecodingParameters, cache: dict=None) -> float:
         """
         Returns an evaluations for the HotpotQA task.
         """
+        # Check if the state is already in the cache
+        if cache is not None and state.current_state in cache:
+            return cache[state.current_state]
 
         # Format the prompt
         num_examples = 2
@@ -127,4 +130,8 @@ class AgentEvaluateHotpotQA(Agent):
                 value = 1
             values.append(value)
         value = sum(values)
+
+        # Cache the value
+        if cache is not None:
+            cache[state.current_state] = value
         return value

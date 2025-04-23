@@ -23,12 +23,11 @@ class EnvironmentHotpotQA(Environment):
         # Parse the type and the argument of the action
         act = action.split("\n")[-1]
         action_type, argument = parse_action(act.split(": ")[-1])
-        print(f"Action: {action_type}, Argument: {argument}")
         #assert "Action" in act, "Action not found in the action string."
         
         # Perform the action and obtain the observation
         obs = perform_action(state.docstore, action_type, argument, state.answer)
-        step = action + f"\nObservation {len(state.steps) + 1}: {obs}"
+        step = f"\nAction {len(state.steps)+ 1}: " + action + f"\nObservation {len(state.steps) + 1}: {obs}"
 
         # Randomness handling
         random.seed(state.randomness)
@@ -36,7 +35,7 @@ class EnvironmentHotpotQA(Environment):
 
         state = StateHotpotQA(
             puzzle=state.puzzle,
-            current_state=state.current_state+step,
+            current_state=(state.current_state+step).strip(),
             steps=state.steps + [step],
             answer=state.answer,
             docstore=state.docstore,
