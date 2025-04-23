@@ -6,10 +6,12 @@ import tempfile
 from diskcache import Cache
 from groq import AsyncGroq
 from groq import RateLimitError
+from lazykey import AsyncKeyHandler
 from omegaconf import OmegaConf
 from cachesaver.pipelines import OnlineAPI
-from cachesaver.typedefs import Response, Batch
+from cachesaver.typedefs import Response, Batch, Request
 from typing import Any, List
+import secret
 
 from src.algorithms import AgentDictGOT, AlgorithmGOT
 from src.models import OnlineLLM, API
@@ -38,7 +40,7 @@ class MockLLM(Model):
         request_id: int,
         namespace: str,
         params: DecodingParameters,
-    ) -> Response:
+    ):
         sleep = 1
         while True:
             try:
@@ -73,8 +75,51 @@ class MockLLM(Model):
         return completions
 
 
+class LazyMockOnlineLLM(Model):
+    def __init__(self) -> None:
+        self.lazy_client = AsyncKeyHandler(secret.GROQ_API_KEYS, AsyncGroq)
+
+    async def request(self, request: Request) -> Response:
+        sleep = 1
+        while True:
+            try:
+                completion = await self.lazy_client.request(
+                    messages=[{"role": "user", "content": request.prompt}],
+                    model=request.model,
+                    n=1,
+                    max_tokens=request.max_completion_tokens or None,
+                    temperature=request.temperature or 1,
+                    stop=request.stop or None,
+                    top_p=request.top_p or 1,
+                    seed=1234,
+                    logprobs=request.logprobs or False,
+                    top_logprobs=request.top_logprobs or None,
+                )
+                break
+            except RateLimitError as e:
+                await asyncio.sleep(max(sleep, 90))
+                sleep *= 2
+            except Exception as e:
+                print(f"Error {e}")
+                raise e
+        input_tokens = completion.usage.prompt_tokens
+        completion_tokens = completion.usage.completion_tokens
+        response = Response(
+            data=[
+                (choice.message.content, input_tokens, completion_tokens /1)
+                for choice in completion.choices
+            ]
+        )
+        return response
+
+    async def batch_request(self, batch: Batch) -> List[Response]:
+        requests = [self.request(request) for request in batch.requests]
+        completions = await asyncio.gather(*requests)
+        return completions
+
+
 class TestGoTOffline:
-    model = MockLLM(client=AsyncGroq(), model="llama-3.3-70b-versatile")
+    model = MockLLM(client=AsyncGroq(api_key=secret.GROQ_API_KEYS[0]), model="llama-3.3-70b-versatile")
     env = EnvironmentGame24()
     params = DecodingParameters(
         temperature=0.7,
@@ -165,11 +210,12 @@ class TestGoTOffline:
 
         assert finished
 
+
 class TestGoTOnline:
     TEST_TIMEOUT = 0.1
 
     llm = "llama-3.3-70b-versatile"
-    model = OnlineLLM(client=AsyncGroq())
+    model = LazyMockOnlineLLM()
     env = EnvironmentGame24()
     params = DecodingParameters(
         temperature=0.7,
@@ -179,14 +225,14 @@ class TestGoTOnline:
         logprobs=False,
     )
 
-    @pytest.fixture
+    @pytest.fixture(scope="session")
     def cache(self):
         """Provide a temporary cache for each test."""
         with tempfile.TemporaryDirectory() as tmpdir:
             with Cache(tmpdir) as cache:
                 yield cache
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_got_with_cache(self, cache):
         state = StateGame24(
             puzzle="10 10 1 4",
@@ -226,10 +272,7 @@ class TestGoTOnline:
         )
 
         result = await method.solve(
-            idx=0,
-            state=state,
-            namespace="test_small",
-            value_cache={}
+            idx=0, state=state, namespace="test_small", value_cache={}
         )
 
         finished, _ = self.env.evaluate(result[0])
