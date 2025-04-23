@@ -8,7 +8,6 @@ from omegaconf import OmegaConf
 from together import AsyncTogether
 from cachesaver.pipelines import OnlineAPI
 logger = logging.getLogger(__name__)
-
 import sys
 sys.path.append(os.getcwd())
 
@@ -16,11 +15,12 @@ from src.utils import tokens2cost
 from src.algorithms import *
 from src.models import OnlineLLM, API
 from src.typedefs import DecodingParameters
-from src.tasks.game24 import EnvironmentGame24, BenchmarkGame24, AgentActGame24, AgentAggregateGame24, AgentEvaluateGame24, AgentBfsGame24
+from src.tasks.hotpotqa import EnvironmentHotpotQA, BenchmarkHotpotQA, AgentBfsHotpotQA, AgentEvaluateHotpotQA, AgentActHotpotQA
 
-cache = Cache(f"caches/game24")
+cache = Cache(f"caches/hotpotqa")
 
 async def run(args):
+    
     # LLM Provider
     if args.provider == "openai":
         client = AsyncOpenAI()
@@ -64,63 +64,46 @@ async def run(args):
     config = OmegaConf.load(args.conf_path)
 
     # Setup the method
+    ## We can create a method factory for this
     if args.method == "foa":
         agents = AgentDictFOA(
-            step=AgentActGame24,
-            evaluate=AgentEvaluateGame24,
+            step=AgentActHotpotQA,
+            evaluate=AgentEvaluateHotpotQA,
             step_params=params,
             eval_params=params,
         )
         method = AlgorithmFOA(
             model=api,
-            agents=agents,
-            env=EnvironmentGame24,
+            agents = agents,
+            env=EnvironmentHotpotQA,
             num_agents=config.foa.num_agents,
             num_steps=config.foa.num_steps,
             k=config.foa.k,
             backtrack=config.foa.backtrack,
             resampling=config.foa.resampling,
-            origin=config.foa.origin,
+            origin= config.foa.origin,
             min_steps=config.foa.min_steps,
             num_evaluations=config.foa.num_evaluations,
         )
     elif args.method == "tot":
         agents = AgentDictTOT(
-            step=AgentBfsGame24,
-            evaluate=AgentEvaluateGame24,
+            step=AgentBfsHotpotQA,
+            evaluate=AgentEvaluateHotpotQA,
             step_params=params,
             eval_params=params,
         )
         method = AlgorithmTOT(
             model=api,
-            agents=agents,
-            env=EnvironmentGame24,
+            agents = agents,
+            env=EnvironmentHotpotQA,
             num_selections=config.tot.num_selections,
             num_steps=config.tot.num_steps,
             num_evaluations=config.tot.num_evaluations,
         )
-    elif args.method == "got":
-        agents = AgentDictGOT(
-            step=AgentBfsGame24,
-            aggregate=AgentAggregateGame24,
-            evaluate=AgentEvaluateGame24,
-            step_params=params,
-            aggregate_params=params,
-            eval_params=params,
-        )
-        method = AlgorithmGOT(
-            model=api,
-            agents=agents,
-            env=EnvironmentGame24,
-            num_selections=config.got.num_selections,
-            num_steps=config.got.num_steps,
-            num_best=config.got.num_best,
-            num_evaluations=config.got.num_evaluations,
-        )
     else:
-        raise NotImplementedError(f"Method {args.method} is not implemented yet.")
+        raise NotImplementedError("Method not implemented yet.")
     
-    benchmark = BenchmarkGame24(path=args.dataset_path, split=args.split)
+    benchmark = BenchmarkHotpotQA(path=args.dataset_path, split=args.split)
     results = await method.benchmark(
         benchmark=benchmark,
         share_ns=args.share_ns,
@@ -129,11 +112,13 @@ async def run(args):
     finished = []
     correct = []
     for i, result in enumerate(results):
-        logger.info(f"Result {i}:")
+        logger.debug(f"Result {i}:")
         for r in result:
-            logger.info(f"\t{r}")
+            logger.debug(f"\t{r}")
     for result in results:
-        evaluations = sorted([EnvironmentGame24.evaluate(state) for state in result], key=lambda x: x[1])
+        for r in result:
+            print(f"\t{r}")
+        evaluations = sorted([EnvironmentHotpotQA.evaluate(state) for state in result], key=lambda x: x[1])
         finished.append(evaluations[-1][0])
         correct.append(evaluations[-1][1])
     acc_finished = sum(finished) / len(finished)
@@ -141,15 +126,15 @@ async def run(args):
     costs = {key:tokens2cost(api.tokens[key], args.model) for key in api.tokens.keys()}
 
     print(f"Method: {args.method}")
-    print(f"Finished: {acc_finished}")
-    print(f"Correct: {acc_correct}")
+    print(f"Finished: {acc_finished:.3f}%")
+    print(f"Correct: {acc_correct:.3f}%")
     for key, value in costs.items():
         print(f"\t{key}: {value['total']:.3f}$")
-    
+
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Solve Game 24 using LLMs.")
-    parser.add_argument("--provider", type=str, help="LLM provider", choices=["openai", "together", "local"], default="openai")
-    parser.add_argument("--model", type=str, help="LLM model", default="gpt-4o-mini")
+    parser = argparse.ArgumentParser(description="Solve HotpotQA using LLMs.")
+    parser.add_argument("--provider", type=str, help="LLM Provider", choices=["openai", "together", "local"], default="openai")
+    parser.add_argument("--model", type=str, help="LLM Model",  default="gpt-4o-mini")
     parser.add_argument("--batch_size", type=int, help="CacheSaver's batch size", default=300)
     parser.add_argument("--timeout", type=float, help="CacheSaver's timeout", default=0.05)
     parser.add_argument("--temperature", type=float, help="Temperature for the model", default=1.0)
@@ -160,11 +145,11 @@ if __name__ == "__main__":
     parser.add_argument("--dataset_path", type=str, help="Path to the dataset")
     parser.add_argument("--split", type=str, help="Split of the dataset", choices=["mini", "train", "validation", "test"], default="mini")
     parser.add_argument("--share_ns", action="store_true", help="Share namespace between puzzles")
-    parser.add_argument("--method", type=str, help="Method to use", choices=["foa", "tot", "got"], default="foa")
+    parser.add_argument("--method", type=str, help="Method to use", choices=["foa", "tot"], default="foa")
     parser.add_argument("--conf_path", type=str, help="Path to corresponding config")
     parser.add_argument("--value_cache", action="store_true", help="Use value cache")
     args = parser.parse_args()
 
-    logging.basicConfig(level=logging.INFO, filename=f"logs/game24/{args.method}.log", filemode="w")
+    logging.basicConfig(level=logging.DEBUG, filename=f"logs/game24/{args.method}.log", filemode="w")
 
     asyncio.run(run(args))
