@@ -29,8 +29,8 @@ if sys.platform == "win32":
 
 
 class MockLLM(Model):
-    def __init__(self, client: Any, model: str) -> None:
-        self.client = client
+    def __init__(self, model: str) -> None:
+        self.client = AsyncKeyHandler(secret.GROQ_API_KEYS, AsyncGroq)
         self.model = model
 
     async def request(
@@ -44,10 +44,10 @@ class MockLLM(Model):
         sleep = 1
         while True:
             try:
-                completion = await self.client.chat.completions.create(
+                completion = await self.client.request(
                     messages=[{"role": "user", "content": prompt}],
                     model=self.model,
-                    n=n,
+                    n=1,
                     max_tokens=params.max_completion_tokens
                     or None,  # or None not needed but just to be explicit
                     temperature=params.temperature or 1,
@@ -119,7 +119,7 @@ class LazyMockOnlineLLM(Model):
 
 
 class TestGoTOffline:
-    model = MockLLM(client=AsyncGroq(api_key=secret.GROQ_API_KEYS[0]), model="llama-3.3-70b-versatile")
+    model = MockLLM(model="llama-3.3-70b-versatile")
     env = EnvironmentGame24()
     params = DecodingParameters(
         temperature=0.7,
@@ -129,7 +129,7 @@ class TestGoTOffline:
         logprobs=False,
     )
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_aggregate(self) -> None:
         state = StateGame24(
             puzzle="10 10 1 4",
@@ -172,7 +172,7 @@ class TestGoTOffline:
         assert len(aggregate_results) == 2
         assert all(agg_step in generate_results for agg_step in aggregate_results)
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_got(self) -> None:
         state = StateGame24(
             puzzle="10 10 1 4",
@@ -181,7 +181,6 @@ class TestGoTOffline:
             randomness=0,
         )
 
-        config = OmegaConf.load("scripts/game24.yaml")
         agents = AgentDictGOT(
             step=AgentBfsGame24,
             aggregate=AgentAggregateGame24,
@@ -194,10 +193,10 @@ class TestGoTOffline:
             model=self.model,
             agents=agents,
             env=EnvironmentGame24,
-            num_selections=config.got.num_selections,
-            num_steps=config.got.num_steps,
-            num_best=config.got.num_best,
-            num_evaluations=config.got.num_evaluations,
+            num_selections=3,
+            num_steps=4,
+            num_best=2,
+            num_evaluations=1,
         )
 
         result = await method.solve(
@@ -232,7 +231,7 @@ class TestGoTOnline:
             with Cache(tmpdir) as cache:
                 yield cache
 
-    @pytest.mark.asyncio()
+    @pytest.mark.asyncio(loop_scope="session")
     async def test_got_with_cache(self, cache):
         state = StateGame24(
             puzzle="10 10 1 4",
@@ -241,7 +240,6 @@ class TestGoTOnline:
             randomness=0,
         )
 
-        config = OmegaConf.load("scripts/game24.yaml")
         pipeline = OnlineAPI(
             model=self.model,
             cache=cache,
@@ -262,13 +260,13 @@ class TestGoTOnline:
             eval_params=self.params,
         )
         method = AlgorithmGOT(
-            model=api,
+            model=self.model,
             agents=agents,
-            env=self.env,
-            num_selections=config.got.num_selections,
-            num_steps=config.got.num_steps,
-            num_best=config.got.num_best,
-            num_evaluations=config.got.num_evaluations,
+            env=EnvironmentGame24,
+            num_selections=3,
+            num_steps=4,
+            num_best=2,
+            num_evaluations=1,
         )
 
         result = await method.solve(
