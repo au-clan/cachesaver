@@ -106,7 +106,7 @@ class LazyMockOnlineLLM(Model):
         completion_tokens = completion.usage.completion_tokens
         response = Response(
             data=[
-                (choice.message.content, input_tokens, completion_tokens /1)
+                (choice.message.content, input_tokens, completion_tokens / 1)
                 for choice in completion.choices
             ]
         )
@@ -205,6 +205,7 @@ class TestGoTOffline:
             namespace="test_small",
             value_cache=None,
         )
+
         finished, _ = self.env.evaluate(result[0])
 
         assert finished
@@ -224,14 +225,14 @@ class TestGoTOnline:
         logprobs=False,
     )
 
-    @pytest.fixture(scope="session")
+    @pytest.fixture(scope="function")
     def cache(self):
         """Provide a temporary cache for each test."""
         with tempfile.TemporaryDirectory() as tmpdir:
             with Cache(tmpdir) as cache:
                 yield cache
 
-    @pytest.mark.asyncio(loop_scope="session")
+    @pytest.mark.asyncio(loop_scope="function")
     async def test_got_with_cache(self, cache):
         state = StateGame24(
             puzzle="10 10 1 4",
@@ -240,38 +241,38 @@ class TestGoTOnline:
             randomness=0,
         )
 
-        pipeline = OnlineAPI(
+        async with OnlineAPI(
             model=self.model,
             cache=cache,
             batch_size=2,
             timeout=self.TEST_TIMEOUT,
-        )
-        api = API(
-            pipeline=pipeline,
-            model=self.llm,
-        )
+        ) as pipeline:
+            api = API(
+                pipeline=pipeline,
+                model=self.llm,
+            )
 
-        agents = AgentDictGOT(
-            step=AgentBfsGame24,
-            aggregate=AgentAggregateGame24,
-            evaluate=AgentEvaluateGame24,
-            step_params=self.params,
-            aggregate_params=self.params,
-            eval_params=self.params,
-        )
-        method = AlgorithmGOT(
-            model=self.model,
-            agents=agents,
-            env=EnvironmentGame24,
-            num_selections=3,
-            num_steps=4,
-            num_best=2,
-            num_evaluations=1,
-        )
+            agents = AgentDictGOT(
+                step=AgentBfsGame24,
+                aggregate=AgentAggregateGame24,
+                evaluate=AgentEvaluateGame24,
+                step_params=self.params,
+                aggregate_params=self.params,
+                eval_params=self.params,
+            )
+            method = AlgorithmGOT(
+                model=api,
+                agents=agents,
+                env=EnvironmentGame24,
+                num_selections=3,
+                num_steps=4,
+                num_best=2,
+                num_evaluations=1,
+            )
 
-        result = await method.solve(
-            idx=0, state=state, namespace="test_small", value_cache={}
-        )
+            result = await method.solve(
+                idx=0, state=state, namespace="test_small", value_cache={}
+            )
 
-        finished, _ = self.env.evaluate(result[0])
-        assert finished
+            finished, _ = self.env.evaluate(result[0])
+            assert finished
