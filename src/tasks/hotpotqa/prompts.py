@@ -80,6 +80,30 @@ Question: {question}
 Evaluation:
 '''
 
+aggregate = '''Analyze the trajectories of a solution to a question answering
+task. The trajectories are labeled by environmental observations about the situation and actions that can be three types:
+(1) Search[entity], which searches the exact entity on Wikipedia and returns the first paragraph if it exists. If not, it will return some similar entities to search.
+(2) Lookup[keyword], which returns the next sentence containing keyword in the current passage.
+(3) Finish[answer], which returns the answer and finishes the task.
+
+Given a question, trajectories and possible actions, select {k} actions that you believe are the best and most relevant to the question. Focus on the latest available action and observation, where you should only select actions from the possible actions. Do not generate additional thoughts or actions. Return only the selected actions in the format given by the examples.
+
+Below some examples are given.
+
+{examples}
+
+(END OF EXAMPLES)
+
+Remember, your task is to select the {k} best actions from the possible actions. Answer in the format given by the examples and mention nothing more.
+
+Question: {question}
+{current_state}
+possible actions:
+{actions}
+
+Selected actions:
+'''
+
 ################################
 ###---Examples for fewshot---###
 ################################
@@ -300,4 +324,61 @@ Action 3: Finish[President Richard Nixon]
 Evaluation:
 This trajectory is correct as all of my thoughts and actions are correct. It makes sense to search for Milhouse first as it is the central subject of the question. It is also correct to directly look up the relevant information in the article, instead of trying another search. 
 Thus the correctness score is 10"""
+]
+
+examples_aggregate = [
+"""
+Which documentary is about Finnish rock groups, Adam Clayton Powell or The Saimaa Gesture?
+
+Possible Actions:
+Search[Adam Clayton Powell (film)]
+Search[The Saimaa Gesture (film)]
+Search[Finish rock music]
+Search[Finish documentaries]
+Search[Juice Leskinen]
+Search[Documentary film]
+
+Selected actions:
+Search[Adam Clayton Powell (film)]
+Search[The Saimaa Gesture (film)]
+Search[Finish documentaries]
+""",
+
+"""Question: Musician and satirist Allie Goertz wrote a song about the "The Simpsons" character Milhouse, who Matt Groening named after who?
+Action 1: Search[Milhouse]
+Observation 1: Milhouse Mussolini Van Houten is a recurring character in the Fox animated television series The Simpsons voiced by Pamela Hayden and created by Matt Groening.
+
+Possible Actions:
+Lookup[named after]
+Lookup[Allie Goertz]
+Lookup[Matt Groening]
+Lookup[name]
+Search[Allie Goertz]
+Search[The Simpsons]
+Search[Allie Goertz Simspons]
+
+Selected actions:
+Lookup[named after]
+Lookup[name]
+Search[The Simpsons]
+""",
+
+"""Question: What profession does Nicholas Ray and Elia Kazan have in common?
+Action 1: Search[Nicholas Ray]
+Observation 1: Nicholas Ray (born Raymond Nicholas Kienzle Jr., August 7, 1911 – June 16, 1979) was an American film director, screenwriter, and actor best known for the 1955 film Rebel Without a Cause.
+Action 2: Search[Elia Kazan]
+Observation 2: Elia Kazan was an American film and theatre director, producer, screenwriter and actor.
+
+Possible Actions:
+Finish[director, screenwriter, actor]
+Finish[film director, screenwriter, actor]
+Finish[director, screenwriter and actor]
+Lookup[Nicholas Ray]
+Lookup[profession]
+Lookup[producer]
+
+Selected actions:
+Finish[director, screenwriter, actor]
+Finish[film director, screenwriter, actor]
+Finish[director, screenwriter and actor]""",
 ]

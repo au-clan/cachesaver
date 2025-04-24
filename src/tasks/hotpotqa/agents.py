@@ -62,6 +62,36 @@ class AgentBfsHotpotQA(Agent):
         # Parse the response
         proposals = [r.strip() for r in response[0].split("\n")]
         return proposals
+
+class AgentAggregateHotpotQA(Agent):
+    """
+    Agent performing the Aggregate operation for the HotpotQA task.
+    """
+
+    @staticmethod
+    async def act(model: Model, state: StateHotpotQA, actions: List[str], k: int, n: int, namespace: str, request_id: str, params: DecodingParameters) -> List[str]:
+        """
+        Returns a list of the k best actions for the HotpotQA task.
+        """
+
+        # Format the prompt
+        num_examples = 2
+        examples = "(Example)\n" + "\n\n(Example)\n".join([example for example in prompts.examples_aggregate[:num_examples]])
+        actions = "\n".join(action for action in actions)
+        prompt = prompts.aggregate.format(examples=examples, question=state.puzzle, current_state=state.current_state, k=k, actions=actions)
+
+        # Generate the responses
+        responses = await model.request(
+            prompt=prompt,
+            n=n,
+            request_id=request_id,
+            namespace=namespace,
+            params=params
+        )
+
+        # Parse the responses
+        aggregate_actions = [r.strip() for response in responses for r in response.split("\n")]
+        return aggregate_actions
     
 class AgentReactHotpotQA(Agent):
     """
