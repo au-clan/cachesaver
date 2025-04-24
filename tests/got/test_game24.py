@@ -244,7 +244,7 @@ class TestGoTOnline:
         async with OnlineAPI(
             model=self.model,
             cache=cache,
-            batch_size=2,
+            batch_size=1,
             timeout=self.TEST_TIMEOUT,
         ) as pipeline:
             api = API(
