@@ -74,6 +74,9 @@ class AgentAggregateHotpotQA(Agent):
         Returns a list of the k best actions for the HotpotQA task.
         """
 
+        if any("Finish" in action for action in actions):
+            return [action for action in actions if "Finish" in action]
+
         # Format the prompt
         num_examples = 2
         examples = "(Example)\n" + "\n\n(Example)\n".join([example for example in prompts.examples_aggregate[:num_examples]])
