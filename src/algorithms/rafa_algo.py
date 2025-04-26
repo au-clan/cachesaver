@@ -146,7 +146,7 @@ class AlgorithmRAFA(Algorithm):
             env_info = {'steps': infos}
 
             ##Generating feedback for the progress so far(last step in the old structure)
-
+            #todo this agent_eval is what makes the difference for rafa, more advanced parsing and eval. also no prompts used in it
             state, obs, reward, done, env_info = self.agent_eval.act(model=self.model,
                                                                      state=state,
                                                                      action=res_ys,

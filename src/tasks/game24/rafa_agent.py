@@ -101,7 +101,7 @@ class AgentRafaGame24_eval(Agent):
         return False, ""
 
     @staticmethod
-    def check_step_rafa(state: StateGame24,idx, action):
+    def check_step_rafa(state: StateGame24, idx, action):
         try:
             if "answer" in action.lower():
                 correct, feedback = AgentRafaGame24_eval.check_answer(state.puzzle, action)
@@ -167,7 +167,7 @@ class AgentRafaGame24_eval(Agent):
     @staticmethod
     def step_rafa(action, state: StateGame24, feedback_print: bool, max_step):
         # state = replace(state, cur_step=state.cur_step + 1)  # todo this can be calculated as actions in list i think
-        state=replace(state, current_state= state.current_step+1)
+        state = replace(state, current_state=state.current_step + 1)
         prev_len = len(state.history)
         generated_state, feedback, reward = AgentRafaGame24_eval.generate_feedback_rafa(action=action,
                                                                                         state=state,
@@ -179,7 +179,7 @@ class AgentRafaGame24_eval(Agent):
         done = (reward >= 10) or (state.current_step > max_step)
         answer = [f"Step {i + 1}: {x}" for i, x in enumerate(action.split('\n')[:delta]) if x != ""]
         answer = "Attempt answer: " + "\n".join(answer)
-        if True: #todo this is default in rafa
+        if True:  # todo this is default in rafa
             info = {'action': action, 'history': generated_state.history}
             obs = {'answer': answer, 'feedback': feedback}
         else:
@@ -195,10 +195,8 @@ class AgentRafaGame24_eval(Agent):
         if "max_step" not in kwargs:
             raise ValueError("Missing required parameter: 'max_step'")
 
-
         action = kwargs["action"]  # to sample etc
         max_step = kwargs["max_step"]  # to sample etc
-
 
         return AgentRafaGame24_eval.step_rafa(action=action,
                                               state=state,
@@ -354,7 +352,7 @@ class AgentRAFA_plan(Agent):
         # history_messages.stop_token = ["\n\n"]  # todo i dont get how their method works with this, in groq it doesnt work
 
         result = await model.request(history_messages,
-                                     n=history_messages.n,
+                                     # n=history_messages.n,
                                      request_id=history_messages.request_id,
                                      namespace=history_messages.namespace,
                                      params=DecodingParameters(
@@ -365,6 +363,7 @@ class AgentRAFA_plan(Agent):
                                          logprobs=history_messages.logprobs,
                                      )
                                      )
+        # result = await model.request(history_messages)
 
         proposal_list = [x.split('\n') for x in result]  # todo the stop token
         proposals = []
@@ -435,7 +434,7 @@ class AgentRAFA_plan_evaluate(Agent):
                     history_messages.add_assistant_message(h["answer"])
                 if 'feedback' in h:
                     history_messages.add_user_message(h["feedback"])
-            history_messages.add_user_message(value_prompt)
+            history_messages.add_user_message(value_prompt) #todo confirm order of messages
             history_messages.request_id = f"step-{str(state.puzzle)}-{1}-{y}-{hash(1)}"  # todo this shpould be done properly at some point
 
             value_outputs = await model.request(history_messages,

@@ -132,7 +132,7 @@ async def run(args):
 
         )
         method = AlgorithmRAFA(
-            model=api,  # todo lint complain about type... should be fixed
+            model=pipeline,  # todo lint complain about type... should be fixed
             agents=agents,
             env=EnvironmentGame24(),
             rafa_options=RAFAOptions(n_propose_sample=5,  # todo all of these configs shouldnt be hardcoded
