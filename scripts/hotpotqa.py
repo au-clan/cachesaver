@@ -74,8 +74,7 @@ async def run(args):
     )
 
     # Config
-    # config = OmegaConf.load(args.conf_path)
-    config = OmegaConf.load(r"C:\Users\Oskar\PycharmProjects\AUCLAN\cachesaver\scripts\hotpotqa.yaml")
+    config = OmegaConf.load(args.conf_path)
 
     # Setup the method
     ## We can create a method factory for this
@@ -137,9 +136,7 @@ async def run(args):
     else:
         raise NotImplementedError("Method not implemented yet.")
     
-    # benchmark = BenchmarkHotpotQA(path=args.dataset_path, split=args.split)
-    # benchmark = BenchmarkHotpotQA(path=r"C:\Users\Oskar\PycharmProjects\AUCLAN\cachesaver\datasets\dataset_hotpotqa.csv.gz", split=args.split)
-    benchmark = BenchmarkHotpotQA(path=r"C:\Users\Oskar\PycharmProjects\AUCLAN\cachesaver\datasets\dataset_hotpotqa.csv.gz", split="single")
+    benchmark = BenchmarkHotpotQA(path=args.dataset_path, split=args.split)
     results = await method.benchmark(
         benchmark=benchmark,
         share_ns=args.share_ns,
