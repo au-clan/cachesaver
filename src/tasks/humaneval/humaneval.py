@@ -19,14 +19,12 @@ class BenchmarkStateHumanEval(Benchmark):
 
         df = pd.read_json(path, lines=True,
                           compression='gzip')
-        # df = pd.read_csv(path, usecols=["question", "answer"], compression="gzip")
         df.reset_index(inplace=True)
         data = list(
             zip(df['index'], df['task_id'], df['prompt'], df['entry_point'], df['canonical_solution'], df['test']))
 
-        # # Compute the idxs for each subset
+        # Compute the idxs for each subset
         valid_idxs = set(range(len(data)))
-        #
 
         random.seed(0)
         mini_set_idxs = random.sample(list(valid_idxs), 10)
