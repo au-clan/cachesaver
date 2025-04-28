@@ -1,5 +1,6 @@
 import pandas as pd
 import random
+import itertools
 from typing import Tuple
 
 from .state import StateHumanEval
@@ -11,9 +12,10 @@ class BenchmarkHumanEval(Benchmark):
         Initializes the Benchmark for HumanEval dataset.
         """
 
-        df = pd.read_csv(path, usecols=["prompt", "canonical_solution", "entry_point", "tests"], compression="gzip")
+        df = pd.read_csv(path, usecols=["prompt", "canonical_solution", "entry_point", "test"], compression="gzip")
         df.reset_index(inplace=True)
-        data = list(zip(df['index'], df['prompt'], df['canonical_solution'], df['entry_point'], df['tests']))
+        data = list(zip(df['index'], df['prompt'], df['canonical_solution'], df['entry_point'], df['test']))
+        print(len(data))
 
         if split == "mini":
             self.data = random.sample(data, 10)
@@ -23,11 +25,6 @@ class BenchmarkHumanEval(Benchmark):
             self.data = random.sample(data[-100:], 50)
         elif split == "test":
             self.data = data[-50:] # <- Taken from reflexion
-        elif split == "stratified":
-            partition_samples = 50 // 3
-            partition_size = len(self.data) // 3
-            partitions = [self.data[i*partition_size:(i+1)*partition_size] for i in range(3)]
-            self.data = [random.sample(partitions[i], partition_samples) for i in range(3)]
         else:
             raise ValueError("Invalid set name")
     
@@ -36,7 +33,7 @@ class BenchmarkHumanEval(Benchmark):
     
     def __getitem__(self, idx: int) -> Tuple[int, StateHumanEval]:
         index = self.data[idx][0]
-        signature, canonical_solution, entry_point, tests = self.data[idx][1:]
+        signature, canonical_solution, entry_point, test = self.data[idx][1:]
 
         state = StateHumanEval(
             puzzle=signature,
@@ -44,7 +41,7 @@ class BenchmarkHumanEval(Benchmark):
             steps=[],
             canonical_solution=canonical_solution,
             entry_point=entry_point,
-            tests=tests,
+            test=test,
             randomness=None
         )
         return index, state

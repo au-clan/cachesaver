@@ -21,7 +21,7 @@ class StateHumanEval(State):
     entry_point: str
 
     # The tests to run against the code
-    tests: str
+    test: str
 
     # A random number associated with the state
     randomness: int
@@ -45,7 +45,7 @@ class StateHumanEval(State):
             steps=self.steps,
             canonical_solution=self.canonical_solution,
             entry_point=self.entry_point,
-            tests=self.tests,
+            test=self.test,
             randomness=randomness or self.randomness
         )
     
