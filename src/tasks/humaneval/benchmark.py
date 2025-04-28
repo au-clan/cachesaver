@@ -36,16 +36,19 @@ class BenchmarkHumanEval(Benchmark):
         validation_set_idxs = random.sample(list(valid_idxs), 50)
         valid_idxs = valid_idxs - set(validation_set_idxs)
 
-        if split == "mini":
-            self.data = data[:10]
+        test_set_idxs = random.sample(list(valid_idxs), 50)
+        valid_idxs = valid_idxs - set(validation_set_idxs)
+
         if split == "single":
             self.data = data[:1]
+        if split == "mini":
+            self.data = [data[i] for i in mini_set_idxs]
         elif split == "train":
-            self.data = data[:10]
+            self.data = [data[i] for i in train_set_idxs]
         elif split == "validation":
-            self.data = data[:10]
+            self.data = [data[i] for i in validation_set_idxs]
         elif split == "test":
-            self.data = data[:10]
+            self.data = [data[i] for i in test_set_idxs]
         else:
             raise ValueError("Invalid set name")
 

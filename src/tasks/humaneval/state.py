@@ -14,13 +14,23 @@ class StateHumanEval(State):
         """
         Returns a dictionary representation of the state.
         """
-        pass
+        return {
+            "prompt": self.prompt,
+            "canonical_solution": self.canonical_solution,
+            "entry_point": self.entry_point,
+            "test": self.test
+        }
 
     def clone(self, randomness: int = None) -> "StateHumanEval":
         """
         Returns a new instance of StateHotpotQA with an optional new randomness value.
         """
-        pass
+        return StateHumanEval(
+            prompt=self.prompt,
+            canonical_solution=self.canonical_solution,
+            entry_point=self.entry_point,
+            test=self.test,
+        )
 
     def get_seed(self) -> int:
         """
