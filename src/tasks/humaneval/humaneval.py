@@ -7,7 +7,7 @@ from .state import StateHumanEval
 from ...typedefs import Benchmark
 
 
-class BenchmarkStateHumanEval(Benchmark):
+class BenchmarkHumanEval(Benchmark):
     def __init__(self, path: str, split: str = "mini"):
         """
         Initializes the benchmark with the dataset.
