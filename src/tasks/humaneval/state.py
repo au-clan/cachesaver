@@ -36,8 +36,8 @@ class StateHumanEval(State):
         """
         Returns the randomness value associated with the state.
         """
-        pass
-        return self.randomness
+        raise NotImplementedError()
+
 
     def __hash__(self) -> int:
         """

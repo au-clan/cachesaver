@@ -83,4 +83,4 @@ class BenchmarkHumanEval(Benchmark):
             entry_point=entry_point,
             test=test,
         )
-        return task_id, state
+        return index, state
