@@ -1,3 +1,5 @@
+import random
+
 import pandas as pd
 from typing import Tuple
 
@@ -14,16 +16,33 @@ class BenchmarkLogiQA(Benchmark):
         data = list(zip(df['index'], df['right_choice'], df['context'], df['question'], df['option_a'], df['option_b'],
                         df['option_c'], df['option_d']))
 
-        if split == "mini":
-            self.data = data[:10]
+        # Compute the idxs for each subset
+        valid_idxs = set(range(len(data)))
+
+
+        random.seed(0)
+        mini_set_idxs = random.sample(list(valid_idxs), 10)
+        valid_idxs = valid_idxs - set(mini_set_idxs)
+
+        train_set_idxs = random.sample(list(valid_idxs), 50)
+        valid_idxs = valid_idxs - set(train_set_idxs)
+
+        validation_set_idxs = random.sample(list(valid_idxs), 50)
+        valid_idxs = valid_idxs - set(validation_set_idxs)
+
+        test_set_idxs = random.sample(list(valid_idxs), 50)
+        valid_idxs = valid_idxs - set(validation_set_idxs)
+
         if split == "single":
             self.data = data[:1]
+        if split == "mini":
+            self.data = [data[i] for i in mini_set_idxs]
         elif split == "train":
-            self.data = data[850:875] + data[1025:1050]
+            self.data = [data[i] for i in train_set_idxs]
         elif split == "validation":
-            self.data = data[875:900] + data[1000:1025]
+            self.data = [data[i] for i in validation_set_idxs]
         elif split == "test":
-            self.data = data[900:1000]
+            self.data = [data[i] for i in test_set_idxs]
         else:
             raise ValueError("Invalid set name")
 
