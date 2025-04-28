@@ -15,7 +15,6 @@ class BenchmarkHumanEval(Benchmark):
         df = pd.read_csv(path, usecols=["prompt", "canonical_solution", "entry_point", "test"], compression="gzip")
         df.reset_index(inplace=True)
         data = list(zip(df['index'], df['prompt'], df['canonical_solution'], df['entry_point'], df['test']))
-        print(len(data))
 
         if split == "mini":
             self.data = random.sample(data, 10)
