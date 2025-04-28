@@ -179,6 +179,5 @@ class TestGoTHotpotQA:
             )
 
             # Check the result
-            print(result)
             finished, _ = env.evaluate(result[0])
             assert finished
