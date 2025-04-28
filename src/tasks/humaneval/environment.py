@@ -83,7 +83,7 @@ def parse_action(string) -> str | None:
     match = re.match(pattern, string)
     return match.group(0) if match else None
 
-def evaluate_code_python(code: str, entry_point: str, test: str) -> Tuple[bool, float]:
+def evaluate_code_python(code: str, entry_point: str, test: str) -> Tuple[bool, float]: # NOTE: Only works on a UNIX system as we are using signal. Need to change this to use a different method for Windows or general case if needed.
     """
     Evaluates the given code using the provided entry point and test.
     """
