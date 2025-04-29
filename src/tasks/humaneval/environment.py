@@ -14,7 +14,7 @@ import multiprocessing
 from .state import StateHumanEval
 from ...typedefs import Environment, MAX_SEED
 
-TIMEOUT = 10.0
+TIMEOUT = 5.0
 
 class EnvironmentHumanEval(Environment):
 
