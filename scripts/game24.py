@@ -3,10 +3,14 @@ import asyncio
 import logging
 import argparse
 from diskcache import Cache
+from groq import AsyncGroq
 from openai import AsyncOpenAI
 from omegaconf import OmegaConf
 from together import AsyncTogether
 from cachesaver.pipelines import OnlineAPI
+
+from src.models.groq import GroqModel
+
 logger = logging.getLogger(__name__)
 
 import sys
@@ -27,14 +31,17 @@ async def run(args):
         client = AsyncOpenAI()
     elif args.provider == "together":
         client = AsyncTogether()
+    elif args.provider == "groq":
+        client = AsyncGroq()
     elif args.provider == "local":
         raise NotImplementedError("Local client is not implemented yet.")
     else:
         raise ValueError("Invalid provider. Choose 'openai', 'together', or 'local'.")
     
     # CacheSaver model layer
-    if args.provider in ["openai", "together"]:
-        model = OnlineLLM(client=client)
+    if args.provider in ["openai", "together", "groq"]:
+        # model = OnlineLLM(client=client)
+        model = GroqModel(api_key=os.getenv("GROQ_API_KEY"), model=args.model) #todo uncomment for step 2
     else:
         raise NotImplementedError("Local model is not implemented yet.")
 
@@ -62,7 +69,7 @@ async def run(args):
     )
 
     # Config
-    config = OmegaConf.load(args.conf_path)
+    config = OmegaConf.load(r"C:\Users\Oskar\PycharmProjects\AUCLAN\cachesaver\scripts\game24.yaml")#args.conf_path)
 
     # Setup the method
     ## We can create a method factory for this
@@ -104,7 +111,8 @@ async def run(args):
     else:
         raise NotImplementedError("Method not implemented yet.")
     
-    benchmark = BenchmarkGame24(path=args.dataset_path, split=args.split)
+    # benchmark = BenchmarkGame24(path=args.dataset_path, split=args.split)
+    benchmark = BenchmarkGame24(path=r"C:\Users\Oskar\PycharmProjects\AUCLAN\cachesaver\datasets\dataset_game24.csv.gz", split=args.split)
     results = await method.benchmark(
         benchmark=benchmark,
         share_ns=args.share_ns,
@@ -132,8 +140,8 @@ async def run(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Solve Game 24 using LLMs.")
-    parser.add_argument("--provider", type=str, help="LLM Provider", choices=["openai", "together", "local"], default="openai")
-    parser.add_argument("--model", type=str, help="LLM Model",  default="gpt-4o-mini")
+    parser.add_argument("--provider", type=str, help="LLM Provider", choices=["openai", "together", "local","groq"], default="groq")
+    parser.add_argument("--model", type=str, help="LLM Model",  default="gemma2-9b-it")
     parser.add_argument("--batch_size", type=int, help="CacheSaver's batch size", default=300)
     parser.add_argument("--timeout", type=float, help="CacheSaver's timeout", default=0.05)
     parser.add_argument("--temperature", type=float, help="Temperature for the model", default=1.0)
@@ -142,9 +150,9 @@ if __name__ == "__main__":
     parser.add_argument("--stop", type=str, nargs="+", help="Stop sequence for the model", default=None)
     parser.add_argument("--logprobs", action="store_true", help="Logprobs for the model")
     parser.add_argument("--dataset_path", type=str, help="Path to the dataset")
-    parser.add_argument("--split", type=str, help="Split of the dataset", choices=["mini", "train", "validation", "test"], default="mini")
+    parser.add_argument("--split", type=str, help="Split of the dataset", choices=["mini", "train", "validation", "test", "single"], default="single")
     parser.add_argument("--share_ns", action="store_true", help="Share namespace between puzzles")
-    parser.add_argument("--method", type=str, help="Method to use", choices=["foa", "tot"], default="foa")
+    parser.add_argument("--method", type=str, help="Method to use", choices=["foa", "tot"], default="tot")
     parser.add_argument("--conf_path", type=str, help="Path to corresponding config")
     parser.add_argument("--value_cache", action="store_true", help="Use value cache")
     args = parser.parse_args()
