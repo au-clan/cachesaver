@@ -29,6 +29,21 @@ python scripts/game24.py\
     --conf_path scripts/game24.yaml\
     --value_cache
 
+python scripts/game24.py\
+    --provider openai\
+    --model gpt-4o-mini\
+    --batch_size 800\
+    --timeout 0.1\
+    --temperature 0.7\
+    --max_completion_tokens 100\
+    --top_p 1.0\
+    --dataset_path datasets/dataset_game24.csv.gz\
+    --split train\
+    --share_ns \
+    --method got\
+    --conf_path scripts/game24.yaml\
+    --value_cache
+
 # No Shared NS
 python scripts/game24.py\
     --provider openai\

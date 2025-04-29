@@ -1,86 +1,47 @@
-﻿import random
-from typing import Tuple
-
 import pandas as pd
+import random
+from typing import Tuple
 
 from .state import StateHumanEval
 from ...typedefs import Benchmark
 
-
 class BenchmarkHumanEval(Benchmark):
-    def __init__(self, path: str, split: str = "mini"):
+    def __init__(self, path: str, split: str = "mini") -> None:
         """
-        Initializes the benchmark with the dataset.
-
-        Args:
-            data_path (str): Path to the dataset.
-            split (str): Name of the dataset split (e.g., "mini", "train", "validation", "test").
+        Initializes the Benchmark for HumanEval dataset.
         """
 
-        df = pd.read_json(path, lines=True,
-                          compression='gzip')
+        df = pd.read_csv(path, usecols=["prompt", "canonical_solution", "entry_point", "test"], compression="gzip")
         df.reset_index(inplace=True)
-        data = list(
-            zip(df['index'], df['task_id'], df['prompt'], df['entry_point'], df['canonical_solution'], df['test']))
+        data = list(zip(df['index'], df['prompt'], df['canonical_solution'], df['entry_point'], df['test']))
 
-        # Compute the idxs for each subset
-        valid_idxs = set(range(len(data)))
-
-        random.seed(0)
-        mini_set_idxs = random.sample(list(valid_idxs), 10)
-        valid_idxs = valid_idxs - set(mini_set_idxs)
-
-        train_set_idxs = random.sample(list(valid_idxs), 50)
-        valid_idxs = valid_idxs - set(train_set_idxs)
-
-        validation_set_idxs = random.sample(list(valid_idxs), 50)
-        valid_idxs = valid_idxs - set(validation_set_idxs)
-
-        test_set_idxs = random.sample(list(valid_idxs), 50)
-        valid_idxs = valid_idxs - set(validation_set_idxs)
-
-        if split == "single":
-            self.data = data[:1]
         if split == "mini":
-            self.data = [data[i] for i in mini_set_idxs]
+            self.data = random.sample(data, 10)
         elif split == "train":
-            self.data = [data[i] for i in train_set_idxs]
+            self.data = random.sample(data, 50)
         elif split == "validation":
-            self.data = [data[i] for i in validation_set_idxs]
+            self.data = random.sample(data[-100:], 50)
         elif split == "test":
-            self.data = [data[i] for i in test_set_idxs]
+            self.data = data[-50:] # <- Taken from reflexion
+        elif split == "single":
+            self.data = data[:1]
         else:
             raise ValueError("Invalid set name")
-
+    
     def __len__(self) -> int:
-        """
-        Returns the length of the benchmark dataset.
-        """
         return len(self.data)
-
-    def __getitem__(self, idx) -> Tuple[int, StateHumanEval]:
-        """
-        Returns the index and the state for the given index.
-
-        Args:
-            idx (int): Index of the data point.
-
-        Returns:
-            Tuple[int, StateHumanEval]: Index and the corresponding state.
-        """
+    
+    def __getitem__(self, idx: int) -> Tuple[int, StateHumanEval]:
         index = self.data[idx][0]
-        task_id = self.data[idx][1]
-        prompt = self.data[idx][2]
-        entry_point = self.data[idx][3]
-        canonical_solution = self.data[idx][4]
-        test = self.data[idx][5]
-
-        # Create a state object
+        signature, canonical_solution, entry_point, test = self.data[idx][1:]
 
         state = StateHumanEval(
-            prompt=prompt,
+            puzzle=signature,
+            current_state=signature,
+            steps=[],
             canonical_solution=canonical_solution,
             entry_point=entry_point,
             test=test,
+            randomness=None
         )
         return index, state

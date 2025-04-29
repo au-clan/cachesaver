@@ -1,4 +1,5 @@
 from typing import List
+import re
 
 from . import prompts as prompts
 from .state import StateGame24
@@ -27,6 +28,38 @@ class AgentActGame24(Agent):
         # Parse the response
         proposals = [r.strip() for r in responses]
         return proposals
+    
+class AgentAggregateGame24(Agent):
+
+    @staticmethod
+    async def act(model: Model, state: StateGame24, actions: List[str], k: int, n: int, namespace: str, request_id: str, params: DecodingParameters) -> List[str]:
+        """
+        Returns the aggregated actions for the Game of 24 task.
+        """
+        if any("left" not in action for action in actions):
+            return [action for action in actions if "left" not in action]
+        
+        # Format the prompt
+        proposals = ''
+        for idx, action in enumerate(actions):
+            proposals += f'({idx + 1}) ' + action + '\n'
+
+        prompt = prompts.aggregate.format(state=state.current_state, proposal=proposals, n_select_sample=k)
+
+        responses = await model.request(
+            prompt=prompt,
+            n=n,
+            request_id=request_id,
+            namespace=namespace,
+            params=params
+        )
+
+        # Parse the response
+        pattern = r"\(\d+\)\s(\d+ [+\-*/] \d+ = \d+ \(left: [^)]+\))"
+        matchs = re.findall(pattern, responses[0])
+
+        proposal = [match.strip() for match in matchs]
+        return proposal
 
 
 class AgentBfsGame24(Agent):
@@ -36,9 +69,8 @@ class AgentBfsGame24(Agent):
         """
         Returns a list of actions for the Game of 24 task.
         """
-        
         # Format the prompt
-        if state.current_state == "24":
+        if len(state.current_state.strip().split(' ')) == 1:
             prompt = prompts.cot.format(input=state.puzzle) + "\nSteps:\n" + '\n'.join(state.steps) + "\nAnswer: "
         else:
             current_numbers = get_current_numbers(state)
