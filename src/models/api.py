@@ -22,6 +22,7 @@ class API(SingleRequestModel):
         Send a request to the pipeline
         """
         request = Request(
+            messages=[{"role": "user", "content": prompt}],
             prompt=prompt,
             n=n,
             request_id=request_id,

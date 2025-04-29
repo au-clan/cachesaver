@@ -1,15 +1,20 @@
-from typing import List, Tuple, Any, NamedTuple, Optional
+from typing import List, Tuple, Any, NamedTuple, Optional, TypedDict, Literal
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from cachesaver.typedefs import Batch, Response, SingleRequestModel, BatchRequestModel
 from cachesaver.typedefs import Request as CacheSaverRequest
 from torch.utils.data import Dataset
 
 MAX_SEED = 10000
+class Message(TypedDict):
+    role: Literal["user", "assistant"]
+    content: str
 
 @dataclass(frozen=True)
 class Request(CacheSaverRequest):# Clean this up
+    prompt:Any
     model: str
+    messages: List[Message]
     max_completion_tokens: Optional[int]=None
     temperature: Optional[float]=1.0
     top_p: Optional[float]=1.0

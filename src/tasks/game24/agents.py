@@ -4,10 +4,13 @@ from . import prompts as prompts
 from .state import StateGame24
 from ...typedefs import Request, Agent, Model, DecodingParameters
 
+
 class AgentActGame24(Agent):
     """
     """
-    async def act(model: Model, state: StateGame24, n: int, namespace: str, request_id: str, params: DecodingParameters) -> List[str]:
+
+    async def act(model: Model, state: StateGame24, n: int, namespace: str, request_id: str,
+                  params: DecodingParameters) -> List[str]:
         # Format the prompt
         if state.current_state == "24":
             prompt = prompts.cot.format(input=state.puzzle) + "\nSteps:\n" + '\n'.join(state.steps) + "\nAnswer: "
@@ -32,18 +35,19 @@ class AgentActGame24(Agent):
 class AgentBfsGame24(Agent):
 
     @staticmethod
-    async def act(model: Model, state: StateGame24, namespace: str, request_id: str, params: DecodingParameters) -> List[str]:
+    async def act(model: Model, state: StateGame24, namespace: str, request_id: str, params: DecodingParameters) -> \
+    List[str]:
         """
         Returns a list of actions for the Game of 24 task.
         """
-        
+
         # Format the prompt
         if state.current_state == "24":
             prompt = prompts.cot.format(input=state.puzzle) + "\nSteps:\n" + '\n'.join(state.steps) + "\nAnswer: "
         else:
             current_numbers = get_current_numbers(state)
             prompt = prompts.bfs.format(input=current_numbers)
-    
+
         # Generate the response
         response = await model.request(
             prompt=prompt,
@@ -63,7 +67,8 @@ class AgentBfsGame24(Agent):
 class AgentEvaluateGame24(Agent):
 
     @staticmethod
-    async def act(model: Model, state: StateGame24, n: int,namespace: str, request_id: str, params: DecodingParameters, cache: dict=None) -> float:
+    async def act(model: Model, state: StateGame24, n: int, namespace: str, request_id: str, params: DecodingParameters,
+                  cache: dict = None) -> float:
         """
         Returns a value for the given state
         """
@@ -78,14 +83,17 @@ class AgentEvaluateGame24(Agent):
             prompt = prompts.evaluate_answer.format(input=state.puzzle, answer=formula)
         else:
             prompt = prompts.evaluate.format(input=state.current_state)
-        
+
         # Format the request
-        responses = await model.request(
+        responses = await model.request(Request(
             prompt=prompt,
             n=n,
             request_id=request_id,
             namespace=namespace,
-            params=params
+            messages=[{"role": "user", "content": prompt}],
+            model="gemma2-9b-it",
+
+        )
         )
 
         # Parse the response
@@ -106,6 +114,7 @@ def get_current_numbers(state: StateGame24) -> str:
     """
     last_line = state.current_state.strip().split('\n')[-1]
     return last_line.split('left: ')[-1].split(')')[0]
+
 
 def get_formula(state: StateGame24) -> str:
     formula = state.steps[-1].lower().replace("answer: ", "")
