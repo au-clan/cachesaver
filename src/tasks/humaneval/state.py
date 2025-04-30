@@ -14,9 +14,6 @@ class StateHumanEval(State):
     # Steps taken towards solution
     steps: List[str]
 
-    # The canonical solution for the puzzle
-    canonical_solution: str
-
     # Entry point for testing the code
     entry_point: str
 
@@ -34,7 +31,6 @@ class StateHumanEval(State):
             "puzzle": self.puzzle,
             "current_state": self.current_state,
             "steps": " -> ".join(self.steps),
-            "canonical_solution": self.canonical_solution,
             "entry_point": self.entry_point,
             "test": self.test,
             "randomness": self.randomness
@@ -48,7 +44,6 @@ class StateHumanEval(State):
             puzzle=self.puzzle,
             current_state=self.current_state,
             steps=self.steps,
-            canonical_solution=self.canonical_solution,
             entry_point=self.entry_point,
             test=self.test,
             randomness=randomness or self.randomness

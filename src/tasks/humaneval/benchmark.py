@@ -11,9 +11,9 @@ class BenchmarkHumanEval(Benchmark):
         Initializes the Benchmark for HumanEval dataset.
         """
 
-        df = pd.read_csv(path, usecols=["prompt", "canonical_solution", "entry_point", "test"], compression="gzip")
+        df = pd.read_csv(path, usecols=["prompt", "entry_point", "test"], compression="gzip")
         df.reset_index(inplace=True)
-        data = list(zip(df['index'], df['prompt'], df['canonical_solution'], df['entry_point'], df['test']))
+        data = list(zip(df['index'], df['prompt'], df['entry_point'], df['test']))
 
         if split == "mini":
             self.data = random.sample(data, 10)
@@ -33,13 +33,12 @@ class BenchmarkHumanEval(Benchmark):
     
     def __getitem__(self, idx: int) -> Tuple[int, StateHumanEval]:
         index = self.data[idx][0]
-        signature, canonical_solution, entry_point, test = self.data[idx][1:]
+        signature, entry_point, test = self.data[idx][1:]
 
         state = StateHumanEval(
             puzzle=signature,
             current_state=signature,
             steps=[],
-            canonical_solution=canonical_solution,
             entry_point=entry_point,
             test=test,
             randomness=None

@@ -53,20 +53,49 @@ class TestHumanEvalEnvironment:
 
     def test_evaluate_py_solved(self):
         # Test evaluate_code_python method
-        benchmark = BenchmarkHumanEval(path="datasets/humaneval-py-sorted.csv.gz", split="mini")
-        _, state = benchmark[0]
         # Simulate a solved state
-        solution = state.current_state + '\n' + state.canonical_solution
+        solution = "def function():\n    return True\n"
+        test_function = "def check(candidate):\n    assert candidate()\n" 
         new_state = StateHumanEval(
-            puzzle=state.puzzle,
+            puzzle="",
             current_state=solution,
-            steps=state.steps + [solution],
-            canonical_solution=state.canonical_solution,
-            entry_point=state.entry_point,
-            test=state.test,
-            randomness=state.randomness
+            steps=[solution],
+            entry_point="function",
+            test=test_function,
+            randomness=None
         )
-        print(new_state.current_state)
-        solved, score = EnvironmentHumanEval.evaluate(new_state)
-        print(score)
+
+        solved, _ = EnvironmentHumanEval.evaluate(new_state)
         assert solved
+
+    def test_evaluate_rust_solved(self):
+        # Test evaluate_code_rust method
+        # Simulate a solved state
+        solution = "fn function() -> i32 {\n    return 1;\n}\n"
+        test_function = "fn main() {\n    let candidate = function;\n    assert_eq!(candidate(), 1);\n}\n"
+        new_state = StateHumanEval(
+            puzzle="",
+            current_state=solution,
+            steps=[solution],
+            entry_point="function",
+            test=test_function,
+            randomness=None
+        )
+        solved, _ = EnvironmentHumanEval.evaluate(new_state)
+        assert solved
+
+    def test_evaluate_rust_failed_solve(self):
+        # Test evaluate_code_rust method
+        # Simulate a failed state
+        solution = "fn function() -> i32 {\n    return 42;\n}\n"
+        test_function = "fn main() {\n    let candidate = function;\n    assert_eq!(candidate(), 0);\n}\n"
+        new_state = StateHumanEval(
+            puzzle="",
+            current_state=solution,
+            steps=[solution],
+            entry_point="function",
+            test=test_function,
+            randomness=None
+        )
+        solved, _ = EnvironmentHumanEval.evaluate(new_state)
+        assert not solved
