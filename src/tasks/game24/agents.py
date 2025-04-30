@@ -32,7 +32,7 @@ class AgentActGame24(Agent):
 class AgentAggregateGame24(Agent):
 
     @staticmethod
-    async def act(model: Model, state: StateGame24, actions: List[str], k: int, n: int, namespace: str, request_id: str, params: DecodingParameters) -> List[str]:
+    async def act(model: Model, state: StateGame24, actions: List[str], k: int, namespace: str, request_id: str, params: DecodingParameters) -> List[str]:
         """
         Returns the aggregated actions for the Game of 24 task.
         """
@@ -48,7 +48,7 @@ class AgentAggregateGame24(Agent):
 
         responses = await model.request(
             prompt=prompt,
-            n=n,
+            n=1,
             request_id=request_id,
             namespace=namespace,
             params=params

@@ -64,7 +64,6 @@ class AlgorithmGOT(Algorithm):
                     state=state,
                     actions=action,
                     k=self.num_selections,
-                    n = 1,
                     namespace=namespace,
                     request_id=f"idx{idx}-aggregate{step}-{hash(state)}",
                     params=self.aggregate_params,
