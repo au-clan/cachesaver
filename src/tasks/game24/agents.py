@@ -36,7 +36,7 @@ class AgentBfsGame24(Agent):
 
     @staticmethod
     async def act(model: Model, state: StateGame24, namespace: str, request_id: str, params: DecodingParameters) -> \
-    List[str]:
+            List[str]:
         """
         Returns a list of actions for the Game of 24 task.
         """
@@ -85,15 +85,13 @@ class AgentEvaluateGame24(Agent):
             prompt = prompts.evaluate.format(input=state.current_state)
 
         # Format the request
-        responses = await model.request(Request(
-            prompt=prompt,
+        responses = await model.request(
+            prompt=[{"role": "assistant", "content": prompt}],
             n=n,
             request_id=request_id,
             namespace=namespace,
-            messages=[{"role": "user", "content": prompt}],
-            model="gemma2-9b-it",
+            params=params
 
-        )
         )
 
         # Parse the response

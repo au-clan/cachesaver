@@ -97,7 +97,7 @@ class GroqModel(ModelBasic):
                             "role" : "user",
                             "content" : request.prompt
                         }
-                    ],
+                    ] if isinstance(request.prompt, str) else request.prompt,
                     model = request.model,
                     n = 1,
                     max_tokens= request.max_completion_tokens or None, # or None not needed but just to be explicit

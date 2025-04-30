@@ -14,7 +14,6 @@ class Message(TypedDict):
 class Request(CacheSaverRequest):# Clean this up
     prompt:Any
     model: str
-    messages: List[Message]
     max_completion_tokens: Optional[int]=None
     temperature: Optional[float]=1.0
     top_p: Optional[float]=1.0
