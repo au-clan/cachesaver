@@ -2,7 +2,9 @@ pandas
 diskcache
 omegaconf
 together
+openai
 sympy
+torch
 langchain
 langchain-community
 wikipedia
