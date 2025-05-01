@@ -69,7 +69,7 @@ class AgentAggregateHotpotQA(Agent):
     """
 
     @staticmethod
-    async def act(model: Model, state: StateHotpotQA, actions: List[str], k: int, n: int, namespace: str, request_id: str, params: DecodingParameters) -> List[str]:
+    async def act(model: Model, state: StateHotpotQA, actions: List[str], k: int, namespace: str, request_id: str, params: DecodingParameters) -> List[str]:
         """
         Returns a list of the k best actions for the HotpotQA task.
         """
@@ -86,7 +86,7 @@ class AgentAggregateHotpotQA(Agent):
         # Generate the responses
         responses = await model.request(
             prompt=prompt,
-            n=n,
+            n=1,
             request_id=request_id,
             namespace=namespace,
             params=params
