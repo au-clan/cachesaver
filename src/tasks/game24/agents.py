@@ -119,6 +119,11 @@ class AgentReActGame24(Agent):
 
         return react_actions
 
+class AgentReflectGame24(Agent):
+    @staticmethod
+    async def act(model: Model, state: StateGame24):
+        pass
+
 class AgentEvaluateGame24(Agent):
 
     @staticmethod
