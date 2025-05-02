@@ -95,7 +95,7 @@ class AgentAggregateHotpotQA(Agent):
         # Parse the responses
         aggregate_actions = [r.strip() for response in responses for r in response.split("\n")]
         return aggregate_actions
-    
+
 class AgentReactHotpotQA(Agent):
     """
     Agent performing the ReAct operation for the HotpotQA task.
@@ -123,6 +123,10 @@ class AgentReactHotpotQA(Agent):
 
         # Parse the responses
         react_actions = [r.strip() for r in responses]
+
+        # take actions
+        # execute 
+
         return react_actions
     
 class AgentEvaluateHotpotQA(Agent):

@@ -19,12 +19,12 @@ class EnvironmentHotpotQA(Environment):
         """
         Takes a step in the environment based on the given action.
         """
-       
+
         # Parse the type and the argument of the action
         act = action.split("\n")[-1]
         action_type, argument = parse_action(act.split(": ")[-1])
         #assert "Action" in act, "Action not found in the action string."
-        
+
         # Perform the action and obtain the observation
         obs = perform_action(state.docstore, action_type, argument, state.answer)
         step = f"\nAction {len(state.steps)+ 1}: " + action + f"\nObservation {len(state.steps) + 1}: {obs}"
@@ -81,12 +81,12 @@ class EnvironmentHotpotQA(Environment):
 def parse_action(string):
     pattern = r'^(\w+)\[(.+)\]$'
     match = re.match(pattern, string)
-    
+
     if match:
         action_type = match.group(1)
         argument = match.group(2)
         return action_type.lower().capitalize(), argument.strip()
-    
+
     else:
         return None, None
     

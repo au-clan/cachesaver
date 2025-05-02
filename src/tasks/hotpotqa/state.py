@@ -33,7 +33,7 @@ class StateHotpotQA(State):
             "current_state": self.current_state,
             "steps": " -> ".join(self.steps)
         }
-    
+
     def clone(self, randomness: int=None) -> "StateHotpotQA":
         """
         Returns a new instance of StateHotpotQA with an optional new randomness value.
