@@ -27,7 +27,7 @@ class MockLLM(Model):
         while True:
             try:
                 completion = await self.client.request(
-                    messages=[{"role": "user", "content": prompt}],
+                    messages=[{"role": "user", "content": prompt}] if isinstance(prompt, str) else prompt,
                     model=self.model,
                     n=1,
                     max_tokens=params.max_completion_tokens
@@ -66,7 +66,7 @@ class LazyMockOnlineLLM(Model):
         while True:
             try:
                 completion = await self.lazy_client.request(
-                    messages=[{"role": "user", "content": request.prompt}],
+                    messages=[{"role": "user", "content": request.prompt}] if isinstance(request.prompt, str) else request.prompt,
                     model=request.model,
                     n=1,
                     max_tokens=request.max_completion_tokens or None,
