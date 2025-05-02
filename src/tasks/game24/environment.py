@@ -31,7 +31,7 @@ class EnvironmentGame24(Environment):
             randomness=randomness
         )
         return state
-    
+
     @staticmethod
     def is_valid(state: StateGame24, action: str) -> bool:
         """

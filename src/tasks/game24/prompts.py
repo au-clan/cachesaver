@@ -17,6 +17,45 @@ Input: {input}
 Possible next step:
 '''
 
+react = """
+Use numbers and basic arithmetic operations (+ - * /). Each step, you are only allowed to choose two of the remaining numbers to obtain a new number. Do not explain simply list one possible next step, as well as all the remaining numbers and nothing else.
+Solve a task with interleaving Thought and Action steps. Thought can reason about the current situation, and Action can be this type:
+
+(1) Make24[a, b], which return how to generate 24 from a and b if possible
+(2) Try[a, b], randomly try a and b to get result
+(3) Finish
+
+Below some examples are given. The examples also include the observations after each action, which you should not use in your answer.
+
+Example: 1 3
+Thought 1: only two numbers left, I have to use these two.
+Action 1: Make24[1, 3]
+Observation 1: no way to get 24 from 1 and 3
+Possible next step:
+1 * 3 = 3 (left: 3)
+
+Example: 1 4 6
+Thought 1: there are three numbers, I can try any two of them.
+Action 1: Try[4, 6]
+Observation 1: 4 * 6 = 24
+Possible next step:
+4 * 6 = 24 (left 1 24)
+
+Example: 2 8 8 14
+Thought 1: there are four numbers, I can try any two of them which is not tried in previous Thought.
+Action 1: Try[2, 14]
+Observation 1: 2 + 14 = 16
+Possible next step:
+2 + 14 = 16 (left 8 8 16)
+
+(END OF EXAMPLES)
+
+Remember, your task is to find the immediate next thought and action. Answer them in the format given by the examples and mention nothing more.
+
+Input: {input}
+Possible next steps:"""
+
+
 bfs = '''Use numbers and basic arithmetic operations (+ - * /). Each step, you are only allowed to choose two of the remaining numbers to obtain a new number. Do not explain simply list possible next steps as well as all the remaining numbers and nothing else.
 
 Example: 2 8 8 14

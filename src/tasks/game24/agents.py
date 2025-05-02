@@ -91,6 +91,33 @@ class AgentBfsGame24(Agent):
         proposals = [r.strip() for r in response[0].split("\n")]
         return proposals
 
+class AgentReActGame24(Agent):
+
+    @staticmethod
+    async def act(model: Model, state: StateGame24, namespace: str, request_id: str, params: DecodingParameters) -> List[str]:
+        """
+        Returns a list of actions for the Game of 24 task.
+        """
+
+        # Format the prompt
+        if state.current_state == "24":
+            prompt = prompts.cot.format(input=state.puzzle) + "\nSteps:\n" + '\n'.join(state.steps) + "\nAnswer: "
+        else:
+            current_numbers = get_current_numbers(state)
+            prompt = prompts.react.format(input=current_numbers)
+
+        # Generate the response
+        response = await model.request(
+            prompt=prompt,
+            n=1,
+            request_id=request_id,
+            namespace=namespace,
+            params=params
+        )
+
+        react_actions = [r.strip() for r in responses]
+
+        return react_actions
 
 class AgentEvaluateGame24(Agent):
 
