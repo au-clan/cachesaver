@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 from ...typedefs import State
+from langchain.agents.react.base import DocstoreExplorer
 
 
 @dataclass(frozen=True)
@@ -17,6 +18,10 @@ class StateHLE(State):
     raw_subject: str
     category: str
     canary: str
+    current_state: str
+    docstore: DocstoreExplorer
+    steps: List[str]
+
 
     def serialize(self) -> dict:
         """
