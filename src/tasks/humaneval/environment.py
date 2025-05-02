@@ -36,7 +36,7 @@ class EnvironmentHumanEval(Environment):
         state = StateHumanEval(
             puzzle=state.puzzle,
             current_state=completion,
-            steps=state.steps + [action],
+            steps=state.steps + [completion],
             entry_point=state.entry_point,
             test=state.test,
             randomness=randomness
@@ -97,7 +97,6 @@ def evaluate_code_python(code: str, entry_point: str, test: str) -> Tuple[bool, 
     if p.is_alive():
         p.kill()
 
-    print(result)
     if not result:
         return False, 0.0
     
@@ -168,7 +167,6 @@ def unsafe_execute(code: str, entry_point: str, test: str, timeout: float, resul
             + '\n'
             + f'check({entry_point})'
         )
-        print(program)
 
         try:
             exec_globals = {}
