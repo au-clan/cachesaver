@@ -24,6 +24,7 @@ class AgentActGame24(Agent):
     """
     """
 
+    @staticmethod
     async def act(model: Model, state: StateGame24, n: int, namespace: str, request_id: str,
                   params: ModelRequestOptions) -> List[str]:
         # Format the prompt

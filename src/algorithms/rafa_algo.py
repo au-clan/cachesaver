@@ -158,7 +158,6 @@ class AlgorithmRAFA(Algorithm):
                                                                      )
             #todo here update env
             # make env step here instead of in evaluate
-            print("asd")
 
             # todo i think this is where we update with a step if types match, to be checked
             # comment for self, I think this is where the env should be updated...

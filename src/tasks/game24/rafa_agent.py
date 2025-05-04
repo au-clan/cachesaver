@@ -29,11 +29,12 @@ class AgentRafaGame24_eval(Agent):
             return False, "The formula is invalid."
 
     @staticmethod
-    def check_valid_move_rafa(state, cur_step, idx):
+    # def check_valid_move_rafa(state, cur_step, idx):
+    def check_valid_move_rafa(state, idx, last_step, cur_step):
         if idx == 1:
-            original_nums = [float(num) for num in state.history[-1].split(" ")]
+            original_nums = [float(num) for num in last_step.split(" ")]
         else:
-            original_nums = [float(num) for num in state.history[-1].split('left:')[-1].strip("()").split(" ") if
+            original_nums = [float(num) for num in last_step.split('left:')[-1].strip("()").split(" ") if
                              num != '']
         formula = [op for op in cur_step.split('left:')[0].strip("()").split(" ") if op != '']
         new_nums = [float(num) for num in cur_step.split('left:')[-1].strip("()").split(" ") if num != '']
@@ -102,25 +103,26 @@ class AgentRafaGame24_eval(Agent):
         return False, ""
 
     @staticmethod
-    def check_step_rafa(state: StateGame24, idx, action):
+    def check_step_rafa(state: StateGame24, idx, last_step, cur_step):
         try:
-            if "answer" in action.lower():
-                correct, feedback = AgentRafaGame24_eval.check_answer(state.puzzle, action)
+            if "answer" in cur_step.lower():
+                correct, feedback = AgentRafaGame24_eval.check_answer(state.puzzle, cur_step)
                 if not correct:
                     return f"Step {idx} tries to give an answer but it is incorrect. {feedback}", 0
                 return f"Step {idx} is correct. {feedback}", 10
             else:
                 # Check if the step is valid
-                correct, feedback = AgentRafaGame24_eval.check_valid_move_rafa(state=state, cur_step=action, idx=idx)
+                correct, feedback = AgentRafaGame24_eval.check_valid_move_rafa(state=state, idx=idx,
+                                                                               last_step=last_step, cur_step=cur_step)
                 if not correct:
                     return f"Step {idx} is illegal. {feedback}", 0
 
-                formula = action.split('left:')[0].strip("()")
+                formula = cur_step.split('left:')[0].strip("()")
                 correct, feedback = AgentRafaGame24_eval.check_equation(formula)
                 if not correct:
                     return f"Step {idx} is not correctly calculated. {feedback}", 0
 
-                correct, feedback = AgentRafaGame24_eval.check_twentyfour(action)
+                correct, feedback = AgentRafaGame24_eval.check_twentyfour(cur_step)
                 if not correct:
                     return f"Step {idx} is impossible to lead to 24. {feedback}", 0
 
@@ -140,7 +142,7 @@ class AgentRafaGame24_eval(Agent):
         idx = len(state.history)
 
         #
-
+        state = state
         for action in actions:
             if idx == 0:
                 last_step = state.puzzle
@@ -150,7 +152,9 @@ class AgentRafaGame24_eval(Agent):
             # print(action)
             if feedback_print:
                 idx += 1
-            feedback, reward = AgentRafaGame24_eval.check_step_rafa(state=state, action=action, idx=idx)
+            # feedback, reward = AgentRafaGame24_eval.check_step_rafa(state=state, action=action, idx=idx)
+            feedback, reward = AgentRafaGame24_eval.check_step_rafa(state=state, idx=idx, last_step=last_step,
+                                                                    cur_step=action)
             if feedback_print:
                 state = replace(state, feedbacks=state.feedbacks.append(feedback))
                 feedbacks.append(feedback)
@@ -174,10 +178,10 @@ class AgentRafaGame24_eval(Agent):
                                                                                         state=state,
                                                                                         feedback_print=feedback_print
                                                                                         )
-        new_len = len(state.history)
+        new_len = len(generated_state.history)
         delta = new_len - prev_len + 1 if new_len < 4 else new_len - prev_len
         assert delta > 0
-        done = (reward >= 10) or (state.current_step > max_step)
+        done = (reward >= 10) or (generated_state.current_step > max_step)
         answer = [f"Step {i + 1}: {x}" for i, x in enumerate(action.split('\n')[:delta]) if x != ""]
         answer = "Attempt answer: " + "\n".join(answer)
         if True:  # todo this is default in rafa
@@ -201,10 +205,8 @@ class AgentRafaGame24_eval(Agent):
 
         return AgentRafaGame24_eval.step_rafa(action=action,
                                               state=state,
-                                              # todo the eval prob doesnt match 1:1 yet will look at once sharp again
                                               max_step=max_step,
                                               feedback_print=False
-                                              # todo this should be removed completly both in function and as argument
                                               )
 
 
@@ -336,6 +338,7 @@ class AgentRAFA_plan(Agent):
                        reflects_list)}]
 
         # this is the old generate feedback
+
         current_numbers = AgentRAFA_plan.get_current_numbers(candidate if candidate else state.puzzle)
         if current_numbers == '24':
             prompt = prompts.cot.format(input=state.puzzle) + 'Steps:\n' + candidate
@@ -366,12 +369,18 @@ class AgentRAFA_plan(Agent):
                                      )
                                      )
         # result = await model.request(history_messages)
-        #todo this logic is flawed, in the event you get a response where the first line is a "here is suggestions:.." and then the next line is a new line with nothing on it and then the third is a suggestion. You will "learn" nothing as the sample could be two:
+        # todo this logic is flawed, in the event you get a response where the first line is a "here is suggestions:.." and then the next line is a new line with nothing on it and then the third is a suggestion. You will "learn" nothing as the sample could be two:
 
         proposal_list = [x.split('\n') for x in result]  # todo the stop token
         proposals = []
-        for p in proposal_list:
-            proposals.extend(p)
+
+        for sublist in proposal_list:
+            for line in sublist:
+                line = line.strip().replace('"', '')
+                # Only keep actual proposals
+                if line.startswith("* **"):
+                    proposals.append(line)
+
         proposals = proposals[:min(len(proposals), n_propose_sample)]
         return [candidate + _ + '\n' for _ in proposals]
 

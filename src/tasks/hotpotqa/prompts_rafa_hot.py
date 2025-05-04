@@ -1,5 +1,5 @@
 #todo Note, is RAFA prompts 1:1 with the agentAct, it seems that way
-#todo the reflect_prompt is an melt of rafa and evaluate prompt for hotpot
+#todo the reflect_prompt is a melt of rafa and evaluate prompt for hotpot
 reflect_prompt='''Solve a question answering task with sequential Action steps. Action can be three types:
 
 (1) Search[entity], which searches the exact entity on Wikipedia and returns the first paragraph if it exists. If not, it will return some similar entities to search.
