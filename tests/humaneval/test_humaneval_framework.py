@@ -39,8 +39,8 @@ class TestHumanEvalEnvironment:
         _, state = benchmark[0]
         action = "```python\nprint('Hello, World!')\n```"
         new_state = EnvironmentHumanEval.step(state, action)
-        assert new_state.current_state == action
-        assert new_state.steps == [action]
+        assert new_state.current_state == '\n'.join(action.split('\n')[1:-1])
+        assert new_state.steps == ['\n'.join(action.split('\n')[1:-1])]
         assert new_state.randomness is not None
 
     def test_evaluate_py_failed_solve(self):
