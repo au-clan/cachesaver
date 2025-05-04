@@ -97,7 +97,7 @@ class AlgorithmRAFA(Algorithm):
                 # update the value reflects
                 value_reflects_list.append(value_reflects)
 
-            # -------------------------------------Now the plan begins
+            # -------------------------------------The plan begins
             output_candidates = ["\n".join(state.history) + "\n"] if len(state.history) else [
                 ""]  # current output candidates
             infos = []

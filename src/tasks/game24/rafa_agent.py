@@ -351,8 +351,8 @@ class AgentRAFA_plan(Agent):
         history_messages.add_user_message(propose_prompt)
         # history_messages.stop_token = ["\n\n"]  # todo i dont get how their method works with this, in groq it doesnt work
 
-        result = await model.request(history_messages,
-                                     # n=history_messages.n,
+        result = await model.request(prompt=history_messages,
+                                     n=history_messages.n,
                                      request_id=history_messages.request_id,
                                      namespace=history_messages.namespace,
                                      params=DecodingParameters(

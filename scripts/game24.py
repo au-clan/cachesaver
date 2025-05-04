@@ -3,7 +3,7 @@ import asyncio
 import logging
 import os
 
-from cachesaver.pipelines import LocalAPI
+from cachesaver.pipelines import LocalAPI, OnlineAPI
 from diskcache import Cache
 from omegaconf import OmegaConf
 from openai import AsyncOpenAI
@@ -40,8 +40,6 @@ async def run(args):
     elif args.provider == "local":
         raise NotImplementedError("Local client is not implemented yet.")
     elif args.provider == "groq":
-        # client = GroqModel(api_key=os.getenv("GROQ_API_KEY"), model="gemma2-9b-it")#todo load from arg.model
-        # todo revisit the way we create clients, why not do it in model?
         pass
     else:
         raise ValueError("Invalid provider. Choose 'openai', 'together', or 'local'.")
@@ -55,18 +53,18 @@ async def run(args):
         raise NotImplementedError("Local model is not implemented yet.")
 
     # CacheSaver Pipeline: Batcher -> Reorderer -> Deduplicator -> Cache -> Model
-    # pipeline = OnlineAPI(
-    #     model=model,
-    #     cache=cache,
-    #     batch_size=args.batch_size,
-    #     timeout=args.timeout
-    # )
-    pipeline = LocalAPI(
+    pipeline = OnlineAPI(
         model=model,
         cache=cache,
         batch_size=args.batch_size,
         timeout=args.timeout
     )
+    # pipeline = LocalAPI(
+    #     model=model,
+    #     cache=cache,
+    #     batch_size=args.batch_size,
+    #     timeout=args.timeout
+    # )
 
     # Cachesaver additional layer for wrapping: API -> Pipeline
     api = API(
@@ -84,7 +82,7 @@ async def run(args):
     )
 
     # Config
-    config = OmegaConf.load(args.conf_path)
+    config = OmegaConf.load("game24.yaml")
 
     # Setup the method
     if args.method == "foa":
@@ -132,7 +130,7 @@ async def run(args):
 
         )
         method = AlgorithmRAFA(
-            model=pipeline,  # todo lint complain about type... should be fixed
+            model=api,  # todo lint complain about type... should be fixed
             agents=agents,
             env=EnvironmentGame24(),
             rafa_options=RAFAOptions(n_propose_sample=5,  # todo all of these configs shouldnt be hardcoded
@@ -161,14 +159,12 @@ async def run(args):
             num_evaluations=config.got.num_evaluations,
         )
     else:
-        raise NotImplementedError("Method not implemented yet.")
+        raise NotImplementedError(f"Method {args.method} is not implemented yet.")
 
     benchmark = BenchmarkGame24(path=r"C:\Users\Oskar\PycharmProjects\AUCLAN\cachesaver\datasets\dataset_game24.csv.gz",
-                                split=args.split)
+                                split="single")
 
-    raise NotImplementedError(f"Method {args.method} is not implemented yet.")
-
-    benchmark = BenchmarkGame24(path=args.dataset_path, split=args.split)
+    # benchmark = BenchmarkGame24(path=args.dataset_path, split=args.split)
     results = await method.benchmark(
         benchmark=benchmark,
         share_ns=args.share_ns,
@@ -202,7 +198,6 @@ if __name__ == "__main__":
     parser.add_argument("--provider", type=str, help="LLM Provider", choices=["openai", "together", "local", "groq"],
                         default="groq")
     parser.add_argument("--model", type=str, help="LLM Model", default="gemma2-9b-it")
-    parser.add_argument("--model", type=str, help="LLM model", default="gpt-4o-mini")
     parser.add_argument("--batch_size", type=int, help="CacheSaver's batch size", default=300)
     parser.add_argument("--timeout", type=float, help="CacheSaver's timeout", default=0.05)
     parser.add_argument("--temperature", type=float, help="Temperature for the model", default=1.0)
