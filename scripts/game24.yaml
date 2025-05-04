@@ -12,3 +12,9 @@ tot:
   num_selections: 5
   num_steps: 4
   num_evaluations: 3
+
+rap:
+  num_iterations: 50
+  num_samples: 5
+  num_evaluations: 3
+  exploration_constant: 1.0
