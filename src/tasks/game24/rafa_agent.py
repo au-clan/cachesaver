@@ -240,7 +240,7 @@ class AgentRAFA_reflect(Agent):
         reflect_messages.add_user_message(reflect_prompt)
 
         reflects = await model.request(
-            request=reflect_messages,
+            prompt=reflect_messages.messages,
             n=reflect_messages.n,
             request_id=reflect_messages.request_id,
             namespace=reflect_messages.namespace,
@@ -284,7 +284,7 @@ class AgentRAFA_reflect_value(Agent):
                                                                    n=n_propose_sample)
         value_reflects_messages.add_user_message(value_reflect_prompt)
 
-        value_reflects = await model.request(request=value_reflects_messages,
+        value_reflects = await model.request(prompt=value_reflects_messages.messages,
                                              n=value_reflects_messages.n,
                                              request_id=value_reflects_messages.request_id,
                                              namespace=value_reflects_messages.namespace,
@@ -366,6 +366,7 @@ class AgentRAFA_plan(Agent):
                                      )
                                      )
         # result = await model.request(history_messages)
+        #todo this logic is flawed, in the event you get a response where the first line is a "here is suggestions:.." and then the next line is a new line with nothing on it and then the third is a suggestion. You will "learn" nothing as the sample could be two:
 
         proposal_list = [x.split('\n') for x in result]  # todo the stop token
         proposals = []

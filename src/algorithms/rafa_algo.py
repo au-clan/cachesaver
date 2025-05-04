@@ -156,6 +156,10 @@ class AlgorithmRAFA(Algorithm):
                                                                      action=res_ys,
                                                                      max_step=self.rafa_options.max_step,
                                                                      )
+            #todo here update env
+            # make env step here instead of in evaluate
+            print("asd")
+
             # todo i think this is where we update with a step if types match, to be checked
             # comment for self, I think this is where the env should be updated...
             # action = agent.act(state)
@@ -167,7 +171,7 @@ class AlgorithmRAFA(Algorithm):
             print(obs)
             print(reward, done, env_info)
 
-        return state  # todo refactor to old state type
+        return state
 
     async def benchmark(self, benchmark: Benchmark, share_ns: bool = False, cache: bool = True):
         cache = {} if cache else None
@@ -176,7 +180,7 @@ class AlgorithmRAFA(Algorithm):
                 idx=index,
                 state=state,
                 namespace="benchmark" if share_ns else f"benchmark-{index}",
-                value_cache=cache  # todo i dont think this is needed in rafa
+                value_cache=cache
             )
             for index, state in benchmark
         ]

@@ -59,12 +59,6 @@ async def run(args):
         batch_size=args.batch_size,
         timeout=args.timeout
     )
-    # pipeline = LocalAPI(
-    #     model=model,
-    #     cache=cache,
-    #     batch_size=args.batch_size,
-    #     timeout=args.timeout
-    # )
 
     # Cachesaver additional layer for wrapping: API -> Pipeline
     api = API(
@@ -87,7 +81,7 @@ async def run(args):
     # Setup the method
     if args.method == "foa":
         agents = AgentDictFOA(
-            step=AgentActGame24,
+            step=AgentActGame24(),
             evaluate=AgentEvaluateGame24,
             step_params=modelRequestoptions,
             eval_params=modelRequestoptions,
@@ -134,11 +128,11 @@ async def run(args):
             model=api,  # todo lint complain about type... should be fixed
             agents=agents,
             env=EnvironmentGame24(),
-            rafa_options=RAFAOptions(n_propose_sample=5,  # todo all of these configs shouldnt be hardcoded
-                                     n_generate_sample=5,
-                                     n_evaluate_sample=5,
-                                     max_step=10,
-                                     n_select_sample=3)
+            rafa_options=RAFAOptions(n_propose_sample=2,  # todo all of these configs shouldnt be hardcoded
+                                     n_generate_sample=2,
+                                     n_evaluate_sample=2,
+                                     max_step=5,
+                                     n_select_sample=1)
 
         )
     elif args.method == "got":
