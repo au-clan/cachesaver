@@ -1,12 +1,13 @@
-import os
+import argparse
 import asyncio
 import logging
-import argparse
-from diskcache import Cache
-from openai import AsyncOpenAI
-from omegaconf import OmegaConf
-from together import AsyncTogether
+import os
+
 from cachesaver.pipelines import OnlineAPI
+from diskcache import Cache
+from omegaconf import OmegaConf
+from openai import AsyncOpenAI
+from together import AsyncTogether
 
 from src.algorithm_options.rafa import RAFAOptions
 from src.algorithms.rafa_algo import AlgorithmRAFA, AgentDictRAFA
@@ -16,18 +17,20 @@ from src.tasks.hotpotqa.rafa_agent_hotpotqa import AgentRAFA_reflect_hotpot_qa, 
 
 logger = logging.getLogger(__name__)
 import sys
+
 sys.path.append(os.getcwd())
 
 from src.utils import tokens2cost
 from src.algorithms import *
 from src.models import OnlineLLM, API
 from src.typedefs import DecodingParameters
-from src.tasks.hotpotqa import EnvironmentHotpotQA, BenchmarkHotpotQA, AgentBfsHotpotQA, AgentEvaluateHotpotQA, AgentActHotpotQA, AgentAggregateHotpotQA
+from src.tasks.hotpotqa import EnvironmentHotpotQA, BenchmarkHotpotQA, AgentBfsHotpotQA, AgentEvaluateHotpotQA, \
+    AgentActHotpotQA, AgentAggregateHotpotQA
 
 cache = Cache(f"caches/hotpotqa")
 
+
 async def run(args):
-    
     # LLM Provider
     if args.provider == "openai":
         client = AsyncOpenAI()
@@ -41,7 +44,7 @@ async def run(args):
         pass
     else:
         raise ValueError("Invalid provider. Choose 'openai', 'together', or 'local'.")
-    
+
     # CacheSaver model layer
     if args.provider in ["openai", "together"]:
         model = OnlineLLM(client=client)
@@ -52,11 +55,11 @@ async def run(args):
 
     # CacheSaver Pipeline: Batcher -> Reorderer -> Deduplicator -> Cache -> Model
     pipeline = OnlineAPI(
-                    model=model,
-                    cache=cache,
-                    batch_size=args.batch_size,
-                    timeout=args.timeout
-                    )
+        model=model,
+        cache=cache,
+        batch_size=args.batch_size,
+        timeout=args.timeout
+    )
 
     # Cachesaver additional layer for wrapping: API -> Pipeline
     api = API(
@@ -87,14 +90,14 @@ async def run(args):
         )
         method = AlgorithmFOA(
             model=api,
-            agents = agents,
+            agents=agents,
             env=EnvironmentHotpotQA,
             num_agents=config.foa.num_agents,
             num_steps=config.foa.num_steps,
             k=config.foa.k,
             backtrack=config.foa.backtrack,
             resampling=config.foa.resampling,
-            origin= config.foa.origin,
+            origin=config.foa.origin,
             min_steps=config.foa.min_steps,
             num_evaluations=config.foa.num_evaluations,
         )
@@ -107,7 +110,7 @@ async def run(args):
         )
         method = AlgorithmTOT(
             model=api,
-            agents = agents,
+            agents=agents,
             env=EnvironmentHotpotQA,
             num_selections=config.tot.num_selections,
             num_steps=config.tot.num_steps,
@@ -133,7 +136,7 @@ async def run(args):
                                      n_select_sample=1)
 
         )
-    elif  args.method == "got":
+    elif args.method == "got":
         agents = AgentDictGOT(
             step=AgentBfsHotpotQA,
             aggregate=AgentAggregateHotpotQA,
@@ -153,7 +156,7 @@ async def run(args):
         )
     else:
         raise NotImplementedError("Method not implemented yet.")
-    
+
     benchmark = BenchmarkHotpotQA(path=args.dataset_path, split=args.split)
     results = await method.benchmark(
         benchmark=benchmark,
@@ -174,7 +177,7 @@ async def run(args):
         correct.append(evaluations[-1][1])
     acc_finished = sum(finished) / len(finished)
     acc_correct = sum(correct) / len(correct)
-    costs = {key:tokens2cost(api.tokens[key], args.model) for key in api.tokens.keys()}
+    costs = {key: tokens2cost(api.tokens[key], args.model) for key in api.tokens.keys()}
 
     print(f"Method: {args.method}")
     print(f"Finished: {acc_finished:.3f}%")
@@ -182,10 +185,12 @@ async def run(args):
     for key, value in costs.items():
         print(f"\t{key}: {value['total']:.3f}$")
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Solve HotpotQA using LLMs.")
-    parser.add_argument("--provider", type=str, help="LLM Provider", choices=["openai", "together", "local", "groq"], default="groq")
-    parser.add_argument("--model", type=str, help="LLM Model",  default="gpt-4o-mini")
+    parser.add_argument("--provider", type=str, help="LLM Provider", choices=["openai", "together", "local", "groq"],
+                        default="groq")
+    parser.add_argument("--model", type=str, help="LLM Model", default="gpt-4o-mini")
     parser.add_argument("--batch_size", type=int, help="CacheSaver's batch size", default=300)
     parser.add_argument("--timeout", type=float, help="CacheSaver's timeout", default=0.05)
     parser.add_argument("--temperature", type=float, help="Temperature for the model", default=1.0)
@@ -194,7 +199,8 @@ if __name__ == "__main__":
     parser.add_argument("--stop", type=str, nargs="+", help="Stop sequence for the model", default=None)
     parser.add_argument("--logprobs", action="store_true", help="Logprobs for the model")
     parser.add_argument("--dataset_path", type=str, help="Path to the dataset")
-    parser.add_argument("--split", type=str, help="Split of the dataset", choices=["mini", "train", "validation", "test"], default="mini")
+    parser.add_argument("--split", type=str, help="Split of the dataset",
+                        choices=["mini", "train", "validation", "test"], default="mini")
     parser.add_argument("--share_ns", action="store_true", help="Share namespace between puzzles")
     parser.add_argument("--method", type=str, help="Method to use", choices=["foa", "tot", "got"], default="foa")
     parser.add_argument("--conf_path", type=str, help="Path to corresponding config")

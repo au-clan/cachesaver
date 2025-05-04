@@ -1,22 +1,22 @@
-import re
-import random
-from typing import Tuple, Optional, List
-import subprocess
-import json
-import signal
 import contextlib
-import io
-import tempfile
-import os
 import faulthandler
-import platform
+import io
+import json
 import multiprocessing
-
+import os
+import platform
+import random
+import re
+import signal
+import subprocess
+import tempfile
+from typing import Tuple, Optional, List
 
 from .state import StateHumanEval
 from ...typedefs import Environment, MAX_SEED
 
 TIMEOUT = 5.0
+
 
 class EnvironmentHumanEval(Environment):
 
@@ -49,14 +49,14 @@ class EnvironmentHumanEval(Environment):
         Checks if the action taken is valid.
         """
         raise NotImplementedError("Action validation logic is not implemented.")
-    
+
     @staticmethod
     def is_final(state: StateHumanEval) -> bool:
         """
         Checks if the current state is a final state.
         """
         raise NotImplementedError("Final state logic is not implemented.")
-    
+
     @staticmethod
     def evaluate(state: StateHumanEval) -> Tuple[bool, float]:
         """
@@ -75,16 +75,17 @@ class EnvironmentHumanEval(Environment):
             # Rust code
             solved, score = evaluate_code_rust(code, entry_point, test)
         return solved, score
-        
 
 
-#---Helper functions---#
+# ---Helper functions---#
 def parse_action(string) -> str | None:
     pattern = r'```[^`]+```'
     match = re.match(pattern, string)
     return "\n".join(match.group(0).split('\n')[1:-1]) if match else None
 
-def evaluate_code_python(code: str, entry_point: str, test: str) -> Tuple[bool, float]: # NOTE: Only works on a UNIX system as we are using signal. Need to change this to use a different method for Windows or general case if needed.
+
+def evaluate_code_python(code: str, entry_point: str, test: str) -> Tuple[
+    bool, float]:  # NOTE: Only works on a UNIX system as we are using signal. Need to change this to use a different method for Windows or general case if needed.
     """
     Evaluates the given code using the provided entry point and test.
     """
@@ -93,22 +94,24 @@ def evaluate_code_python(code: str, entry_point: str, test: str) -> Tuple[bool, 
 
     p = multiprocessing.Process(target=unsafe_execute, args=(code, entry_point, test, TIMEOUT, result))
     p.start()
-    p.join(timeout=TIMEOUT+1)
+    p.join(timeout=TIMEOUT + 1)
     if p.is_alive():
         p.kill()
 
     if not result:
         return False, 0.0
-    
+
     if result[0] == "passed":
         return True, 1.0
     else:
         return False, 0.0
-    
+
+
 def evaluate_code_rust(code: str, entry_point: str, test: str) -> Tuple[bool, float]:
     """
     Evaluates the given code using the provided entry point and test.
     """
+
     # This implementation is from Reflexion, it uses rust compiler to compile the code and then run it.
 
     def cleanup():
@@ -116,13 +119,12 @@ def evaluate_code_rust(code: str, entry_point: str, test: str) -> Tuple[bool, fl
         if os.path.exists(tmp_dir):
             os.system(f"rm -rf {tmp_dir}")
 
-
     tmp_dir, tmp_path = create_temp_project()
     write_to_file_toplevel(tmp_path, code + test)
 
     res = run_with_timeout(
         "cargo check --message-format=json", tmp_dir, timeout=TIMEOUT)
-    
+
     if res is None:
         cleanup()
         return False, 0.0
@@ -141,14 +143,11 @@ def evaluate_code_rust(code: str, entry_point: str, test: str) -> Tuple[bool, fl
         errs = grab_runtime_errs(res[0] + "\n" + res[1])
         if len(errs) > 0:
             return False, 0.0
-        
+
         return len(errs) == 0, 1.0
-    
 
 
-
-
-#---Context Managers---#
+# ---Context Managers---#
 # From HumanEval repo for evaluating code with timelimit and a bit more securely. Still recommending to do it inside a sandbox.
 def unsafe_execute(code: str, entry_point: str, test: str, timeout: float, result):
     with create_tempdir():
@@ -161,11 +160,11 @@ def unsafe_execute(code: str, entry_point: str, test: str, timeout: float, resul
         reliability_guard()
 
         program = (
-            code 
-            + '\n'
-            + test
-            + '\n'
-            + f'check({entry_point})'
+                code
+                + '\n'
+                + test
+                + '\n'
+                + f'check({entry_point})'
         )
 
         try:
@@ -195,6 +194,7 @@ def time_limit(seconds: float):
     finally:
         signal.setitimer(signal.ITIMER_REAL, 0)
 
+
 @contextlib.contextmanager
 def swallow_io():
     stream = WriteOnlyStringIO()
@@ -203,11 +203,13 @@ def swallow_io():
             with redirect_stdin(stream):
                 yield
 
+
 @contextlib.contextmanager
 def create_tempdir():
     with tempfile.TemporaryDirectory() as dirname:
         with chdir(dirname):
             yield dirname
+
 
 class WriteOnlyStringIO(io.StringIO):
     """StringIO that throws an exception when it's read from"""
@@ -224,9 +226,11 @@ class WriteOnlyStringIO(io.StringIO):
     def readable(self, *args, **kwargs):
         """Returns True if the IO object can be read."""
         return False
-    
+
+
 class redirect_stdin(contextlib._RedirectStream):  # type: ignore
     _stream = "stdin"
+
 
 @contextlib.contextmanager
 def chdir(root):
@@ -241,6 +245,7 @@ def chdir(root):
         raise exc
     finally:
         os.chdir(cwd)
+
 
 def reliability_guard(maximum_memory_bytes: Optional[int] = None):
     """
@@ -323,7 +328,7 @@ def reliability_guard(maximum_memory_bytes: Optional[int] = None):
     sys.modules["tkinter"] = None
 
 
-#---Helper function for Rust code evaluation---#
+# ---Helper function for Rust code evaluation---#
 def create_temp_project() -> Tuple[str, str]:
     # get pid of the process
     pid = os.getpid()
@@ -356,6 +361,7 @@ def create_temp_project() -> Tuple[str, str]:
     main_path = os.path.join(temp_dir, "src", "main.rs")
     return temp_dir, main_path
 
+
 class CompileErr:
     def __init__(self, rendered):
         self.rendered = rendered
@@ -365,7 +371,8 @@ class CompileErr:
 
     def __repr__(self):
         return "{" + str(self) + "}"
-    
+
+
 class RuntimeErr:
     def __init__(self, left, right, line, column, panic_reason):
         # right and left are only used for assert_eq! errors
@@ -384,7 +391,8 @@ class RuntimeErr:
 
     def __repr__(self):
         return "{" + str(self) + "}"
-    
+
+
 def write_to_file_toplevel(path: str, code: str):
     # delete the file if it exists
     if os.path.exists(path):
@@ -394,7 +402,9 @@ def write_to_file_toplevel(path: str, code: str):
     with open(path, "w") as f:
         f.write(code)
 
-def run_with_timeout(cmd: str, tmp_cargo_path: str, timeout: float = 5.0, print_debug: bool = False) -> Optional[Tuple[str, str]]:
+
+def run_with_timeout(cmd: str, tmp_cargo_path: str, timeout: float = 5.0, print_debug: bool = False) -> Optional[
+    Tuple[str, str]]:
     """
     Runs the given command with a timeout. Produces a tuple of stdout and stderr.
     If the command times out, returns None.
@@ -410,12 +420,12 @@ def run_with_timeout(cmd: str, tmp_cargo_path: str, timeout: float = 5.0, print_
             with time_limit(timeout):
                 # run the command
                 p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE, cwd=tmp_cargo_path)
+                                     stderr=subprocess.PIPE, cwd=tmp_cargo_path)
                 out, err = p.communicate()
     except Exception:
         p.kill()
         return None
-    
+
     # if p.returncode != 0:
     #     return None 
 
@@ -428,13 +438,14 @@ def run_with_timeout(cmd: str, tmp_cargo_path: str, timeout: float = 5.0, print_
         print(out)
         print("STDERR:")
         print(err, flush=True)
-    
+
     # Clean up
     shutil.rmtree = rmtree
     os.rmdir = rmdir
     os.chdir = chdir
 
     return out, err
+
 
 # assumes that the input is the stdout of cargo check --message-format=json
 # returns a list of compile errors as CompileErr objects
@@ -452,6 +463,7 @@ def grab_compile_errs(inp: str) -> List[CompileErr]:
             objs.append(CompileErr(rendered))
 
     return objs
+
 
 def grab_runtime_errs(inp: str) -> List[RuntimeErr]:
     failed_asserts = []

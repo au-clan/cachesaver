@@ -1,6 +1,8 @@
 from abc import ABC
-from ..typedefs import Model, SingleRequestModel, DecodingParameters, Request
 from typing import List, Union
+
+from ..typedefs import Model, DecodingParameters, Request
+
 
 class API(ABC):
     """
@@ -17,8 +19,9 @@ class API(ABC):
             "duplicator": {"in": 0, "out": 0},
             "cacher_duplicator": {"in": 0, "out": 0},
         }
-    
-    async def request(self, prompt: Union[str, List[str]], n: int, request_id: str, namespace: str, params: DecodingParameters) -> List[str]:
+
+    async def request(self, prompt: Union[str, List[str]], n: int, request_id: str, namespace: str,
+                      params: DecodingParameters) -> List[str]:
         """
         Send a request to the pipeline
         """
@@ -63,13 +66,12 @@ class API(ABC):
                 non_duplicated_out += out_tok
             else:
                 non_duplicated_out += out_tok
-            
+
             if cached and not duplicated:
                 cacher_duplicator_in += in_tok
                 cacher_duplicator_out += out_tok
             elif cached and duplicated:
                 cacher_duplicator_out += out_tok
-
 
         self.tokens["total"]["in"] += total_in
         self.tokens["total"]["out"] += total_out
@@ -81,7 +83,3 @@ class API(ABC):
         self.tokens["cacher_duplicator"]["out"] += cacher_duplicator_out
 
         return messages
-
-        
-    
-    

@@ -3,7 +3,7 @@ import asyncio
 import logging
 import os
 
-from cachesaver.pipelines import OnlineAPI, OrderedLocalAPI, LocalAPI
+from cachesaver.pipelines import LocalAPI
 from diskcache import Cache
 from omegaconf import OmegaConf
 from openai import AsyncOpenAI
@@ -25,7 +25,8 @@ from src.utils import tokens2cost
 from src.algorithms import *
 from src.models import OnlineLLM, API
 from src.typedefs import DecodingParameters
-from src.tasks.game24 import EnvironmentGame24, BenchmarkGame24, AgentActGame24, AgentAggregateGame24, AgentEvaluateGame24, AgentBfsGame24
+from src.tasks.game24 import EnvironmentGame24, BenchmarkGame24, AgentActGame24, AgentAggregateGame24, \
+    AgentEvaluateGame24, AgentBfsGame24
 
 cache = Cache(f"caches/game24")
 
@@ -165,7 +166,7 @@ async def run(args):
     benchmark = BenchmarkGame24(path=r"C:\Users\Oskar\PycharmProjects\AUCLAN\cachesaver\datasets\dataset_game24.csv.gz",
                                 split=args.split)
 
-        raise NotImplementedError(f"Method {args.method} is not implemented yet.")
+    raise NotImplementedError(f"Method {args.method} is not implemented yet.")
 
     benchmark = BenchmarkGame24(path=args.dataset_path, split=args.split)
     results = await method.benchmark(
@@ -196,13 +197,11 @@ async def run(args):
         print(f"\t{key}: {value['total']:.3f}$")
 
 
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Solve Game 24 using LLMs.")
     parser.add_argument("--provider", type=str, help="LLM Provider", choices=["openai", "together", "local", "groq"],
                         default="groq")
     parser.add_argument("--model", type=str, help="LLM Model", default="gemma2-9b-it")
-    parser.add_argument("--provider", type=str, help="LLM provider", choices=["openai", "together", "local"], default="openai")
     parser.add_argument("--model", type=str, help="LLM model", default="gpt-4o-mini")
     parser.add_argument("--batch_size", type=int, help="CacheSaver's batch size", default=300)
     parser.add_argument("--timeout", type=float, help="CacheSaver's timeout", default=0.05)
@@ -213,10 +212,10 @@ if __name__ == "__main__":
     parser.add_argument("--logprobs", action="store_true", help="Logprobs for the model")
     parser.add_argument("--dataset_path", type=str, help="Path to the dataset")
     parser.add_argument("--split", type=str, help="Split of the dataset",
-                        choices=["mini", "train", "validation", "test"], default="mini")
+                        choices=["mini", "train", "validation", "test", "single"], default="mini")
     parser.add_argument("--share_ns", action="store_true", help="Share namespace between puzzles")
-    parser.add_argument("--method", type=str, help="Method to use", choices=["foa", "tot", "rafa"], default="rafa")
-    parser.add_argument("--method", type=str, help="Method to use", choices=["foa", "tot", "got"], default="foa")
+    parser.add_argument("--method", type=str, help="Method to use", choices=["foa", "tot", "rafa", "got"],
+                        default="rafa")
     parser.add_argument("--conf_path", type=str, help="Path to corresponding config")
     parser.add_argument("--value_cache", action="store_true", help="Use value cache")
     args = parser.parse_args()

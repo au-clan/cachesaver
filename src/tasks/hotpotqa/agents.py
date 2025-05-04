@@ -5,13 +5,15 @@ from . import prompts as prompts
 from .state import StateHotpotQA
 from ...typedefs import Agent, Model, DecodingParameters
 
+
 class AgentActHotpotQA(Agent):
     """
     Agent performing the Act operation for the HotpotQA task.
     """
 
     @staticmethod
-    async def act(model: Model, state: StateHotpotQA, n: int, namespace: str, request_id: str, params: DecodingParameters) -> List[str]:
+    async def act(model: Model, state: StateHotpotQA, n: int, namespace: str, request_id: str,
+                  params: DecodingParameters) -> List[str]:
         """
         Returns a list of n actions for the HotpotQA task.
         """
@@ -20,7 +22,7 @@ class AgentActHotpotQA(Agent):
         num_examples = 2
         examples = "(Example)\n" + "\n\n(Example)\n".join([example for example in prompts.examples_act[:num_examples]])
         prompt = prompts.act.format(examples=examples, question=state.puzzle, current_state=state.current_state)
-        
+
         # Generate the responses
         responses = await model.request(
             prompt=prompt,
@@ -34,13 +36,15 @@ class AgentActHotpotQA(Agent):
         actions = [r.strip() for r in responses]
         return actions
 
+
 class AgentBfsHotpotQA(Agent):
     """
     Agent performing the BFS operation for the HotpotQA task.
     """
 
     @staticmethod
-    async def act(model: Model, state: StateHotpotQA, namespace: str, request_id: str, params: DecodingParameters) -> List[str]:
+    async def act(model: Model, state: StateHotpotQA, namespace: str, request_id: str, params: DecodingParameters) -> \
+    List[str]:
         """
         Returns a list of n actions for the HotpotQA task.
         """
@@ -63,13 +67,15 @@ class AgentBfsHotpotQA(Agent):
         proposals = [r.strip() for r in response[0].split("\n")]
         return proposals
 
+
 class AgentAggregateHotpotQA(Agent):
     """
     Agent performing the Aggregate operation for the HotpotQA task.
     """
 
     @staticmethod
-    async def act(model: Model, state: StateHotpotQA, actions: List[str], k: int, namespace: str, request_id: str, params: DecodingParameters) -> List[str]:
+    async def act(model: Model, state: StateHotpotQA, actions: List[str], k: int, namespace: str, request_id: str,
+                  params: DecodingParameters) -> List[str]:
         """
         Returns a list of the k best actions for the HotpotQA task.
         """
@@ -79,9 +85,11 @@ class AgentAggregateHotpotQA(Agent):
 
         # Format the prompt
         num_examples = 2
-        examples = "(Example)\n" + "\n\n(Example)\n".join([example for example in prompts.examples_aggregate[:num_examples]])
+        examples = "(Example)\n" + "\n\n(Example)\n".join(
+            [example for example in prompts.examples_aggregate[:num_examples]])
         actions = "\n".join(action for action in actions)
-        prompt = prompts.aggregate.format(examples=examples, question=state.puzzle, current_state=state.current_state, k=k, actions=actions)
+        prompt = prompts.aggregate.format(examples=examples, question=state.puzzle, current_state=state.current_state,
+                                          k=k, actions=actions)
 
         # Generate the responses
         responses = await model.request(
@@ -95,21 +103,24 @@ class AgentAggregateHotpotQA(Agent):
         # Parse the responses
         aggregate_actions = [r.strip() for response in responses for r in response.split("\n")]
         return aggregate_actions
-    
+
+
 class AgentReactHotpotQA(Agent):
     """
     Agent performing the ReAct operation for the HotpotQA task.
     """
 
     @staticmethod
-    async def act(model: Model, state: StateHotpotQA, n:int, namespace: str, request_id: str, params: DecodingParameters) -> List[Tuple[str, str]]:
+    async def act(model: Model, state: StateHotpotQA, n: int, namespace: str, request_id: str,
+                  params: DecodingParameters) -> List[Tuple[str, str]]:
         """
         Returns a list of n thought-action pairs for the HotpotQA task.
         """
 
         # Format the prompt
         num_examples = 2
-        examples = "(Example)\n" + "\n\n(Example)\n".join([example for example in prompts.examples_react[:num_examples]])
+        examples = "(Example)\n" + "\n\n(Example)\n".join(
+            [example for example in prompts.examples_react[:num_examples]])
         prompt = prompts.react.format(examples=examples, question=state.puzzle, current_state=state.current_state)
 
         # Generate the responses
@@ -124,14 +135,16 @@ class AgentReactHotpotQA(Agent):
         # Parse the responses
         react_actions = [r.strip() for r in responses]
         return react_actions
-    
+
+
 class AgentEvaluateHotpotQA(Agent):
     """
     Agent performing the Evaluate operation for the HotpotQA task.
     """
 
     @staticmethod
-    async def act(model: Model, state: StateHotpotQA, n: int, namespace: str, request_id: str, params: DecodingParameters, cache: dict=None) -> float:
+    async def act(model: Model, state: StateHotpotQA, n: int, namespace: str, request_id: str,
+                  params: DecodingParameters, cache: dict = None) -> float:
         """
         Returns an evaluations for the HotpotQA task.
         """
@@ -141,7 +154,8 @@ class AgentEvaluateHotpotQA(Agent):
 
         # Format the prompt
         num_examples = 2
-        examples = "(Example)\n" + "\n\n(Example)\n".join([example for example in prompts.examples_evaluate[:num_examples]])
+        examples = "(Example)\n" + "\n\n(Example)\n".join(
+            [example for example in prompts.examples_evaluate[:num_examples]])
         prompt = prompts.evaluate.format(examples=examples, question=state.puzzle, current_state=state.current_state)
 
         # Generate the responses

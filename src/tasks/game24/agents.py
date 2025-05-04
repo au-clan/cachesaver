@@ -1,5 +1,5 @@
-from typing import List
 import re
+from typing import List
 
 from . import prompts as prompts
 from .state import StateGame24
@@ -46,10 +46,12 @@ class AgentActGame24(Agent):
         proposals = [r.strip() for r in responses]
         return proposals
 
+
 class AgentAggregateGame24(Agent):
 
     @staticmethod
-    async def act(model: Model, state: StateGame24, actions: List[str], k: int, namespace: str, request_id: str, params: DecodingParameters) -> List[str]:
+    async def act(model: Model, state: StateGame24, actions: List[str], k: int, namespace: str, request_id: str,
+                  params: DecodingParameters) -> List[str]:
         """
         Returns the aggregated actions for the Game of 24 task.
         """
@@ -149,6 +151,3 @@ class AgentEvaluateGame24(Agent):
         if cache is not None:
             cache[state.current_state] = value
         return value
-
-
-

@@ -3,11 +3,9 @@ import re
 import time
 from typing import List
 
-from cachesaver.typedefs import Batch
-from cachesaver.typedefs import Response
+from cachesaver.typedefs import Request, Batch, Response
 from groq import AsyncGroq, RateLimitError
 
-from src.algorithm_options.rafa import RafaRequest
 from src.typedefs import Model as ModelBasic
 
 
@@ -16,7 +14,6 @@ class GroqModel(ModelBasic):
         super().__init__()
         self.client = AsyncGroq(api_key=api_key)
         self.model = model
-
 
         self.model_limits = {
             "deepseek-r1-distill-llama-70b": (30, 1000, 6000, None),
@@ -67,13 +64,10 @@ class GroqModel(ModelBasic):
 
         return responses
 
-    async def request(self, request: RafaRequest) -> Response:
-        coroutines=[]
+    async def request(self, request: Request) -> Response:
+        coroutines = []
         for i in range(request.n):
-            request_with_unique_id=request.prompt
-            request_with_unique_id.request_id=request_with_unique_id.request_id+str(i)
-            coroutines.append(self.single_request(request_with_unique_id))
-        # responses = await asyncio.gather(*(self.single_request(request.prompt) for _ in range(request.n)))
+            coroutines.append(self.single_request(request))
         responses = await asyncio.gather(*coroutines)
         # todo format here, request count, input tokens and output tokens math should go here
         merged_data = [item for r in responses for item in r.data]
@@ -82,7 +76,7 @@ class GroqModel(ModelBasic):
         )
         return merged_response
 
-    async def single_request(self, request: RafaRequest) -> Response:
+    async def single_request(self, request: Request) -> Response:
         await self.obey_rate_limits()
         async with self.rate_limit_lock:
             if self.rpm_remaining > 0:
@@ -92,13 +86,19 @@ class GroqModel(ModelBasic):
 
         async with self.semaphore:
             try:
+
                 completions = await self.client.with_raw_response.chat.completions.create(
-                    messages=request.messages,
-                    model=self.model,
+                    messages=[
+                        {
+                            "role": "user",
+                            "content": request.prompt
+                        }
+                    ] if isinstance(request.prompt, str) else request.prompt,
+                    model=request.model,
                     n=1,
                     max_tokens=request.max_completion_tokens or None,  # or None not needed but just to be explicit
                     temperature=request.temperature or 1,
-                    stop=request.stop_token or None,
+                    stop=request.stop or None,
                     top_p=request.top_p or 1,
                     seed=request.seed or None,
                     logprobs=request.logprobs or False,

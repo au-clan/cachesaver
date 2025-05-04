@@ -1,9 +1,12 @@
-import random
-import logging
 import asyncio
+import logging
+import random
 from typing import TypedDict
+
 from ..typedefs import Algorithm, Model, Agent, Environment, DecodingParameters, State, Benchmark, MAX_SEED
+
 logger = logging.getLogger(__name__)
+
 
 class AgentDictTOT(TypedDict):
     step: Agent
@@ -11,15 +14,16 @@ class AgentDictTOT(TypedDict):
     step_params: DecodingParameters
     eval_params: DecodingParameters
 
+
 class AlgorithmTOT(Algorithm):
     def __init__(self,
-                model: Model,
-                agents: AgentDictTOT,
-                env: Environment,
-                num_selections: int,
-                num_steps: int,
-                num_evaluations: int
-                ):
+                 model: Model,
+                 agents: AgentDictTOT,
+                 env: Environment,
+                 num_selections: int,
+                 num_steps: int,
+                 num_evaluations: int
+                 ):
         super().__init__(model, agents, env)
 
         self.step_agent = agents["step"]
@@ -32,14 +36,14 @@ class AlgorithmTOT(Algorithm):
         self.num_steps = num_steps
         self.num_evaluations = num_evaluations
 
-    async def solve(self, idx:int, state: State, namespace: str, value_cache: dict = None):
-        
+    async def solve(self, idx: int, state: State, namespace: str, value_cache: dict = None):
+
         randomness = idx
         random.seed(randomness)
         states = [state.clone(randomness=random.randint(0, MAX_SEED))]
 
         for step in range(self.num_steps):
-            
+
             # Generate actions for each state
             action_coroutines = [
                 self.step_agent.act(
@@ -78,10 +82,10 @@ class AlgorithmTOT(Algorithm):
             state_value_pairs = list(zip(state_proposals, values))
             sorted_pairs = sorted(state_value_pairs, key=lambda x: x[1], reverse=True)
             states, values = map(list, zip(*sorted_pairs[:self.num_selections]))
-    
+
         return states
 
-    async def benchmark(self, benchmark: Benchmark, share_ns: bool=False, cache: bool=True):
+    async def benchmark(self, benchmark: Benchmark, share_ns: bool = False, cache: bool = True):
         cache = {} if cache else None
         solve_coroutines = [
             self.solve(
@@ -94,5 +98,3 @@ class AlgorithmTOT(Algorithm):
         ]
         results = await asyncio.gather(*solve_coroutines)
         return results
-
-
