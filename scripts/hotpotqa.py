@@ -22,7 +22,7 @@ from src.utils import tokens2cost
 from src.algorithms import *
 from src.models import OnlineLLM, API
 from src.typedefs import DecodingParameters
-from src.tasks.hotpotqa import EnvironmentHotpotQA, BenchmarkHotpotQA, AgentBfsHotpotQA, AgentEvaluateHotpotQA, AgentActHotpotQA
+from src.tasks.hotpotqa import EnvironmentHotpotQA, BenchmarkHotpotQA, AgentBfsHotpotQA, AgentEvaluateHotpotQA, AgentActHotpotQA, AgentAggregateHotpotQA
 
 cache = Cache(f"caches/hotpotqa")
 
@@ -133,6 +133,24 @@ async def run(args):
                                      n_select_sample=1)
 
         )
+    elif  args.method == "got":
+        agents = AgentDictGOT(
+            step=AgentBfsHotpotQA,
+            aggregate=AgentAggregateHotpotQA,
+            evaluate=AgentEvaluateHotpotQA,
+            step_params=params,
+            aggregate_params=params,
+            eval_params=params,
+        )
+        method = AlgorithmGOT(
+            model=api,
+            agents=agents,
+            env=EnvironmentHotpotQA,
+            num_selections=config.got.num_selections,
+            num_steps=config.got.num_steps,
+            num_best=config.got.num_best,
+            num_evaluations=config.got.num_evaluations,
+        )
     else:
         raise NotImplementedError("Method not implemented yet.")
     
@@ -178,7 +196,7 @@ if __name__ == "__main__":
     parser.add_argument("--dataset_path", type=str, help="Path to the dataset")
     parser.add_argument("--split", type=str, help="Split of the dataset", choices=["mini", "train", "validation", "test"], default="mini")
     parser.add_argument("--share_ns", action="store_true", help="Share namespace between puzzles")
-    parser.add_argument("--method", type=str, help="Method to use", choices=["foa", "tot"], default="foa")
+    parser.add_argument("--method", type=str, help="Method to use", choices=["foa", "tot", "got"], default="foa")
     parser.add_argument("--conf_path", type=str, help="Path to corresponding config")
     parser.add_argument("--value_cache", action="store_true", help="Use value cache")
     args = parser.parse_args()

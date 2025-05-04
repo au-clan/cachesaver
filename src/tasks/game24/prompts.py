@@ -39,6 +39,41 @@ Input: {input}
 Possible next steps:
 '''
 
+aggregate = '''
+Please select {n_select_sample} step from the proposed step list, which you believe can reach 24. Do not explain, just list the selected steps as well as all the remaining numbers and nothing else. See the examples for how you are expected to respond.
+ 
+Example: 2 8 8 14
+Proposed next steps:
+(1) 8 / 2 = 4 (left: 4 8 14)
+(2) 14 + 2 = 16 (left: 8 8 16)
+Best Next Step:
+(1) 8 / 2 = 4 (left: 4 8 14)
+
+Example: 4 8 8
+Proposed next steps:
+(1) 8 * 8 = 64 (left: 4 64)
+(2) 4 * 8 = 32 (left: 8 32)
+Best Next Step:
+(2) 4 * 8 = 32 (left: 8 32)
+
+Example: 4 8 8
+Proposed next steps:
+(1) 4 * 8 = 32 (left: 8 32)
+(2) 8 * 8 = 64 (left: 4 64)
+(3) 4 - 8 = -4 (left: -4 8)
+(4) 8 - 8 = 0 (left: 0 4)
+(5) 8 / 4 = 2 (left: 2 8)
+Best Next Step Set:
+(1) 4 * 8 = 32 (left: 8 32)
+(2) 8 * 8 = 64 (left: 4 64)
+(5) 8 / 4 = 2 (left: 2 8)
+
+Input: {state}
+Proposed next steps:
+{proposal}
+Best Next Step:
+'''
+
 cot = '''Use numbers and basic arithmetic operations (+ - * /) to obtain 24. Return only the complete answer.
 
 Example: 4 4 6 8
