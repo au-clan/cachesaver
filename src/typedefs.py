@@ -19,7 +19,7 @@ class Request(CacheSaverRequest):  # Clean this up
     logprobs: Optional[bool] = False
 
 
-class DecodingParameters(NamedTuple):
+class ModelRequestOptions(NamedTuple):
     max_completion_tokens: int
     temperature: float
     top_p: float

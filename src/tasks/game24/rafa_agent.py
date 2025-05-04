@@ -1,4 +1,5 @@
 ﻿import itertools
+import random
 import re
 from dataclasses import replace
 from typing import Any
@@ -7,7 +8,7 @@ import sympy
 
 from . import prompts as prompts, StateGame24
 from ...algorithm_options.rafa import RafaRequest, RAFAOptions
-from ...typedefs import Agent, Model, DecodingParameters
+from ...typedefs import Agent, Model, ModelRequestOptions
 
 
 class AgentRafaGame24_eval(Agent):
@@ -243,7 +244,7 @@ class AgentRAFA_reflect(Agent):
             n=reflect_messages.n,
             request_id=reflect_messages.request_id,
             namespace=reflect_messages.namespace,
-            params=DecodingParameters(
+            params=ModelRequestOptions(
                 max_completion_tokens=reflect_messages.max_completion_tokens,
                 temperature=reflect_messages.temperature,
                 top_p=reflect_messages.top_p,
@@ -287,7 +288,7 @@ class AgentRAFA_reflect_value(Agent):
                                              n=value_reflects_messages.n,
                                              request_id=value_reflects_messages.request_id,
                                              namespace=value_reflects_messages.namespace,
-                                             params=DecodingParameters(
+                                             params=ModelRequestOptions(
                                                  max_completion_tokens=value_reflects_messages.max_completion_tokens,
                                                  temperature=value_reflects_messages.temperature,
                                                  top_p=value_reflects_messages.top_p,
@@ -323,6 +324,7 @@ class AgentRAFA_plan(Agent):
         reflects_list = kwargs["reflects_list"]
 
         request_options = kwargs["request_options"]
+        request_params = kwargs["params"]
 
         candidate = kwargs["candidate"]
 
@@ -351,11 +353,11 @@ class AgentRAFA_plan(Agent):
         history_messages.add_user_message(propose_prompt)
         # history_messages.stop_token = ["\n\n"]  # todo i dont get how their method works with this, in groq it doesnt work
 
-        result = await model.request(prompt=history_messages,
+        result = await model.request(prompt=history_messages.messages,
                                      n=history_messages.n,
-                                     request_id=history_messages.request_id,
+                                     request_id=f"{history_messages.request_id}-randomnes-{random.randint(1, 10000)}",
                                      namespace=history_messages.namespace,
-                                     params=DecodingParameters(
+                                     params=ModelRequestOptions(
                                          max_completion_tokens=history_messages.max_completion_tokens,
                                          temperature=history_messages.temperature,
                                          top_p=history_messages.top_p,
@@ -434,14 +436,14 @@ class AgentRAFA_plan_evaluate(Agent):
                     history_messages.add_assistant_message(h["answer"])
                 if 'feedback' in h:
                     history_messages.add_user_message(h["feedback"])
-            history_messages.add_user_message(value_prompt) #todo confirm order of messages
+            history_messages.add_user_message(value_prompt)  # todo confirm order of messages
             history_messages.request_id = f"step-{str(state.puzzle)}-{1}-{y}-{hash(1)}"  # todo this shpould be done properly at some point
 
-            value_outputs = await model.request(history_messages,
+            value_outputs = await model.request(prompt=history_messages.messages,
                                                 n=history_messages.n,
                                                 request_id=history_messages.request_id,
                                                 namespace=history_messages.namespace,
-                                                params=DecodingParameters(
+                                                params=ModelRequestOptions(
                                                     max_completion_tokens=history_messages.max_completion_tokens,
                                                     temperature=history_messages.temperature,
                                                     top_p=history_messages.top_p,

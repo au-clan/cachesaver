@@ -3,7 +3,7 @@ from typing import List
 
 from . import prompts as prompts
 from .state import StateGame24
-from ...typedefs import Agent, Model, DecodingParameters
+from ...typedefs import Agent, Model, ModelRequestOptions
 
 
 # Helper functions
@@ -25,7 +25,7 @@ class AgentActGame24(Agent):
     """
 
     async def act(model: Model, state: StateGame24, n: int, namespace: str, request_id: str,
-                  params: DecodingParameters) -> List[str]:
+                  params: ModelRequestOptions) -> List[str]:
         # Format the prompt
         if state.current_state == "24":
             prompt = prompts.cot.format(input=state.puzzle) + "\nSteps:\n" + '\n'.join(state.steps) + "\nAnswer: "
@@ -51,7 +51,7 @@ class AgentAggregateGame24(Agent):
 
     @staticmethod
     async def act(model: Model, state: StateGame24, actions: List[str], k: int, namespace: str, request_id: str,
-                  params: DecodingParameters) -> List[str]:
+                  params: ModelRequestOptions) -> List[str]:
         """
         Returns the aggregated actions for the Game of 24 task.
         """
@@ -84,7 +84,7 @@ class AgentAggregateGame24(Agent):
 class AgentBfsGame24(Agent):
 
     @staticmethod
-    async def act(model: Model, state: StateGame24, namespace: str, request_id: str, params: DecodingParameters) -> \
+    async def act(model: Model, state: StateGame24, namespace: str, request_id: str, params: ModelRequestOptions) -> \
             List[str]:
         """
         Returns a list of actions for the Game of 24 task.
@@ -116,7 +116,7 @@ class AgentBfsGame24(Agent):
 class AgentEvaluateGame24(Agent):
 
     @staticmethod
-    async def act(model: Model, state: StateGame24, n: int, namespace: str, request_id: str, params: DecodingParameters,
+    async def act(model: Model, state: StateGame24, n: int, namespace: str, request_id: str, params: ModelRequestOptions,
                   cache: dict = None) -> float:
         """
         Returns a value for the given state

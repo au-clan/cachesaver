@@ -24,7 +24,7 @@ sys.path.append(os.getcwd())
 from src.utils import tokens2cost
 from src.algorithms import *
 from src.models import OnlineLLM, API
-from src.typedefs import DecodingParameters
+from src.typedefs import ModelRequestOptions
 from src.tasks.game24 import EnvironmentGame24, BenchmarkGame24, AgentActGame24, AgentAggregateGame24, \
     AgentEvaluateGame24, AgentBfsGame24
 
@@ -73,7 +73,7 @@ async def run(args):
     )
 
     # Decoding parameters
-    params = DecodingParameters(
+    modelRequestoptions = ModelRequestOptions(
         temperature=args.temperature,
         max_completion_tokens=args.max_completion_tokens,
         top_p=args.top_p,
@@ -89,8 +89,8 @@ async def run(args):
         agents = AgentDictFOA(
             step=AgentActGame24,
             evaluate=AgentEvaluateGame24,
-            step_params=params,
-            eval_params=params,
+            step_params=modelRequestoptions,
+            eval_params=modelRequestoptions,
         )
         method = AlgorithmFOA(
             model=api,
@@ -109,8 +109,8 @@ async def run(args):
         agents = AgentDictTOT(
             step=AgentBfsGame24,
             evaluate=AgentEvaluateGame24,
-            step_params=params,
-            eval_params=params,
+            step_params=modelRequestoptions,
+            eval_params=modelRequestoptions,
         )
         method = AlgorithmTOT(
             model=api,
@@ -127,6 +127,7 @@ async def run(args):
             agent_plan=AgentRAFA_plan(),
             agent_plan_evaluate=AgentRAFA_plan_evaluate(),
             agent_eval=AgentRafaGame24_eval(),
+            params=modelRequestoptions
 
         )
         method = AlgorithmRAFA(
@@ -145,9 +146,9 @@ async def run(args):
             step=AgentBfsGame24,
             aggregate=AgentAggregateGame24,
             evaluate=AgentEvaluateGame24,
-            step_params=params,
-            aggregate_params=params,
-            eval_params=params,
+            step_params=modelRequestoptions,
+            aggregate_params=modelRequestoptions,
+            eval_params=modelRequestoptions,
         )
         method = AlgorithmGOT(
             model=api,

@@ -3,7 +3,7 @@ import logging
 import random
 from typing import TypedDict
 
-from ..typedefs import Algorithm, Model, Agent, Environment, DecodingParameters, State, Benchmark, MAX_SEED
+from ..typedefs import Algorithm, Model, Agent, Environment, ModelRequestOptions, State, Benchmark, MAX_SEED
 
 logger = logging.getLogger(__name__)
 
@@ -11,8 +11,8 @@ logger = logging.getLogger(__name__)
 class AgentDictTOT(TypedDict):
     step: Agent
     evaluate: Agent
-    step_params: DecodingParameters
-    eval_params: DecodingParameters
+    step_params: ModelRequestOptions
+    eval_params: ModelRequestOptions
 
 
 class AlgorithmTOT(Algorithm):

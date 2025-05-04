@@ -3,7 +3,7 @@ from typing import List, Tuple
 
 from . import prompts as prompts
 from .state import StateHotpotQA
-from ...typedefs import Agent, Model, DecodingParameters
+from ...typedefs import Agent, Model, ModelRequestOptions
 
 
 class AgentActHotpotQA(Agent):
@@ -13,7 +13,7 @@ class AgentActHotpotQA(Agent):
 
     @staticmethod
     async def act(model: Model, state: StateHotpotQA, n: int, namespace: str, request_id: str,
-                  params: DecodingParameters) -> List[str]:
+                  params: ModelRequestOptions) -> List[str]:
         """
         Returns a list of n actions for the HotpotQA task.
         """
@@ -43,7 +43,7 @@ class AgentBfsHotpotQA(Agent):
     """
 
     @staticmethod
-    async def act(model: Model, state: StateHotpotQA, namespace: str, request_id: str, params: DecodingParameters) -> \
+    async def act(model: Model, state: StateHotpotQA, namespace: str, request_id: str, params: ModelRequestOptions) -> \
     List[str]:
         """
         Returns a list of n actions for the HotpotQA task.
@@ -75,7 +75,7 @@ class AgentAggregateHotpotQA(Agent):
 
     @staticmethod
     async def act(model: Model, state: StateHotpotQA, actions: List[str], k: int, namespace: str, request_id: str,
-                  params: DecodingParameters) -> List[str]:
+                  params: ModelRequestOptions) -> List[str]:
         """
         Returns a list of the k best actions for the HotpotQA task.
         """
@@ -112,7 +112,7 @@ class AgentReactHotpotQA(Agent):
 
     @staticmethod
     async def act(model: Model, state: StateHotpotQA, n: int, namespace: str, request_id: str,
-                  params: DecodingParameters) -> List[Tuple[str, str]]:
+                  params: ModelRequestOptions) -> List[Tuple[str, str]]:
         """
         Returns a list of n thought-action pairs for the HotpotQA task.
         """
@@ -144,7 +144,7 @@ class AgentEvaluateHotpotQA(Agent):
 
     @staticmethod
     async def act(model: Model, state: StateHotpotQA, n: int, namespace: str, request_id: str,
-                  params: DecodingParameters, cache: dict = None) -> float:
+                  params: ModelRequestOptions, cache: dict = None) -> float:
         """
         Returns an evaluations for the HotpotQA task.
         """

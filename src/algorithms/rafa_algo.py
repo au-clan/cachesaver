@@ -42,6 +42,9 @@ class AlgorithmRAFA(Algorithm):
         # the agent that evaluate after each loop in the while loop: agent_eval
         self.agent_eval = agents['agent_eval']
 
+        #this is the model request option
+        self.step_params = agents["params"]
+
     async def solve(self, idx: int, state: State, namespace: str, value_cache: dict = None):
 
         # Initial state
@@ -112,7 +115,8 @@ class AlgorithmRAFA(Algorithm):
                                                     candidate=output_candidate,
                                                     reflects_list=reflects_list,
                                                     n_propose_sample=self.rafa_options.n_propose_sample,
-                                                    n_generate_sample=self.rafa_options.n_generate_sample
+                                                    n_generate_sample=self.rafa_options.n_generate_sample,
+                                                    params=self.step_params,
 
                                                     )
                     coroutines.append(coroutine)
