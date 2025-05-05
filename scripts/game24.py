@@ -130,7 +130,7 @@ async def run(args):
             rafa_options=RAFAOptions(n_propose_sample=2,  # todo all of these configs shouldnt be hardcoded
                                      n_generate_sample=2,
                                      n_evaluate_sample=2,
-                                     max_step=5,
+                                     max_step=4,
                                      n_select_sample=1)
 
         )
