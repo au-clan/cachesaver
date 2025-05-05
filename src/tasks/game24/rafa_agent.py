@@ -370,18 +370,15 @@ class AgentRAFA_plan(Agent):
                                      )
         # result = await model.request(history_messages)
         # todo this logic is flawed, in the event you get a response where the first line is a "here is suggestions:.." and then the next line is a new line with nothing on it and then the third is a suggestion. You will "learn" nothing as the sample could be two:
+        pattern = r'\d+\.\s+([^\n]+?\(left: [^\n]+?\))'
+        all_matches = []
 
-        proposal_list = [x.split('\n') for x in result]  # todo the stop token
-        proposals = []
+        for text in result:
+            matches = re.findall(pattern, text)
+            all_matches.extend(matches)
 
-        for sublist in proposal_list:
-            for line in sublist:
-                line = line.strip().replace('"', '')
-                # Only keep actual proposals
-                if line.startswith("* **"):
-                    proposals.append(line)
 
-        proposals = proposals[:min(len(proposals), n_propose_sample)]
+        proposals = all_matches[:min(len(all_matches), n_propose_sample)]
         return [candidate + _ + '\n' for _ in proposals]
 
 

@@ -156,6 +156,8 @@ class AlgorithmRAFA(Algorithm):
                                                                      action=res_ys,
                                                                      max_step=self.rafa_options.max_step,
                                                                      )
+            #confirm step below:
+            observations=obs
             #todo here update env
             # make env step here instead of in evaluate
 

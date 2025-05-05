@@ -191,8 +191,8 @@ async def run(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Solve Game 24 using LLMs.")
     parser.add_argument("--provider", type=str, help="LLM Provider", choices=["openai", "together", "local", "groq"],
-                        default="groq")
-    parser.add_argument("--model", type=str, help="LLM Model", default="gemma2-9b-it")
+                        default="openai")
+    parser.add_argument("--model", type=str, help="LLM Model", default="gpt-4.1-nano")
     parser.add_argument("--batch_size", type=int, help="CacheSaver's batch size", default=300)
     parser.add_argument("--timeout", type=float, help="CacheSaver's timeout", default=0.05)
     parser.add_argument("--temperature", type=float, help="Temperature for the model", default=1.0)
@@ -205,7 +205,7 @@ if __name__ == "__main__":
                         choices=["mini", "train", "validation", "test", "single"], default="mini")
     parser.add_argument("--share_ns", action="store_true", help="Share namespace between puzzles")
     parser.add_argument("--method", type=str, help="Method to use", choices=["foa", "tot", "rafa", "got"],
-                        default="foa ")
+                        default="rafa")
     parser.add_argument("--conf_path", type=str, help="Path to corresponding config")
     parser.add_argument("--value_cache", action="store_true", help="Use value cache")
     args = parser.parse_args()
