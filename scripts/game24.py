@@ -121,7 +121,6 @@ async def run(args):
             agent_plan=AgentRAFA_plan(),
             agent_plan_evaluate=AgentRAFA_plan_evaluate(),
             agent_eval=AgentRafaGame24_eval(),
-            params=modelRequestoptions
 
         )
         method = AlgorithmRAFA(

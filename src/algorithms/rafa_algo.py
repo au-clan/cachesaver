@@ -42,9 +42,6 @@ class AlgorithmRAFA(Algorithm):
         # the agent that evaluate after each loop in the while loop: agent_eval
         self.agent_eval = agents['agent_eval']
 
-        #this is the model request option
-        self.step_params = agents["params"]
-
     async def solve(self, idx: int, state: State, namespace: str, value_cache: dict = None):
 
         # Initial state
@@ -65,7 +62,9 @@ class AlgorithmRAFA(Algorithm):
         reflects_list = []
         value_reflects_list = []
 
-        # these two should be cleared after each puzzle
+        self_feedbacks = []
+        self_history = []
+        self_cur_step = 0
 
         ##-------
         i = 0
@@ -86,7 +85,7 @@ class AlgorithmRAFA(Algorithm):
 
                 reflects_list.append(reflects)
 
-                # score reflects?
+                # score reflects
                 request_options.request_id = f"idx{idx}-step{i}-{hash(state)}-reflect_value{i}"
                 value_reflects = await  self.agent_reflect_value.act(model=self.model,
                                                                      state=state,
@@ -101,10 +100,10 @@ class AlgorithmRAFA(Algorithm):
                 value_reflects_list.append(value_reflects)
 
             # -------------------------------------The plan begins
-            current_output_candidates = ["\n".join(state.history) + "\n"] if len(state.history) else [
+            current_output_candidates = ["\n".join(self_history) + "\n"] if len(self_history) else [
                 ""]  # current output candidates
             infos = []
-            for step in range(4 - len(state.history)):
+            for step in range(4 - len(self_history)):
                 # get proposals (plan suggestions/generate)
                 coroutines = []
                 for output_candidate in current_output_candidates:
@@ -115,16 +114,13 @@ class AlgorithmRAFA(Algorithm):
                                                     candidate=output_candidate,
                                                     reflects_list=reflects_list,
                                                     n_propose_sample=self.rafa_options.n_propose_sample,
-                                                    n_generate_sample=self.rafa_options.n_generate_sample,
-                                                    params=self.step_params,
-
+                                                    n_generate_sample=self.rafa_options.n_generate_sample
                                                     )
                     coroutines.append(coroutine)
 
                 new_output_candidates = await asyncio.gather(*coroutines)
-
                 new_output_candidates = list(itertools.chain(*new_output_candidates))
-                ids = list(range(len(new_output_candidates)))
+
                 # Evaluate proposals(evaluate plan suggestions/evaluate what has been generated)
                 request_options.request_id = f"idx{idx}-step{i}-{hash(state)}-plan_evaluate"
                 values = await self.agent_plan_evaluate.act(model=self.model,
@@ -134,46 +130,39 @@ class AlgorithmRAFA(Algorithm):
                                                             value_reflects=value_reflects_list,
                                                             n_evaluate_sample=self.rafa_options.n_evaluate_sample
                                                             )
-                selected_top_candidates_with_score = sorted(values, key=lambda x: x[1], reverse=True)[:self.rafa_options.n_select_sample]
+                selected_top_candidates_with_score = sorted(values, key=lambda x: x[1], reverse=True)[
+                                                     :self.rafa_options.n_select_sample]
                 best_candidates_list = [candidate for candidate, _ in selected_top_candidates_with_score]
-                # select_ids = sorted(ids, key=lambda x: values[x], reverse=True)[:self.rafa_options.n_select_sample]
 
-                # select_new_ys = [new_output_candidates[select_id] for select_id in select_ids]
+                # for logging i guess
                 infos.append(
-                    {'step': step, 'x': state.puzzle, 'ys(current output candidates)': current_output_candidates, 'new_ys(output candidates)': new_output_candidates,
+                    {'step': step, 'x': state.puzzle, 'ys(current output candidates)': current_output_candidates,
+                     'new_ys(output candidates)': new_output_candidates,
                      'values': values,
                      'select_new_ys(best scored candidates)': best_candidates_list})
                 current_output_candidates = best_candidates_list
 
-            ys_list = [y.split('\n')[len(state.history):] for y in current_output_candidates]
+            ys_list = [y.split('\n')[len(self_history):] for y in current_output_candidates]
             res_ys = ["\n".join(ys) for ys in ys_list][0]
 
-            state = state
-            res_ys = res_ys
-            env_info = {'steps': infos}
-
-            ##Generating feedback for the progress so far(last step in the old structure)
-            #todo this agent_eval is what makes the difference for rafa, more advanced parsing and eval. also no prompts used in it
-            state, obs, reward, done, env_info = self.agent_eval.act(model=self.model,
-                                                                     state=state,
-                                                                     action=res_ys,
-                                                                     max_step=self.rafa_options.max_step,
-                                                                     )
-            #confirm step below:
-            observations=obs
-            #todo here update env
-            # make env step here instead of in evaluate
-
-            # todo i think this is where we update with a step if types match, to be checked
-            # comment for self, I think this is where the env should be updated...
-            # action = agent.act(state)
-            # new_state = environment.step(state, action)
-            # if done:
-            #     state = replace(state, reflects=[], value_reflects=[])
-            #     i = 0
-
-            print(obs)
-            print(reward, done, env_info)
+            # generating feedback:
+            obs, reward, done, env_info, self_history1, self_feedbacks1, self_curstep1 = self.agent_eval.act(
+                model=self.model,
+                state=state,
+                puzzle=state.puzzle,
+                action=res_ys,
+                max_steps=self.rafa_options.max_step,
+                cur_step=self_cur_step,
+                history=self_history,
+                feedbacks=self_feedbacks,
+                max_step=self.rafa_options.max_step,
+            )
+            # update env (this should be done with a function at some point)
+            # todo create env update function
+            self_feedbacks.append(self_feedbacks1)
+            self_history.append(self_history1)
+            self_cur_step = self_curstep1
+            observations = obs
 
         return state
 
