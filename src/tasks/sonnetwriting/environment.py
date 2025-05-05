@@ -19,7 +19,16 @@ class EnvironmentSonnetWriting(Environment):
         """
         Takes a step in the environment based on the given action.
         """
-        pass
+        random.seed(state.randomness)
+        randomness = random.randint(0, MAX_SEED)
+
+        state = StateSonnetWriting(
+            puzzle=state.puzzle,
+            current_state=action,
+            steps=state.steps + [action],
+            target=state.target
+            randomness=randomness
+        )
 
     @staticmethod
     def is_valid(state: StateSonnetWriting, action: str) -> bool:
