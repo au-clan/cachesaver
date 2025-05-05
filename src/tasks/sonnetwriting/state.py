@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-
+from typing import List
 from ...typedefs import State
 
 
@@ -7,7 +7,13 @@ from ...typedefs import State
 class StateSonnetWriting(State):
     input: str
 
+    current_state: str
+
+    steps: List[str]
+
     target: str
+
+    randomness: int
 
     def serialize(self) -> dict:
         """
@@ -15,7 +21,10 @@ class StateSonnetWriting(State):
         """
         return {
             "input": self.input,
+            "current_state": self.current_state,
+            "steps": "->".join(self.steps),
             "target": self.target,
+            "randomness": self.randomness,
         }
 
     def clone(self, randomness: int = None) -> "StateSonnetWriting":
@@ -24,14 +33,16 @@ class StateSonnetWriting(State):
         """
         return StateSonnetWriting(
             input=self.input,
+            current_state=self.current_state,
+            steps=self.steps,
             target=self.target,
+            randomness=self.randomness,
         )
 
     def get_seed(self) -> int:
         """
         Returns the randomness value associated with the state.
         """
-        pass
         return self.randomness
 
     def __hash__(self) -> int:
