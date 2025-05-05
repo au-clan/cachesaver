@@ -16,5 +16,6 @@ tot:
 got:
   num_selections: 3
   num_steps: 5
+  num_generate: 1
   num_evaluations: 3
   num_best: 2

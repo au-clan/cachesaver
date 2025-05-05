@@ -40,7 +40,7 @@ class AgentBfsHotpotQA(Agent):
     """
 
     @staticmethod
-    async def act(model: Model, state: StateHotpotQA, namespace: str, request_id: str, params: DecodingParameters) -> List[str]:
+    async def act(model: Model, state: StateHotpotQA, namespace: str, request_id: str, params: DecodingParameters, **kwargs) -> List[str]:
         """
         Returns a list of n actions for the HotpotQA task.
         """

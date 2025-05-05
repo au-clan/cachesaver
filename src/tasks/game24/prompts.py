@@ -40,7 +40,7 @@ Possible next steps:
 '''
 
 aggregate = '''
-Please select {n_select_sample} step from the proposed step list, which you believe can reach 24. Do not explain, just list the selected steps as well as all the remaining numbers and nothing else. See the examples for how you are expected to respond.
+Please select {n_select_sample} step from the proposed step list, which you believe can reach 24. Do not explain, just list the selected steps as well as all the remaining numbers and nothing else.
  
 Example: 2 8 8 14
 Proposed next steps:

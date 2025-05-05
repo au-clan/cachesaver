@@ -115,6 +115,7 @@ async def run(args):
             env=EnvironmentHotpotQA,
             num_selections=config.got.num_selections,
             num_steps=config.got.num_steps,
+            num_generate=config.got.num_generate,
             num_best=config.got.num_best,
             num_evaluations=config.got.num_evaluations,
         )
@@ -141,11 +142,11 @@ async def run(args):
         correct.append(evaluations[-1][1])
     acc_finished = sum(finished) / len(finished)
     acc_correct = sum(correct) / len(correct)
-    costs = {key:tokens2cost(api.tokens[key], args.model) for key in api.tokens.keys()}
-
     print(f"Method: {args.method}")
     print(f"Finished: {acc_finished:.3f}%")
     print(f"Correct: {acc_correct:.3f}%")
+
+    costs = {key:tokens2cost(api.tokens[key], args.model) for key in api.tokens.keys()}
     for key, value in costs.items():
         print(f"\t{key}: {value['total']:.3f}$")
 

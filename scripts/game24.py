@@ -16,7 +16,7 @@ from src.utils import tokens2cost
 from src.algorithms import *
 from src.models import OnlineLLM, API
 from src.typedefs import DecodingParameters
-from src.tasks.game24 import EnvironmentGame24, BenchmarkGame24, AgentActGame24, AgentAggregateGame24, AgentEvaluateGame24, AgentBfsGame24
+from src.tasks.game24 import EnvironmentGame24, BenchmarkGame24, AgentActGame24, AgentAggregateGame24, AgentEvaluateGame24, AgentBfsGame24, AgentGenerateGame24
 
 cache = Cache(f"caches/game24")
 
@@ -101,7 +101,7 @@ async def run(args):
         )
     elif args.method == "got":
         agents = AgentDictGOT(
-            step=AgentBfsGame24,
+            step=AgentGenerateGame24,
             aggregate=AgentAggregateGame24,
             evaluate=AgentEvaluateGame24,
             step_params=params,
@@ -114,6 +114,7 @@ async def run(args):
             env=EnvironmentGame24,
             num_selections=config.got.num_selections,
             num_steps=config.got.num_steps,
+            num_generate=config.got.num_generate,
             num_best=config.got.num_best,
             num_evaluations=config.got.num_evaluations,
         )
@@ -138,11 +139,11 @@ async def run(args):
         correct.append(evaluations[-1][1])
     acc_finished = sum(finished) / len(finished)
     acc_correct = sum(correct) / len(correct)
-    costs = {key:tokens2cost(api.tokens[key], args.model) for key in api.tokens.keys()}
-
     print(f"Method: {args.method}")
     print(f"Finished: {acc_finished}")
     print(f"Correct: {acc_correct}")
+
+    costs = {key:tokens2cost(api.tokens[key], args.model) for key in api.tokens.keys()}
     for key, value in costs.items():
         print(f"\t{key}: {value['total']:.3f}$")
     
