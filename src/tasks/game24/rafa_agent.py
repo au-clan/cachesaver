@@ -213,9 +213,7 @@ class AgentRafaGame24_eval(Agent):
                                                                                                 history=history,
                                                                                                 puzzle=puzzle,
                                                                                                 feedbacks=self_feedbacks)
-        # update the history here:
-        # todo oskar
-        ##
+
         new_len = len(history)
         delta = new_len - prev_len + 1 if new_len < 4 else new_len - prev_len
         assert delta > 0
@@ -386,10 +384,8 @@ class AgentRAFA_plan(Agent):
                                          logprobs=history_messages.logprobs,
                                      )
                                      )
-        # result = await model.request(history_messages)
-        # todo this logic is flawed, in the event you get a response where the first line is a "here is suggestions:.." and then the next line is a new line with nothing on it and then the third is a suggestion. You will "learn" nothing as the sample could be two:
-        pattern = r'\d+\.\s+([^\n]+?\(left: [^\n]+?\))'  # todo this is the numbered
-        pattern = r'[-\d]+\.\s+([^\n]+?\(left: [^\n]+?\))|-\s+([^\n]+?\(left: [^\n]+?\))'  # todo this is with the "-"
+
+        pattern = r'[-\d]+\.\s+([^\n]+?\(left: [^\n]+?\))|-\s+([^\n]+?\(left: [^\n]+?\))'
         all_matches = []
 
         for text in result:
@@ -463,7 +459,7 @@ class AgentRAFA_plan_evaluate(Agent):
                 if 'feedback' in h:
                     history_messages.add_user_message(h["feedback"])
             history_messages.add_user_message(value_prompt)  # todo confirm order of messages
-            history_messages.request_id = f"step-{str(state.puzzle)}-{1}-{candidate}-{hash(1)}"  # todo this shpould be done properly at some point
+            history_messages.request_id = f"step-{str(state.puzzle)}-{1}-{candidate}-{hash(1)}"
 
             value_outputs = await model.request(prompt=history_messages.messages,
                                                 n=history_messages.n,
