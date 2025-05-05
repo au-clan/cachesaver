@@ -101,13 +101,13 @@ class AlgorithmRAFA(Algorithm):
                 value_reflects_list.append(value_reflects)
 
             # -------------------------------------The plan begins
-            output_candidates = ["\n".join(state.history) + "\n"] if len(state.history) else [
+            current_output_candidates = ["\n".join(state.history) + "\n"] if len(state.history) else [
                 ""]  # current output candidates
             infos = []
             for step in range(4 - len(state.history)):
                 # get proposals (plan suggestions/generate)
                 coroutines = []
-                for output_candidate in output_candidates:
+                for output_candidate in current_output_candidates:
                     request_options.request_id = f"idx{idx}-step{i}-step-in-history{step}-{hash(state)}-plan-{output_candidate}"
                     coroutine = self.agent_plan.act(model=self.model,
                                                     state=state,
@@ -140,12 +140,12 @@ class AlgorithmRAFA(Algorithm):
 
                 # select_new_ys = [new_output_candidates[select_id] for select_id in select_ids]
                 infos.append(
-                    {'step': step, 'x': state.puzzle, 'ys': output_candidates, 'new_ys': new_output_candidates,
+                    {'step': step, 'x': state.puzzle, 'ys(current output candidates)': current_output_candidates, 'new_ys(output candidates)': new_output_candidates,
                      'values': values,
-                     'select_new_ys': best_candidates_list})
-                output_candidates = best_candidates_list
+                     'select_new_ys(best scored candidates)': best_candidates_list})
+                current_output_candidates = best_candidates_list
 
-            ys_list = [y.split('\n')[len(state.history):] for y in output_candidates]
+            ys_list = [y.split('\n')[len(state.history):] for y in current_output_candidates]
             res_ys = ["\n".join(ys) for ys in ys_list][0]
 
             state = state
