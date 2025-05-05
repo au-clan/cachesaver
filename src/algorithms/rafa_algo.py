@@ -83,7 +83,7 @@ class AlgorithmRAFA(Algorithm):
 
                                                         )
 
-                reflects_list.append(reflects)
+                reflects_list.extend(reflects)
 
                 # score reflects
                 request_options.request_id = f"idx{idx}-step{i}-{hash(state)}-reflect_value{i}"
@@ -97,11 +97,10 @@ class AlgorithmRAFA(Algorithm):
                                                                      )
 
                 # update the value reflects
-                value_reflects_list.append(value_reflects)
+                value_reflects_list.extend(value_reflects)
 
             # -------------------------------------The plan begins
-            current_output_candidates = ["\n".join(self_history) + "\n"] if len(self_history) else [
-                ""]  # current output candidates
+            current_output_candidates = ["\n".join(self_history) + "\n"] if len(self_history) else [""]  # current output candidates
             infos = []
             for step in range(4 - len(self_history)):
                 # get proposals (plan suggestions/generate)
@@ -136,10 +135,13 @@ class AlgorithmRAFA(Algorithm):
 
                 # for logging i guess
                 infos.append(
-                    {'step': step, 'x': state.puzzle, 'ys(current output candidates)': current_output_candidates,
+                    {'step': step,
+                     'x': state.puzzle,
+                     'ys(current output candidates)': current_output_candidates,
                      'new_ys(output candidates)': new_output_candidates,
                      'values': values,
                      'select_new_ys(best scored candidates)': best_candidates_list})
+
                 current_output_candidates = best_candidates_list
 
             ys_list = [y.split('\n')[len(self_history):] for y in current_output_candidates]
@@ -159,8 +161,11 @@ class AlgorithmRAFA(Algorithm):
             )
             # update env (this should be done with a function at some point)
             # todo create env update function
-            self_feedbacks.append(self_feedbacks1)
-            self_history.append(self_history1)
+            # self_feedbacks.append(self_feedbacks1)
+            # if self_history1:
+            #     self_history.extend(self_history1)
+            self_feedbacks=self_feedbacks1
+            self_history=self_history1
             self_cur_step = self_curstep1
             observations = obs
 

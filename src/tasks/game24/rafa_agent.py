@@ -394,6 +394,9 @@ class AgentRAFA_plan(Agent):
             all_matches.extend(cleaned)
 
         proposals = all_matches[:min(len(all_matches), n_propose_sample)]
+        if len(all_matches)==0:
+            print("no suggestions found")
+            return [candidate + current_numbers+'\n']
         return [candidate + _ + '\n' for _ in proposals]
 
 
@@ -437,7 +440,6 @@ class AgentRAFA_plan_evaluate(Agent):
         n_evaluate_sample = kwargs["n_evaluate_sample"]
         request_options = kwargs["request_options"]
         value_reflects = kwargs["value_reflects"]
-
         new_output_candidates = kwargs["new_output_candidates"]  # to sample etc
 
         prompt = "Now we would like to play a game of 24. That is, given 4 numbers, try to use "
@@ -458,7 +460,7 @@ class AgentRAFA_plan_evaluate(Agent):
                     history_messages.add_assistant_message(h["answer"])
                 if 'feedback' in h:
                     history_messages.add_user_message(h["feedback"])
-            history_messages.add_user_message(value_prompt)  # todo confirm order of messages
+            history_messages.add_user_message(value_prompt)
             history_messages.request_id = f"step-{str(state.puzzle)}-{1}-{candidate}-{hash(1)}"
 
             value_outputs = await model.request(prompt=history_messages.messages,
