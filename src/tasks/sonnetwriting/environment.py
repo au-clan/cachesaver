@@ -35,14 +35,14 @@ class EnvironmentSonnetWriting(Environment):
         """
         Checks if the action taken is valid.
         """
-        pass
+        raise NotImplementedError("is_valid have not been implemented yet.")
 
     @staticmethod
     def is_final(state: StateSonnetWriting) -> bool:
         """
         Checks if the current state is a final state.
         """
-        pass
+        raise NotImplementedError("is_final have not been implemented yet.")
 
     @staticmethod
     def evaluate(state: StateSonnetWriting) -> Tuple[bool | float]:
