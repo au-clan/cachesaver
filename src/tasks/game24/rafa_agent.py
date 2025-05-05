@@ -27,7 +27,7 @@ class AgentRafaGame24_eval(Agent):
                 return False, "The formula does not lead to 24."
 
         except Exception as e:
-            # print(e)
+            print(e)
             return False, "The formula is invalid."
 
     @staticmethod
@@ -38,7 +38,14 @@ class AgentRafaGame24_eval(Agent):
             original_nums = [float(num) for num in last_step.split('left:')[-1].strip("()").split(" ") if
                              num != '']
         formula = [op for op in cur_step.split('left:')[0].strip("()").split(" ") if op != '']
-        new_nums = [float(num) for num in cur_step.split('left:')[-1].strip("()").split(" ") if num != '']
+        # try:
+        #     new_nums = [float(num) for num in cur_step.split('left:')[-1].strip("()").split(" ") if num != '']
+        new_nums = [float(num) for num in cur_step.split('left:')[-1].replace(",", "").strip("()").split() if
+                        num != '']
+        # except ValueError:
+        #     print("The formula is invalid.")
+        # new_nums = [float(num) for num in cur_step.split('left:')[-1].strip("()").split(" ") if num != '']
+
 
         try:
             print(original_nums, new_nums, formula)
@@ -70,7 +77,10 @@ class AgentRafaGame24_eval(Agent):
 
     @staticmethod
     def check_twentyfour(cur_step):
-        cards = [float(num) for num in cur_step.split('left:')[-1].strip("()").split(" ") if num != '']
+        cards = [float(num) for num in cur_step.split('left:')[-1].replace(",", "").strip("()").split() if
+                        num != '']
+
+        # cards = [float(num) for num in cur_step.split('left:')[-1].strip("()").split(" ") if num != '']
 
         try:
             for nums in itertools.permutations(cards):  # 四个数

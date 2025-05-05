@@ -172,7 +172,7 @@ class AlgorithmRAFA(Algorithm):
             observations = obs
             state = replace(state, steps = self_history)
 
-        return state
+        return [state]
 
     async def benchmark(self, benchmark: Benchmark, share_ns: bool = False, cache: bool = True):
         cache = {} if cache else None

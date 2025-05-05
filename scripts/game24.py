@@ -156,7 +156,7 @@ async def run(args):
         raise NotImplementedError(f"Method {args.method} is not implemented yet.")
 
     benchmark = BenchmarkGame24(path=r"C:\Users\Oskar\PycharmProjects\AUCLAN\cachesaver\datasets\dataset_game24.csv.gz",
-                                split="single")
+                                split=args.split)
 
     # benchmark = BenchmarkGame24(path=args.dataset_path, split=args.split)
     results = await method.benchmark(
@@ -201,10 +201,10 @@ if __name__ == "__main__":
     parser.add_argument("--logprobs", action="store_true", help="Logprobs for the model")
     parser.add_argument("--dataset_path", type=str, help="Path to the dataset")
     parser.add_argument("--split", type=str, help="Split of the dataset",
-                        choices=["mini", "train", "validation", "test", "single"], default="mini")
+                        choices=["mini", "train", "validation", "test", "single"], default="single")
     parser.add_argument("--share_ns", action="store_true", help="Share namespace between puzzles")
     parser.add_argument("--method", type=str, help="Method to use", choices=["foa", "tot", "rafa", "got"],
-                        default="tot")
+                        default="rafa")
     parser.add_argument("--conf_path", type=str, help="Path to corresponding config")
     parser.add_argument("--value_cache", action="store_true", help="Use value cache")
     args = parser.parse_args()
