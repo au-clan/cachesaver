@@ -1,213 +1,17 @@
 ﻿import itertools
 import random
 import re
-from dataclasses import replace
 from typing import Any
 
 import sympy
 
 from . import prompts as prompts, StateGame24
-from ...algorithm_options.rafa import RafaRequest, RAFAOptions
+from ...algorithm_options.rafa import RafaRequest
 from ...typedefs import Agent, Model, ModelRequestOptions
 
 
 class AgentRafaGame24_eval(Agent):
-    # @staticmethod
-    # def check_answer(problem: str, answer: str):
-    #     expression = answer.strip().split('\n')[-1].lower().replace('answer: ', '').split('=')[0]
-    #     numbers = re.findall(r'\d+', expression)
-    #     problem_numbers = re.findall(r'\d+', problem)
-    #     if sorted(numbers) != sorted(problem_numbers):
-    #         return False, "The numbers you use are not the original numbers from the problem."
-    #     try:
-    #         if sympy.simplify(expression) == 24:
-    #             return True, "The formula is correct."
-    #         else:
-    #             return False, "The formula does not lead to 24."
-    #
-    #     except Exception as e:
-    #         return False, "The formula is invalid."
-    #
-    # @staticmethod
-    # # def check_valid_move_rafa(state, cur_step, idx):
-    # def check_valid_move_rafa(state, idx, last_step, cur_step):
-    #     if idx == 1:
-    #         original_nums = [float(num) for num in last_step.split(" ")]
-    #     else:
-    #         original_nums = [float(num) for num in last_step.split('left:')[-1].strip("()").split(" ") if
-    #                          num != '']
-    #     formula = [op for op in cur_step.split('left:')[0].strip("()").split(" ") if op != '']
-    #     new_nums = [float(num) for num in cur_step.split('left:')[-1].strip("()").split(" ") if num != '']
-    #
-    #     try:
-    #         print(original_nums, new_nums, formula)
-    #         original_nums.remove(float(eval(formula[0])))
-    #         original_nums.remove(float(eval(formula[2])))
-    #         for num in original_nums:
-    #             new_nums.remove(num)
-    #         new_nums.remove(float(formula[4]))
-    #         assert len(new_nums) == 0
-    #     except ValueError:
-    #         return False, "You use value that does not exists in last step or you use them repeatedly; or you drop numbers from the last step."
-    #     except AssertionError:
-    #         return False, "You have more numbers left than expected."
-    #
-    #     return True, "The move the valid and correct."
-    #
-    # @staticmethod
-    # def check_equation(equation):
-    #     try:
-    #         left, right = equation.split("=")
-    #         err = abs(eval(left) - float(right))
-    #         if err < 1e-10:
-    #             return True, "The Equation is correct."
-    #         else:
-    #             return False, f"The Equation is incorrect, the result should be {eval(left)}"
-    #     except Exception as e:
-    #         print(e)
-    #         return False, "The Equation is not valid."
-    #
-    # @staticmethod
-    # def check_twentyfour(cur_step):
-    #     cards = [float(num) for num in cur_step.split('left:')[-1].strip("()").split(" ") if num != '']
-    #
-    #     try:
-    #         for nums in itertools.permutations(cards):  # 四个数
-    #             for ops in itertools.product('+-*/', repeat=len(cards) - 1):  # 三个运算符（可重复！）
-    #                 # 构造三种中缀表达式 (bsd)
-    #                 if len(cards) == 4:
-    #                     bds1 = '({0}{4}{1}){5}({2}{6}{3})'.format(*nums, *ops)  # (a+b)*(c-d)
-    #                     bds2 = '(({0}{4}{1}){5}{2}){6}{3}'.format(*nums, *ops)  # (a+b)*c-d
-    #                     bds3 = '{0}{4}({1}{5}({2}{6}{3}))'.format(*nums, *ops)  # a/(b-(c/d))
-    #                     bdss = [bds1, bds2, bds3]
-    #                 elif len(cards) == 3:
-    #                     bds1 = '({0}{3}{1}){4}{2}'.format(*nums, *ops)  # (a+b)*c
-    #                     bds2 = '{0}{3}({1}{4}{2})'.format(*nums, *ops)  # a+(b*c)
-    #                     bdss = [bds1, bds2]
-    #                 elif len(cards) == 2:
-    #                     bds1 = '({0}{2}{1})'.format(*nums, *ops)  # a+b
-    #                     bdss = [bds1]
-    #                 else:
-    #                     if len(nums) == 1 and abs(nums[0] - 24) < 1e-5:
-    #                         return True, ""
-    #                     return False, ""
-    #                 for bds in bdss:  # 遍历
-    #                     try:
-    #                         if abs(eval(bds) - 24.0) < 1e-10:  # eval函数
-    #                             return True, ""
-    #                     except ZeroDivisionError:  # 零除错误！
-    #                         continue
-    #     except Exception as e:
-    #         print(e)
-    #         return False, "It is not a valid formula."
-    #     return False, ""
-    #
-    # @staticmethod
-    # def check_step_rafa(state: StateGame24, idx, last_step, cur_step):
-    #     try:
-    #         if "answer" in cur_step.lower():
-    #             correct, feedback = AgentRafaGame24_eval.check_answer(state.puzzle, cur_step)
-    #             if not correct:
-    #                 return f"Step {idx} tries to give an answer but it is incorrect. {feedback}", 0
-    #             return f"Step {idx} is correct. {feedback}", 10
-    #         else:
-    #             # Check if the step is valid
-    #             correct, feedback = AgentRafaGame24_eval.check_valid_move_rafa(state=state, idx=idx,
-    #                                                                            last_step=last_step, cur_step=cur_step)
-    #             if not correct:
-    #                 return f"Step {idx} is illegal. {feedback}", 0
-    #
-    #             formula = cur_step.split('left:')[0].strip("()")
-    #             correct, feedback = AgentRafaGame24_eval.check_equation(formula)
-    #             if not correct:
-    #                 return f"Step {idx} is not correctly calculated. {feedback}", 0
-    #
-    #             correct, feedback = AgentRafaGame24_eval.check_twentyfour(cur_step)
-    #             if not correct:
-    #                 return f"Step {idx} is impossible to lead to 24. {feedback}", 0
-    #
-    #             return f"Step {idx} is correct and can lead to 24.", 1
-    #
-    #     except Exception as e:
-    #         print(e)
-    #         return f"Step {idx} is invalid.", 0
-    #
-    # @staticmethod
-    # def generate_feedback_rafa(action, state: StateGame24, feedback_print: bool):
-    #     feedbacks = ["Evaluation:"]  # feedbacks for each step
-    #     rewards = 0
-    #     if isinstance(action, list):
-    #         action = action[0]
-    #     actions = action.strip(" \n").split('\n')
-    #     idx = len(state.history)
-    #
-    #     #
-    #     state = state
-    #     for action in actions:
-    #         if idx == 0:
-    #             last_step = state.puzzle
-    #         else:
-    #             last_step = state.history[-1]
-    #         print(last_step)
-    #         # print(action)
-    #         if feedback_print:
-    #             idx += 1
-    #         # feedback, reward = AgentRafaGame24_eval.check_step_rafa(state=state, action=action, idx=idx)
-    #         feedback, reward = AgentRafaGame24_eval.check_step_rafa(state=state, idx=idx, last_step=last_step,
-    #                                                                 cur_step=action)
-    #         if feedback_print:
-    #             state = replace(state, feedbacks=state.feedbacks.append(feedback))
-    #             feedbacks.append(feedback)
-    #         if reward > 0:
-    #             if feedback_print:
-    #                 state = replace(state, history=state.history.append(action))
-    #                 # state.history.append(action)
-    #             rewards += reward
-    #         else:
-    #             break
-    #
-    #     total_feedback = " ".join(feedbacks) if feedback_print else None
-    #     return state, total_feedback, rewards
-    #
-    # @staticmethod
-    # def step_rafa(action, state: StateGame24, feedback_print: bool, max_step):
-    #     # state = replace(state, cur_step=state.cur_step + 1)  # todo this can be calculated as actions in list i think
-    #     state = replace(state, current_state=state.current_step + 1)
-    #     prev_len = len(state.history)
-    #     generated_state, feedback, reward = AgentRafaGame24_eval.generate_feedback_rafa(action=action,
-    #                                                                                     state=state,
-    #                                                                                     feedback_print=feedback_print
-    #                                                                                     )
-    #     new_len = len(generated_state.history)
-    #     delta = new_len - prev_len + 1 if new_len < 4 else new_len - prev_len
-    #     assert delta > 0
-    #     done = (reward >= 10) or (generated_state.current_step > max_step)
-    #     answer = [f"Step {i + 1}: {x}" for i, x in enumerate(action.split('\n')[:delta]) if x != ""]
-    #     answer = "Attempt answer: " + "\n".join(answer)
-    #     if True:  # todo this is default in rafa
-    #         info = {'action': action, 'history': generated_state.history}
-    #         obs = {'answer': answer, 'feedback': feedback}
-    #     else:
-    #         info = {'action': action, 'history': []}
-    #         obs = {'answer': answer, 'feedback': []}
-    #     return generated_state, obs, reward, done, info
-    #
-    # @staticmethod
-    # def act(model: Model, state: StateGame24, **kwargs) -> Any:
-    #
-    #     if "action" not in kwargs:
-    #         raise ValueError("Missing required parameter: 'action'")
-    #     if "max_step" not in kwargs:
-    #         raise ValueError("Missing required parameter: 'max_step'")
-    #
-    #     action = kwargs["action"]  # to sample etc
-    #     max_step = kwargs["max_step"]  # to sample etc
-    #
-    #     return AgentRafaGame24_eval.step_rafa(action=action,
-    #                                           state=state,
-    #                                           max_step=max_step,
-    #                                           feedback_print=False
-    #                                           )
+
     @staticmethod
     def check_answer(problem: str, answer: str):
         expression = answer.strip().split('\n')[-1].lower().replace('answer: ', '').split('=')[0]
@@ -225,6 +29,7 @@ class AgentRafaGame24_eval(Agent):
         except Exception as e:
             # print(e)
             return False, "The formula is invalid."
+
     @staticmethod
     def check_valid_move(idx, last_step, cur_step):
         if idx == 1:
@@ -249,6 +54,7 @@ class AgentRafaGame24_eval(Agent):
             return False, "You have more numbers left than expected."
 
         return True, "The move the valid and correct."
+
     @staticmethod
     def check_equation(equation):
         try:
@@ -261,6 +67,7 @@ class AgentRafaGame24_eval(Agent):
         except Exception as e:
             print(e)
             return False, "The Equation is not valid."
+
     @staticmethod
     def check_twentyfour(cur_step):
         cards = [float(num) for num in cur_step.split('left:')[-1].strip("()").split(" ") if num != '']
@@ -297,7 +104,7 @@ class AgentRafaGame24_eval(Agent):
         return False, ""
 
     def check_step(idx, last_step, cur_step, puzzle):
-        puzzle=puzzle
+        puzzle = puzzle
 
         try:
             if "answer" in cur_step.lower():
@@ -328,11 +135,11 @@ class AgentRafaGame24_eval(Agent):
 
     @staticmethod
     def generate_feedback(action, history, puzzle, feedbacks):
-        self_feedbacks=feedbacks
-        feedbacks = ["Evaluation:"]   # feedbacks for each step
+        self_feedbacks = feedbacks
+        feedbacks = ["Evaluation:"]  # feedbacks for each step
         rewards = 0
-        self_history=history
-        puzzle=puzzle
+        self_history = history
+        puzzle = puzzle
         # feedbacks=feedbacks
         if isinstance(action, list):
             action = action[0]
@@ -346,79 +153,21 @@ class AgentRafaGame24_eval(Agent):
                 last_step = self_history[-1]
             print(last_step)
             # print(action)
-            if True: #self.feedback:
+            if True:  # self.feedback:
                 idx += 1
-            feedback, reward = AgentRafaGame24_eval.check_step(idx, last_step, action, puzzle=puzzle) #todo confirm
-            if True:#self.feedback:
+            feedback, reward = AgentRafaGame24_eval.check_step(idx, last_step, action, puzzle=puzzle)
+            if True:  # self.feedback:
                 self_feedbacks.append(feedback)
                 feedbacks.append(feedback)
             if reward > 0:
-                if True:#self.feedback:
+                if True:  # self.feedback:
                     self_history.append(action)
                 rewards += reward
             else:
                 break
-        # if 'answer' not in steps[-1].lower():
-        #     feedbacks.append("The answer is not complete.")
-        total_feedback = " ".join(feedbacks) if True else None#self.feedback else None
-        return total_feedback, rewards, self_history, self_feedbacks #todo
 
-    # def step(self, action):
-    #     self.cur_step += 1
-    #     prev_len = len(self.history)
-    #     feedback, reward = self.generate_feedback(action)
-    #     new_len = len(self.history)
-    #     delta = new_len - prev_len + 1 if new_len < 4 else new_len - prev_len
-    #     assert delta > 0
-    #     done = (reward >= 10) or (self.cur_step > self.max_steps)
-    #     answer = [f"Step {i + 1}: {x}" for i, x in enumerate(action.split('\n')[:delta]) if x != ""]
-    #     answer = "Attempt answer: " + "\n".join(answer)
-    #     if self.feedback:
-    #         info = {'action': action, 'history': self.history}
-    #         obs = {'answer': answer, 'feedback': feedback}
-    #     else:
-    #         info = {'action': action, 'history': []}
-    #         obs = {'answer': answer, 'feedback': []}
-    #     return obs, reward, done, info
-
-    # @staticmethod
-    # def standard_prompt_wrap(x: str, y: str = '') -> str:
-    #     return standard_prompt.format(input=x) + y
-    #
-    # @staticmethod
-    # def cot_prompt_wrap(x: str, y: str = '') -> str:
-    #     return cot_prompt.format(input=x) + y
-    #
-    # @staticmethod
-    # def propose_prompt_wrap(x: str, y: str = '') -> str:
-    #     current_numbers = get_current_numbers(y if y else x)
-    #     if current_numbers == '24':
-    #         prompt = cot_prompt.format(input=x) + 'Steps:\n' + y
-    #         # print([prompt])
-    #     else:
-    #         prompt = propose_prompt.format(input=current_numbers)
-    #     return prompt
-
-    # @staticmethod
-    # def validation_prompt_wrap(x: str, y: str) -> str or None:
-    #     last_line = y.strip().split('\n')[-1]
-    #     if 'left: ' not in last_line:  # last step
-    #         return
-    #     if len(y.strip().split('\n')) > 1:
-    #         prev_line = get_current_numbers(y.strip().split('\n')[-2])
-    #     else:
-    #         prev_line = x
-    #     return validation_prompt.format(input=prev_line, formula=last_line)
-
-    # @staticmethod
-    # def value_prompt_wrap(x: str, y: str) -> str:
-    #     last_line = y.strip().split('\n')[-1]
-    #     if 'left: ' not in last_line:  # last step
-    #         ans = last_line.lower().replace('answer: ', '')
-    #         # print([value_last_step_prompt.format(input=x, answer=ans)])
-    #         return value_last_step_prompt.format(input=x, answer=ans)
-    #     current_numbers = get_current_numbers(y)
-    #     return value_prompt.format(input=current_numbers)
+        total_feedback = " ".join(feedbacks) if True else None  # self.feedback else None
+        return total_feedback, rewards, self_history, self_feedbacks
 
     @staticmethod
     def validation_outputs_unwrap(x: str, y: str, value_outputs: list) -> float:
@@ -426,12 +175,6 @@ class AgentRafaGame24_eval(Agent):
         if "invalid" in validations:
             return 0
         return 1
-
-    # @staticmethod
-    # def reflect_prompt_wrap(x: str, y: str, feedback: str) -> str:
-    #     return reflect_prompt.format(input=x, answer=y, feedback=feedback), value_reflect_prompt.format(input=x,
-    #                                                                                                     answer=y,
-    #                                                                                                     feedback=feedback)
 
     @staticmethod
     def value_outputs_unwrap(x: str, y: str, value_outputs: list) -> float:
@@ -441,7 +184,6 @@ class AgentRafaGame24_eval(Agent):
         value_map = {'impossible': 0.001, 'likely': 1, 'sure': 20}  # TODO: ad hoc
         value = sum(value * sum(name in value_name for value_name in value_names) for name, value in value_map.items())
         return value
-
 
     @staticmethod
     def act(model: Model, state: StateGame24, **kwargs) -> Any:
@@ -464,13 +206,15 @@ class AgentRafaGame24_eval(Agent):
         cur_step = kwargs["cur_step"]
         history = kwargs["history"]
         self_feedbacks = kwargs["feedbacks"]
-        cur_step+=1
-        # self.cur_step += 1
+        cur_step += 1
         prev_len = len(history)
-        # feedback, reward, self_history, self_feedbacks = AgentRafaGame24_eval.generate_feedback(action) (action, history, puzzle, feedbacks):
-        feedback, reward, self_history, self_feedbacks = AgentRafaGame24_eval.generate_feedback(action, history=history,puzzle=puzzle, feedbacks=self_feedbacks) #update this
-        #update the history here:
-        #todo oskar
+
+        feedback, reward, self_history, self_feedbacks = AgentRafaGame24_eval.generate_feedback(action=action,
+                                                                                                history=history,
+                                                                                                puzzle=puzzle,
+                                                                                                feedbacks=self_feedbacks)
+        # update the history here:
+        # todo oskar
         ##
         new_len = len(history)
         delta = new_len - prev_len + 1 if new_len < 4 else new_len - prev_len
@@ -482,23 +226,8 @@ class AgentRafaGame24_eval(Agent):
         info = {'action': action, 'history': history}
         obs = {'answer': answer, 'feedback': feedback}
 
-        return obs, reward, done, info, self_history, self_feedbacks,cur_step # todo the self_history, self_feedbacks are added from eval generate
-        # if "action" not in kwargs:
-        #     raise ValueError("Missing required parameter: 'action'")
-        # if "max_step" not in kwargs:
-        #     raise ValueError("Missing required parameter: 'max_step'")
-        #
-        #
-        #
-        # action = kwargs["action"]  # to sample etc
-        # max_step = kwargs["max_step"]  # to sample etc
-        #
-        # return AgentRafaGame24_eval.step_rafa(action=action,
-        #                                       state=state,
-        #                                       max_step=max_step,
-        #                                       feedback_print=False
-        #                                       )
-        #
+        return obs, reward, done, info, self_history, self_feedbacks, cur_step
+
 
 class AgentRAFA_reflect(Agent):
     @staticmethod
@@ -617,7 +346,6 @@ class AgentRAFA_plan(Agent):
 
         request_options = kwargs["request_options"]
 
-
         candidate = kwargs["candidate"]
 
         prompt = "Now we would like to play a game of 24. That is, given 4 numbers, try to use "
@@ -660,15 +388,14 @@ class AgentRAFA_plan(Agent):
                                      )
         # result = await model.request(history_messages)
         # todo this logic is flawed, in the event you get a response where the first line is a "here is suggestions:.." and then the next line is a new line with nothing on it and then the third is a suggestion. You will "learn" nothing as the sample could be two:
-        pattern = r'\d+\.\s+([^\n]+?\(left: [^\n]+?\))'#todo this is the numbered
-        pattern = r'[-\d]+\.\s+([^\n]+?\(left: [^\n]+?\))|-\s+([^\n]+?\(left: [^\n]+?\))' #todo this is with the "-"
+        pattern = r'\d+\.\s+([^\n]+?\(left: [^\n]+?\))'  # todo this is the numbered
+        pattern = r'[-\d]+\.\s+([^\n]+?\(left: [^\n]+?\))|-\s+([^\n]+?\(left: [^\n]+?\))'  # todo this is with the "-"
         all_matches = []
 
         for text in result:
             matches = re.findall(pattern, text)
             cleaned = [m[0] if m[0] else m[1] for m in matches]
             all_matches.extend(cleaned)
-
 
         proposals = all_matches[:min(len(all_matches), n_propose_sample)]
         return [candidate + _ + '\n' for _ in proposals]
@@ -751,7 +478,8 @@ class AgentRAFA_plan_evaluate(Agent):
                                                 )
                                                 )
 
-            value = AgentRAFA_plan_evaluate.value_outputs_unwrap(state.puzzle, candidate, value_outputs)  # todo fix types
+            value = AgentRAFA_plan_evaluate.value_outputs_unwrap(state.puzzle, candidate,
+                                                                 value_outputs)  # todo fix types
 
             values.append((candidate, value))
 
