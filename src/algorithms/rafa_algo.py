@@ -134,13 +134,16 @@ class AlgorithmRAFA(Algorithm):
                                                             value_reflects=value_reflects_list,
                                                             n_evaluate_sample=self.rafa_options.n_evaluate_sample
                                                             )
-                select_ids = sorted(ids, key=lambda x: values[x], reverse=True)[:self.rafa_options.n_select_sample]
-                select_new_ys = [new_output_candidates[select_id] for select_id in select_ids]
+                selected_top_candidates_with_score = sorted(values, key=lambda x: x[1], reverse=True)[:self.rafa_options.n_select_sample]
+                best_candidates_list = [candidate for candidate, _ in selected_top_candidates_with_score]
+                # select_ids = sorted(ids, key=lambda x: values[x], reverse=True)[:self.rafa_options.n_select_sample]
+
+                # select_new_ys = [new_output_candidates[select_id] for select_id in select_ids]
                 infos.append(
                     {'step': step, 'x': state.puzzle, 'ys': output_candidates, 'new_ys': new_output_candidates,
                      'values': values,
-                     'select_new_ys': select_new_ys})
-                output_candidates = select_new_ys
+                     'select_new_ys': best_candidates_list})
+                output_candidates = best_candidates_list
 
             ys_list = [y.split('\n')[len(state.history):] for y in output_candidates]
             res_ys = ["\n".join(ys) for ys in ys_list][0]

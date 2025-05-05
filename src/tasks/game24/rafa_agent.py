@@ -434,9 +434,9 @@ class AgentRAFA_plan_evaluate(Agent):
                        value_reflects))]
         values = []
 
-        for y in new_output_candidates:  # each partial output
+        for candidate in new_output_candidates:  # each partial output
 
-            value_prompt = AgentRAFA_plan_evaluate.value_prompt_wrap(state.puzzle, y)
+            value_prompt = AgentRAFA_plan_evaluate.value_prompt_wrap(state.puzzle, candidate)
 
             history_messages = RafaRequest.from_request_options(request_options=request_options,
                                                                 n=n_evaluate_sample)
@@ -446,7 +446,7 @@ class AgentRAFA_plan_evaluate(Agent):
                 if 'feedback' in h:
                     history_messages.add_user_message(h["feedback"])
             history_messages.add_user_message(value_prompt)  # todo confirm order of messages
-            history_messages.request_id = f"step-{str(state.puzzle)}-{1}-{y}-{hash(1)}"  # todo this shpould be done properly at some point
+            history_messages.request_id = f"step-{str(state.puzzle)}-{1}-{candidate}-{hash(1)}"  # todo this shpould be done properly at some point
 
             value_outputs = await model.request(prompt=history_messages.messages,
                                                 n=history_messages.n,
@@ -461,8 +461,8 @@ class AgentRAFA_plan_evaluate(Agent):
                                                 )
                                                 )
 
-            value = AgentRAFA_plan_evaluate.value_outputs_unwrap(state.puzzle, y, value_outputs)  # todo fix types
+            value = AgentRAFA_plan_evaluate.value_outputs_unwrap(state.puzzle, candidate, value_outputs)  # todo fix types
 
-            values.append(value)
+            values.append((candidate, value))
 
         return values
