@@ -370,12 +370,14 @@ class AgentRAFA_plan(Agent):
                                      )
         # result = await model.request(history_messages)
         # todo this logic is flawed, in the event you get a response where the first line is a "here is suggestions:.." and then the next line is a new line with nothing on it and then the third is a suggestion. You will "learn" nothing as the sample could be two:
-        pattern = r'\d+\.\s+([^\n]+?\(left: [^\n]+?\))'
+        pattern = r'\d+\.\s+([^\n]+?\(left: [^\n]+?\))'#todo this is the numbered
+        pattern = r'[-\d]+\.\s+([^\n]+?\(left: [^\n]+?\))|-\s+([^\n]+?\(left: [^\n]+?\))' #todo this is with the "-"
         all_matches = []
 
         for text in result:
             matches = re.findall(pattern, text)
-            all_matches.extend(matches)
+            cleaned = [m[0] if m[0] else m[1] for m in matches]
+            all_matches.extend(cleaned)
 
 
         proposals = all_matches[:min(len(all_matches), n_propose_sample)]
