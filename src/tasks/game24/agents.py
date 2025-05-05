@@ -1,14 +1,32 @@
-from typing import List
 import re
+from typing import List
 
 from . import prompts as prompts
 from .state import StateGame24
-from ...typedefs import Request, Agent, Model, DecodingParameters
+from ...typedefs import Agent, Model, ModelRequestOptions
+
+
+# Helper functions
+def get_current_numbers(state: StateGame24) -> str:
+    """
+    Returns the current numbers in the state.
+    """
+    last_line = state.current_state.strip().split('\n')[-1]
+    return last_line.split('left: ')[-1].split(')')[0]
+
+
+def get_formula(state: StateGame24) -> str:
+    formula = state.steps[-1].lower().replace("answer: ", "")
+    return formula
+
 
 class AgentActGame24(Agent):
     """
     """
-    async def act(model: Model, state: StateGame24, n: int, namespace: str, request_id: str, params: DecodingParameters) -> List[str]:
+
+    @staticmethod
+    async def act(model: Model, state: StateGame24, n: int, namespace: str, request_id: str,
+                  params: ModelRequestOptions) -> List[str]:
         # Format the prompt
         if state.current_state == "24":
             prompt = prompts.cot.format(input=state.puzzle) + "\nSteps:\n" + '\n'.join(state.steps) + "\nAnswer: "
@@ -28,17 +46,19 @@ class AgentActGame24(Agent):
         # Parse the response
         proposals = [r.strip() for r in responses]
         return proposals
-    
+
+
 class AgentAggregateGame24(Agent):
 
     @staticmethod
-    async def act(model: Model, state: StateGame24, actions: List[str], k: int, namespace: str, request_id: str, params: DecodingParameters) -> List[str]:
+    async def act(model: Model, state: StateGame24, actions: List[str], k: int, namespace: str, request_id: str,
+                  params: ModelRequestOptions) -> List[str]:
         """
         Returns the aggregated actions for the Game of 24 task.
         """
         if any("left" not in action for action in actions):
             return [action for action in actions if "left" not in action]
-        
+
         # Format the prompt
         proposals = ''
         for idx, action in enumerate(actions):
@@ -65,17 +85,19 @@ class AgentAggregateGame24(Agent):
 class AgentBfsGame24(Agent):
 
     @staticmethod
-    async def act(model: Model, state: StateGame24, namespace: str, request_id: str, params: DecodingParameters) -> List[str]:
+    async def act(model: Model, state: StateGame24, namespace: str, request_id: str, params: ModelRequestOptions) -> \
+            List[str]:
         """
         Returns a list of actions for the Game of 24 task.
         """
+
         # Format the prompt
         if len(state.current_state.strip().split(' ')) == 1:
             prompt = prompts.cot.format(input=state.puzzle) + "\nSteps:\n" + '\n'.join(state.steps) + "\nAnswer: "
         else:
             current_numbers = get_current_numbers(state)
             prompt = prompts.bfs.format(input=current_numbers)
-    
+
         # Generate the response
         response = await model.request(
             prompt=prompt,
@@ -95,7 +117,8 @@ class AgentBfsGame24(Agent):
 class AgentEvaluateGame24(Agent):
 
     @staticmethod
-    async def act(model: Model, state: StateGame24, n: int,namespace: str, request_id: str, params: DecodingParameters, cache: dict=None) -> float:
+    async def act(model: Model, state: StateGame24, n: int, namespace: str, request_id: str, params: ModelRequestOptions,
+                  cache: dict = None) -> float:
         """
         Returns a value for the given state
         """
@@ -110,7 +133,7 @@ class AgentEvaluateGame24(Agent):
             prompt = prompts.evaluate_answer.format(input=state.puzzle, answer=formula)
         else:
             prompt = prompts.evaluate.format(input=state.current_state)
-        
+
         # Format the request
         responses = await model.request(
             prompt=prompt,
@@ -129,16 +152,3 @@ class AgentEvaluateGame24(Agent):
         if cache is not None:
             cache[state.current_state] = value
         return value
-
-
-# Helper functions
-def get_current_numbers(state: StateGame24) -> str:
-    """
-    Returns the current numbers in the state.
-    """
-    last_line = state.current_state.strip().split('\n')[-1]
-    return last_line.split('left: ')[-1].split(')')[0]
-
-def get_formula(state: StateGame24) -> str:
-    formula = state.steps[-1].lower().replace("answer: ", "")
-    return formula

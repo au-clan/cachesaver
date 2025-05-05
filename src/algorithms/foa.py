@@ -2,15 +2,15 @@ import random
 import logging
 import asyncio
 from typing import TypedDict
-from ..typedefs import Algorithm, Model, Agent, Environment, DecodingParameters, State, Benchmark, MAX_SEED
+from ..typedefs import Algorithm, Model, Agent, Environment, ModelRequestOptions, State, Benchmark, MAX_SEED
 from ..utils import Resampler
 logger = logging.getLogger(__name__)
 
 class AgentDictFOA(TypedDict):
     step: Agent
     evaluate: Agent
-    step_params: DecodingParameters
-    eval_params: DecodingParameters
+    step_params: ModelRequestOptions
+    eval_params: ModelRequestOptions
 
 class AlgorithmFOA(Algorithm):
     def __init__(self, 

@@ -10,7 +10,7 @@ from cachesaver.pipelines import OnlineAPI
 
 from src.algorithms import AgentDictGOT, AlgorithmGOT
 from src.models import API
-from src.typedefs import DecodingParameters
+from src.typedefs import ModelRequestOptions
 from src.tasks.hotpotqa import (
     EnvironmentHotpotQA,
     AgentBfsHotpotQA,
@@ -22,7 +22,7 @@ from src.tasks.hotpotqa import (
 
 class TestGoTHotpotQA:
     llm = "llama-3.3-70b-versatile"
-    params = DecodingParameters(
+    params = ModelRequestOptions(
         temperature=0.7,
         max_completion_tokens=100,
         top_p=1.0,

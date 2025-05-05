@@ -3,6 +3,7 @@ from typing import List
 
 from ...typedefs import State
 
+
 @dataclass(frozen=True)
 class StateHumanEval(State):
     # The initial code to complete
@@ -35,8 +36,8 @@ class StateHumanEval(State):
             "test": self.test,
             "randomness": self.randomness
         }
-    
-    def clone(self, randomness: int=None) -> "StateHumanEval":
+
+    def clone(self, randomness: int = None) -> "StateHumanEval":
         """
         Returns a new instance of StateHumanEval with an optional new randomness value.
         """
@@ -48,13 +49,13 @@ class StateHumanEval(State):
             test=self.test,
             randomness=randomness or self.randomness
         )
-    
+
     def get_seed(self) -> int:
         """
         Returns the randomness value associated with the state.
         """
         return self.randomness
-    
+
     def __hash__(self) -> int:
         """
         Returns a hash of the current state.

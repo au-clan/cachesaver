@@ -1,24 +1,35 @@
-import os
+import argparse
 import asyncio
 import logging
-import argparse
-from diskcache import Cache
-from openai import AsyncOpenAI
-from omegaconf import OmegaConf
-from together import AsyncTogether
+import os
+
 from cachesaver.pipelines import OnlineAPI
+from diskcache import Cache
+from omegaconf import OmegaConf
+from openai import AsyncOpenAI
+from together import AsyncTogether
+
+from src.algorithm_options.rafa import RAFAOptions
+from src.algorithms.rafa_algo import AgentDictRAFA, AlgorithmRAFA
+from src.models.groq_wrapper import GroqModel
+from src.tasks.game24.rafa_agent import AgentRafaGame24_eval, AgentRAFA_reflect, \
+    AgentRAFA_reflect_value, AgentRAFA_plan, AgentRAFA_plan_evaluate
+
 logger = logging.getLogger(__name__)
 
 import sys
+
 sys.path.append(os.getcwd())
 
 from src.utils import tokens2cost
 from src.algorithms import *
 from src.models import OnlineLLM, API
-from src.typedefs import DecodingParameters
-from src.tasks.game24 import EnvironmentGame24, BenchmarkGame24, AgentActGame24, AgentAggregateGame24, AgentEvaluateGame24, AgentBfsGame24
+from src.typedefs import ModelRequestOptions
+from src.tasks.game24 import EnvironmentGame24, BenchmarkGame24, AgentActGame24, AgentAggregateGame24, \
+    AgentEvaluateGame24, AgentBfsGame24
 
 cache = Cache(f"caches/game24")
+
 
 async def run(args):
     # LLM Provider
@@ -28,22 +39,26 @@ async def run(args):
         client = AsyncTogether()
     elif args.provider == "local":
         raise NotImplementedError("Local client is not implemented yet.")
+    elif args.provider == "groq":
+        pass
     else:
         raise ValueError("Invalid provider. Choose 'openai', 'together', or 'local'.")
-    
+
     # CacheSaver model layer
     if args.provider in ["openai", "together"]:
         model = OnlineLLM(client=client)
+    elif args.provider == "groq":
+        model = GroqModel(api_key=os.getenv("GROQ_API_KEY"), model=args.model)
     else:
         raise NotImplementedError("Local model is not implemented yet.")
 
     # CacheSaver Pipeline: Batcher -> Reorderer -> Deduplicator -> Cache -> Model
     pipeline = OnlineAPI(
-                    model=model,
-                    cache=cache,
-                    batch_size=args.batch_size,
-                    timeout=args.timeout
-                    )
+        model=model,
+        cache=cache,
+        batch_size=args.batch_size,
+        timeout=args.timeout
+    )
 
     # Cachesaver additional layer for wrapping: API -> Pipeline
     api = API(
@@ -52,7 +67,7 @@ async def run(args):
     )
 
     # Decoding parameters
-    params = DecodingParameters(
+    modelRequestoptions = ModelRequestOptions(
         temperature=args.temperature,
         max_completion_tokens=args.max_completion_tokens,
         top_p=args.top_p,
@@ -61,15 +76,15 @@ async def run(args):
     )
 
     # Config
-    config = OmegaConf.load(args.conf_path)
+    config = OmegaConf.load("game24.yaml")
 
     # Setup the method
     if args.method == "foa":
         agents = AgentDictFOA(
-            step=AgentActGame24,
+            step=AgentActGame24(),
             evaluate=AgentEvaluateGame24,
-            step_params=params,
-            eval_params=params,
+            step_params=modelRequestoptions,
+            eval_params=modelRequestoptions,
         )
         method = AlgorithmFOA(
             model=api,
@@ -88,8 +103,8 @@ async def run(args):
         agents = AgentDictTOT(
             step=AgentBfsGame24,
             evaluate=AgentEvaluateGame24,
-            step_params=params,
-            eval_params=params,
+            step_params=modelRequestoptions,
+            eval_params=modelRequestoptions,
         )
         method = AlgorithmTOT(
             model=api,
@@ -99,14 +114,34 @@ async def run(args):
             num_steps=config.tot.num_steps,
             num_evaluations=config.tot.num_evaluations,
         )
+    elif args.method == "rafa":
+        agents = AgentDictRAFA(
+            agent_reflect=AgentRAFA_reflect(),
+            agent_reflect_value=AgentRAFA_reflect_value(),
+            agent_plan=AgentRAFA_plan(),
+            agent_plan_evaluate=AgentRAFA_plan_evaluate(),
+            agent_eval=AgentRafaGame24_eval(),
+
+        )
+        method = AlgorithmRAFA(
+            model=api,  # todo lint complain about type... should be fixed
+            agents=agents,
+            env=EnvironmentGame24(),
+            rafa_options=RAFAOptions(n_propose_sample=2,  # todo all of these configs shouldnt be hardcoded
+                                     n_generate_sample=2,
+                                     n_evaluate_sample=2,
+                                     max_step=4,
+                                     n_select_sample=1)
+
+        )
     elif args.method == "got":
         agents = AgentDictGOT(
             step=AgentBfsGame24,
             aggregate=AgentAggregateGame24,
             evaluate=AgentEvaluateGame24,
-            step_params=params,
-            aggregate_params=params,
-            eval_params=params,
+            step_params=modelRequestoptions,
+            aggregate_params=modelRequestoptions,
+            eval_params=modelRequestoptions,
         )
         method = AlgorithmGOT(
             model=api,
@@ -119,8 +154,11 @@ async def run(args):
         )
     else:
         raise NotImplementedError(f"Method {args.method} is not implemented yet.")
-    
-    benchmark = BenchmarkGame24(path=args.dataset_path, split=args.split)
+
+    benchmark = BenchmarkGame24(path=r"C:\Users\Oskar\PycharmProjects\AUCLAN\cachesaver\datasets\dataset_game24.csv.gz",
+                                split=args.split)
+
+    # benchmark = BenchmarkGame24(path=args.dataset_path, split=args.split)
     results = await method.benchmark(
         benchmark=benchmark,
         share_ns=args.share_ns,
@@ -138,18 +176,22 @@ async def run(args):
         correct.append(evaluations[-1][1])
     acc_finished = sum(finished) / len(finished)
     acc_correct = sum(correct) / len(correct)
-    costs = {key:tokens2cost(api.tokens[key], args.model) for key in api.tokens.keys()}
+    costs = {key: tokens2cost(api.tokens[key], args.model) for key in api.tokens.keys()}
 
     print(f"Method: {args.method}")
     print(f"Finished: {acc_finished}")
     print(f"Correct: {acc_correct}")
+    # print(f"Finished: {acc_finished:.3f}%")
+    print(f"Correct: {acc_correct:.3f}%")
     for key, value in costs.items():
         print(f"\t{key}: {value['total']:.3f}$")
-    
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Solve Game 24 using LLMs.")
-    parser.add_argument("--provider", type=str, help="LLM provider", choices=["openai", "together", "local"], default="openai")
-    parser.add_argument("--model", type=str, help="LLM model", default="gpt-4o-mini")
+    parser.add_argument("--provider", type=str, help="LLM Provider", choices=["openai", "together", "local", "groq"],
+                        default="openai")
+    parser.add_argument("--model", type=str, help="LLM Model", default="gpt-4.1-nano")
     parser.add_argument("--batch_size", type=int, help="CacheSaver's batch size", default=300)
     parser.add_argument("--timeout", type=float, help="CacheSaver's timeout", default=0.05)
     parser.add_argument("--temperature", type=float, help="Temperature for the model", default=1.0)
@@ -158,12 +200,18 @@ if __name__ == "__main__":
     parser.add_argument("--stop", type=str, nargs="+", help="Stop sequence for the model", default=None)
     parser.add_argument("--logprobs", action="store_true", help="Logprobs for the model")
     parser.add_argument("--dataset_path", type=str, help="Path to the dataset")
-    parser.add_argument("--split", type=str, help="Split of the dataset", choices=["mini", "train", "validation", "test"], default="mini")
+    parser.add_argument("--split", type=str, help="Split of the dataset",
+                        choices=["mini", "train", "validation", "test", "single"], default="single")
     parser.add_argument("--share_ns", action="store_true", help="Share namespace between puzzles")
-    parser.add_argument("--method", type=str, help="Method to use", choices=["foa", "tot", "got"], default="foa")
+    parser.add_argument("--method", type=str, help="Method to use", choices=["foa", "tot", "rafa", "got"],
+                        default="rafa")
     parser.add_argument("--conf_path", type=str, help="Path to corresponding config")
     parser.add_argument("--value_cache", action="store_true", help="Use value cache")
     args = parser.parse_args()
+
+    # Create the directory if it doesn't exist
+    log_dir = "logs/game24"
+    os.makedirs(log_dir, exist_ok=True)
 
     logging.basicConfig(level=logging.INFO, filename=f"logs/game24/{args.method}.log", filemode="w")
 

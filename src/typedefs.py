@@ -1,27 +1,31 @@
-from typing import List, Tuple, Any, NamedTuple, Optional
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from typing import List, Tuple, Any, NamedTuple, Optional
+
 from cachesaver.typedefs import Batch, Response, SingleRequestModel, BatchRequestModel
 from cachesaver.typedefs import Request as CacheSaverRequest
 from torch.utils.data import Dataset
 
 MAX_SEED = 10000
 
-@dataclass(frozen=True)
-class Request(CacheSaverRequest):# Clean this up
-    model: str
-    max_completion_tokens: Optional[int]=None
-    temperature: Optional[float]=1.0
-    top_p: Optional[float]=1.0
-    stop: Optional[str]=None
-    logprobs: Optional[bool]=False
 
-class DecodingParameters(NamedTuple):
+@dataclass(frozen=True)
+class Request(CacheSaverRequest):  # Clean this up
+    model: str
+    max_completion_tokens: Optional[int] = None
+    temperature: Optional[float] = 1.0
+    top_p: Optional[float] = 1.0
+    stop: Optional[str] = None
+    logprobs: Optional[bool] = False
+
+
+class ModelRequestOptions(NamedTuple):
     max_completion_tokens: int
     temperature: float
     top_p: float
     stop: str
     logprobs: bool
+
 
 class Model(SingleRequestModel, BatchRequestModel):
     def __init__(self):
@@ -34,6 +38,7 @@ class Model(SingleRequestModel, BatchRequestModel):
     @abstractmethod
     async def batch_request(self, batch: Batch) -> List[Response]:
         pass
+
 
 class Benchmark(Dataset):
     def __init__(self, path: str, set_name: str):
@@ -66,7 +71,7 @@ class State(ABC):
     def get_seed(self) -> int:
         pass
 
-    
+
 class Environment(ABC):
     def __init__(self):
         pass
@@ -91,13 +96,15 @@ class Environment(ABC):
     def evaluate(state: State) -> Tuple[bool, float]:
         pass
 
+
 class Agent(ABC):
 
     @staticmethod
     @abstractmethod
-    def act(model: Model, state: State) -> Any:
+    async def act(model: Model, state: State, **kwargs) -> Any:
         pass
-    
+
+
 class Algorithm(ABC):
     def __init__(self, model: Model, agents: dict[str, Agent], env: Environment):
         self.model = model
@@ -105,7 +112,7 @@ class Algorithm(ABC):
         self.env = env
 
     @abstractmethod
-    async def solve(self) -> List[State]:
+    async def solve(self, idx: int, state: State, namespace: str, value_cache: dict = None) -> List[State]:
         pass
 
     @abstractmethod
