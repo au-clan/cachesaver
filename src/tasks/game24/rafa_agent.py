@@ -136,6 +136,7 @@ class AgentRafaGame24_eval(Agent):
 
         try:
             #todo oskar, this check answer should be replaced with the numbers left...
+            #to check if numbers are used instead of this
             if "answer" in cur_step.lower():
                 correct, feedback = AgentRafaGame24_eval.check_answer(puzzle, cur_step)
                 if not correct:
