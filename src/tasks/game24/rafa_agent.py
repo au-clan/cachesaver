@@ -395,7 +395,7 @@ class AgentRAFA_plan(Agent):
 
         proposals = all_matches[:min(len(all_matches), n_propose_sample)]
         if len(all_matches)==0:
-            print("no suggestions found")
+            print("no suggestions found") #todo maybe find a better way to solve this issue
             return [candidate + current_numbers+'\n']
         return [candidate + _ + '\n' for _ in proposals]
 

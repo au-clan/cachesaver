@@ -1,5 +1,6 @@
 ﻿import asyncio
 import itertools
+from dataclasses import replace
 from typing import TypedDict
 
 from ..algorithm_options.rafa import RAFAOptions, RequestOptions
@@ -45,7 +46,7 @@ class AlgorithmRAFA(Algorithm):
     async def solve(self, idx: int, state: State, namespace: str, value_cache: dict = None):
 
         # Initial state
-
+        state = state
         request_options = RequestOptions(max_completion_tokens=200,
                                          temperature=1.0,
                                          top_p=1.0,
@@ -100,7 +101,8 @@ class AlgorithmRAFA(Algorithm):
                 value_reflects_list.extend(value_reflects)
 
             # -------------------------------------The plan begins
-            current_output_candidates = ["\n".join(self_history) + "\n"] if len(self_history) else [""]  # current output candidates
+            current_output_candidates = ["\n".join(self_history) + "\n"] if len(self_history) else [
+                ""]  # current output candidates
             infos = []
             for step in range(4 - len(self_history)):
                 # get proposals (plan suggestions/generate)
@@ -164,10 +166,11 @@ class AlgorithmRAFA(Algorithm):
             # self_feedbacks.append(self_feedbacks1)
             # if self_history1:
             #     self_history.extend(self_history1)
-            self_feedbacks=self_feedbacks1
-            self_history=self_history1
+            self_feedbacks = self_feedbacks1
+            self_history = self_history1
             self_cur_step = self_curstep1
             observations = obs
+            state = replace(state, steps = self_history)
 
         return state
 
