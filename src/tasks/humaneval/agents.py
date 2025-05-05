@@ -7,23 +7,6 @@ from ...typedefs import Request, Agent, Model, DecodingParameters
 
 
 class AgentActHumanEval(Agent):
-    """ """
-
-    @staticmethod
-    async def act(
-        model: Model,
-        state: StateHumanEval,
-        n: int,
-        namespace: str,
-        request_id: str,
-        params: DecodingParameters,
-    ) -> List[str]:
-        raise NotImplementedError(
-            "The act method for AgentActHumanEval is not implemented."
-        )
-
-
-class AgentGenerateHumanEval(Agent):
     @staticmethod
     async def act(
         model: Model,
