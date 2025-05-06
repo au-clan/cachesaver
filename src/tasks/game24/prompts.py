@@ -210,8 +210,8 @@ Answer: 5 + 5 + 5 + 9 = 24
 Input: {input}
 '''
 
-# 1-shot
-propose_prompt = '''Now use numbers and basic arithmetic operations (+ - * /) to generate possible next steps. Make sure use steps that is sure to leads to 24 and avoid steps that are impossible to generate 24. Note that it is possible that we are considering intermediate steps so the numbers of the input may be less than 4.
+# 1-shot #could ask to list them from most promising results in the beginning
+propose_prompt = '''Now use numbers and basic arithmetic operations (+ - * /) to generate possible next steps. Make sure use steps that is sure to leads to 24 and avoid steps that are impossible to generate 24. Note that it is possible that we are considering intermediate steps so the numbers of the input may be less than 4.Do not explain simply list possible next steps as well as all the remaining numbers and nothing else.
 Example:
 Input: 2 8 8 14 
 Possible next steps: 

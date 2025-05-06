@@ -50,8 +50,8 @@ class BenchmarkHotpotQA(Benchmark):
 
         if split == "mini":
             self.data = [data[i] for i in mini_set_idxs]
-        if split == "single":
-            self.data = mini_set_idxs[0]
+        elif split == "single":
+            self.data = mini_set_idxs[:1]
         elif split == "train":
             self.data = [data[i] for i in train_set_idxs]
         elif split == "validation":

@@ -195,13 +195,13 @@ if __name__ == "__main__":
     parser.add_argument("--batch_size", type=int, help="CacheSaver's batch size", default=300)
     parser.add_argument("--timeout", type=float, help="CacheSaver's timeout", default=0.05)
     parser.add_argument("--temperature", type=float, help="Temperature for the model", default=1.0)
-    parser.add_argument("--max_completion_tokens", type=int, help="Max completion tokens", default=100)
+    parser.add_argument("--max_completion_tokens", type=int, help="Max completion tokens", default=400)
     parser.add_argument("--top_p", type=float, help="Top P for the model", default=1.0)
     parser.add_argument("--stop", type=str, nargs="+", help="Stop sequence for the model", default=None)
     parser.add_argument("--logprobs", action="store_true", help="Logprobs for the model")
     parser.add_argument("--dataset_path", type=str, help="Path to the dataset")
     parser.add_argument("--split", type=str, help="Split of the dataset",
-                        choices=["mini", "train", "validation", "test", "single"], default="single")
+                        choices=["mini", "train", "validation", "test", "single"], default="mini")
     parser.add_argument("--share_ns", action="store_true", help="Share namespace between puzzles")
     parser.add_argument("--method", type=str, help="Method to use", choices=["foa", "tot", "rafa", "got"],
                         default="rafa")

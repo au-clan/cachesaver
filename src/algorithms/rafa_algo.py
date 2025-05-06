@@ -47,7 +47,7 @@ class AlgorithmRAFA(Algorithm):
 
         # Initial state
         state = state
-        request_options = RequestOptions(max_completion_tokens=200,
+        request_options = RequestOptions(max_completion_tokens=600,
                                          temperature=1.0,
                                          top_p=1.0,
                                          logprobs=False,

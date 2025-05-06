@@ -414,6 +414,19 @@ class AgentRAFA_plan(Agent):
                                          logprobs=history_messages.logprobs,
                                      )
                                      )
+        result_list = []
+        for block in result:
+            result_list.extend(block.strip().split('\n'))
+
+        result_list_finish = [line.strip() for line in result_list if line.strip() and re.search(r'[+\-*/=\d]', line)]
+        proposals = result_list_finish[:min(len(result_list_finish), n_propose_sample)]
+        # pattern = r'[-\d]+\.\s+([^\n]+?\(left: [^\n]+?\))|-\s+([^\n]+?\(left: [^\n]+?\))'
+        pattern = re.compile(r'^([-\d]+\.\s+[^\n]*?\(left: [^\n]+?\)|-\s+[^\n]*?\(left: [^\n]+?\))$')
+        cleaned_data = [
+            line for line in result_list_finish
+            if line.strip() != 'Possible next steps:' # and not pattern.match(line.strip())
+        ]
+        return [candidate + _ + '\n' for _ in proposals]
 
         pattern = r'[-\d]+\.\s+([^\n]+?\(left: [^\n]+?\))|-\s+([^\n]+?\(left: [^\n]+?\))'
         all_matches = []

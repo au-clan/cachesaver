@@ -77,7 +77,8 @@ async def run(args):
     )
 
     # Config
-    config = OmegaConf.load(args.conf_path)
+    # config = OmegaConf.load(args.conf_path)
+    config = OmegaConf.load("hotpotqa.yaml")
 
     # Setup the method
     ## We can create a method factory for this
@@ -157,7 +158,7 @@ async def run(args):
     else:
         raise NotImplementedError("Method not implemented yet.")
 
-    benchmark = BenchmarkHotpotQA(path=args.dataset_path, split=args.split)
+    benchmark = BenchmarkHotpotQA(path=r"C:\Users\Oskar\PycharmProjects\AUCLAN\cachesaver\datasets\dataset_hotpotqa.csv.gz", split=args.split)
     results = await method.benchmark(
         benchmark=benchmark,
         share_ns=args.share_ns,
@@ -189,23 +190,27 @@ async def run(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Solve HotpotQA using LLMs.")
     parser.add_argument("--provider", type=str, help="LLM Provider", choices=["openai", "together", "local", "groq"],
-                        default="groq")
-    parser.add_argument("--model", type=str, help="LLM Model", default="gpt-4o-mini")
+                        default="openai")
+    parser.add_argument("--model", type=str, help="LLM Model", default="gpt-4.1-nano")
     parser.add_argument("--batch_size", type=int, help="CacheSaver's batch size", default=300)
     parser.add_argument("--timeout", type=float, help="CacheSaver's timeout", default=0.05)
     parser.add_argument("--temperature", type=float, help="Temperature for the model", default=1.0)
-    parser.add_argument("--max_completion_tokens", type=int, help="Max completion tokens", default=100)
+    parser.add_argument("--max_completion_tokens", type=int, help="Max completion tokens", default=400)
     parser.add_argument("--top_p", type=float, help="Top P for the model", default=1.0)
     parser.add_argument("--stop", type=str, nargs="+", help="Stop sequence for the model", default=None)
     parser.add_argument("--logprobs", action="store_true", help="Logprobs for the model")
     parser.add_argument("--dataset_path", type=str, help="Path to the dataset")
     parser.add_argument("--split", type=str, help="Split of the dataset",
-                        choices=["mini", "train", "validation", "test"], default="mini")
+                        choices=["mini", "train", "validation", "test", "single"], default="mini")
     parser.add_argument("--share_ns", action="store_true", help="Share namespace between puzzles")
-    parser.add_argument("--method", type=str, help="Method to use", choices=["foa", "tot", "got"], default="foa")
+    parser.add_argument("--method", type=str, help="Method to use", choices=["foa", "tot", "got"], default="got")
     parser.add_argument("--conf_path", type=str, help="Path to corresponding config")
     parser.add_argument("--value_cache", action="store_true", help="Use value cache")
     args = parser.parse_args()
+
+    # Create the directory if it doesn't exist
+    log_dir = "logs/hotpotqa"
+    os.makedirs(log_dir, exist_ok=True)
 
     logging.basicConfig(level=logging.DEBUG, filename=f"logs/game24/{args.method}.log", filemode="w")
 
