@@ -195,8 +195,8 @@ Input: {input}
 Answer: {answer}
 Judge:'''
 
-# RAP prompt for Game24
-rap = '''Use numbers and basic arithmetic operations (+ - * /) to obtain 24. Each step, you are only allowed to choose two of the remaining numbers to obtain a new number. Think step by step and plan your moves carefully.
+# React prompt for Game24
+react = '''Use numbers and basic arithmetic operations (+ - * /) to obtain 24. Each step, you are only allowed to choose two of the remaining numbers to obtain a new number. Think step by step and plan your moves carefully.
 
 Example: 2 8 8 14
 Thought: I need to get to 24. Let me analyze the numbers and plan my moves.

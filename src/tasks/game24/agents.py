@@ -131,9 +131,9 @@ class AgentEvaluateGame24(Agent):
         return value
 
 
-class AgentRAPGame24(Agent):
+class AgentReactGame24(Agent):
     """
-    Agent for RAP algorithm
+    Agent for React algorithm
     """
     @staticmethod
     async def act(model: Model, state: StateGame24, n: int, namespace: str, request_id: str, params: DecodingParameters) -> List[str]:
@@ -141,7 +141,7 @@ class AgentRAPGame24(Agent):
             prompt = prompts.cot.format(input=state.puzzle) + "\nSteps:\n" + '\n'.join(state.steps) + "\nAnswer: "
         else:
             current_numbers = get_current_numbers(state)
-            prompt = prompts.rap.format(input=current_numbers)
+            prompt = prompts.react.format(input=current_numbers)
 
         responses = await model.request(
             prompt=prompt,
