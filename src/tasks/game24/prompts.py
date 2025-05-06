@@ -1,5 +1,5 @@
 # Updated
-act = '''Use numbers and basic arithmetic operations (+ - * /). Each step, you are only allowed to choose two of the remaining numbers to obtain a new number. Do not explain simply list one possible next step, as well as all the remaining numbers and nothing else.
+act = '''Use numbers and basic arithmetic operations (+ - * /). Each step, you are only allowed to choose two of the remaining numbers to obtain a new number. Do not explain. Simply list one possible next step, as well as all the remaining numbers and nothing else.
 
 Example: 2 8 8 14
 Possible next step:
@@ -17,7 +17,7 @@ Input: {input}
 Possible next step:
 '''
 
-bfs = '''Use numbers and basic arithmetic operations (+ - * /). Each step, you are only allowed to choose two of the remaining numbers to obtain a new number. Do not explain simply list possible next steps as well as all the remaining numbers and nothing else.
+bfs = '''Use numbers and basic arithmetic operations (+ - * /). Each step, you are only allowed to choose two of the remaining numbers to obtain a new number. Do not explain. Simply list possible next steps as well as all the remaining numbers and nothing else.
 
 Example: 2 8 8 14
 Possible next steps:
@@ -166,7 +166,7 @@ Input: {input}
 '''
 
 # Taken from Tree of Thoughts paper
-evaluate_answer = '''Use numbers and basic arithmetic operations (+ - * /) to obtain 24. Given an input and an answer, give a judgement (sure/impossible) if the answer is correct, i.e. it uses each input exactly once and no other numbers, and reach 24. Do not explain simply list the judgement.
+evaluate_answer = '''Use numbers and basic arithmetic operations (+ - * /) to obtain 24. Given an input and an answer, give a judgement (sure/impossible) if the answer is correct, i.e. it uses each input exactly once and no other numbers, and reach 24. Do not explain. Simply list the judgement.
 Example: 4 4 6 8
 Answer: (4 + 8) * (6 - 4) = 24
 Judge: 
