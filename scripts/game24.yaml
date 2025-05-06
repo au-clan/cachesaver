@@ -18,3 +18,8 @@ got:
   num_steps: 4
   num_evaluations: 3
   num_best: 2
+
+rap:
+  num_selections: 3
+  num_steps: 4
+  num_evaluations: 3

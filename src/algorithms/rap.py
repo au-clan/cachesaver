@@ -33,6 +33,7 @@ class AlgorithmRAP(Algorithm):
             model: Model,
             agents: AgentDictRAP,
             env: Environment,
+            num_evaluations: int
     ):
         super().__init__(model, agents, env)
 
@@ -41,10 +42,10 @@ class AlgorithmRAP(Algorithm):
         self.eval_agent = agents['evaluate']
         self.step_params = agents['step_params']
         self.eval_params = agents['eval_params']
+        self.num_evaluations = num_evaluations
 
         # World model adapter
         self.world_model: RAPWorldModel[State, str] = RAPWorldModel(
-            model=self.model,
             step_agent=self.step_agent,
             step_params=self.step_params,
             env=self.env
@@ -54,7 +55,8 @@ class AlgorithmRAP(Algorithm):
             model=self.model,
             step_agent=self.step_agent,
             step_params=self.step_params,
-            env=self.env
+            env=self.env,
+            num_evaluations=self.num_evaluations,
         )
         # MCTS with trace output and mean cumulative reward
         self.search_algo = MCTS(
@@ -75,7 +77,9 @@ class AlgorithmRAP(Algorithm):
         """
         # Execute MCTS using the callable interface
         # __call__ signature: (world_model, search_config, log_file=None, **kwargs)
-        mcts_result: MCTSResult = self.search_algo(
+        self.world_model.update_init_state(state)
+        self.search_config.update_namespace(namespace)
+        mcts_result: MCTSResult = await self.search_algo(
             self.world_model,
             self.search_config
         )
