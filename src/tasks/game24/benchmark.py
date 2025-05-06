@@ -11,7 +11,9 @@ class BenchmarkGame24(Benchmark):
         df.reset_index(inplace=True)
         data = list(zip(df['index'], df['Puzzles']))
 
-        if  split == "mini":
+        if  split == "single":
+            self.data = data[0:1]
+        elif split == "mini":
             self.data = data[:10]
         elif split == "train":
             self.data = data[850:875] + data[1025:1050]
