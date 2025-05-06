@@ -10,8 +10,8 @@ from ..models.rap import RAPWorldModel, RAPSearchConfig
 from ..typedefs import Algorithm, Model, Agent, Environment, DecodingParameters, State, Benchmark
 
 # Import LLM Reasoners components (ensure llm-reasoners is installed or vendored)
-from ..third_party.llm_reasoners.reasoners.algorithm import MCTS
-from ..third_party.llm_reasoners.reasoners.algorithm import MCTSResult
+from ..third_party.llm_reasoners_mcts import MCTS
+from ..third_party.llm_reasoners_mcts import MCTSResult
 
 logger = logging.getLogger(__name__)
 

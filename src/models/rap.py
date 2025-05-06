@@ -4,8 +4,8 @@ from typing import List, Tuple
 from ..typedefs import Model, Agent, Environment, DecodingParameters, State
 
 # Import LLM Reasoners components (ensure llm-reasoners is installed or vendored)
-from ..third_party.llm_reasoners.reasoners import WorldModel
-from ..third_party.llm_reasoners.reasoners import SearchConfig
+from ..third_party.llm_reasoners_mcts import WorldModel
+from ..third_party.llm_reasoners_mcts import SearchConfig
 
 
 class RAPWorldModel(WorldModel):

@@ -8,3 +8,10 @@ torch
 langchain
 langchain-community
 wikipedia
+cachesaver
+groq
+lazykey
+python-dotenv
+numpy
+tqdm
+pytest
