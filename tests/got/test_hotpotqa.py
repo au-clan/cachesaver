@@ -1,8 +1,6 @@
 from langchain import Wikipedia
 from langchain.agents.react.base import DocstoreExplorer
 
-import sys
-import asyncio
 import pytest
 import tempfile
 from diskcache import Cache
