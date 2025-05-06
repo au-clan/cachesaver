@@ -170,8 +170,9 @@ async def run(args):
             logger.info(f"\t{r}")
     for result in results:
         evaluations = sorted([EnvironmentGame24.evaluate(state) for state in result], key=lambda x: x[1])
-        finished.append(evaluations[-1][0])
-        correct.append(evaluations[-1][1])
+        if evaluations:
+            finished.append(evaluations[-1][0])
+            correct.append(evaluations[-1][1])
     acc_finished = sum(finished) / len(finished)
     acc_correct = sum(correct) / len(correct)
     if args.provider == "groq":
