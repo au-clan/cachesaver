@@ -30,7 +30,6 @@ async def run(args):
         raise NotImplementedError("Local client is not implemented yet.")
     else:
         raise ValueError("Invalid provider. Choose 'openai', 'together', or 'local'.")
-    
     # CacheSaver model layer
     if args.provider in ["openai", "together"]:
         model = OnlineLLM(client=client)
@@ -117,6 +116,18 @@ async def run(args):
             num_best=config.got.num_best,
             num_evaluations=config.got.num_evaluations,
         )
+    elif args.method == "rap":
+        agents = AgentDictRAP(
+            step=AgentBfsGame24,
+            evaluate=AgentEvaluateGame24,
+            step_params=params,
+            eval_params=params,
+        )
+        method = AlgorithmRAP(
+            model=api,
+            agents=agents,
+            env=EnvironmentGame24,
+        )
     else:
         raise NotImplementedError(f"Method {args.method} is not implemented yet.")
     
@@ -160,7 +171,7 @@ if __name__ == "__main__":
     parser.add_argument("--dataset_path", type=str, help="Path to the dataset")
     parser.add_argument("--split", type=str, help="Split of the dataset", choices=["mini", "train", "validation", "test"], default="mini")
     parser.add_argument("--share_ns", action="store_true", help="Share namespace between puzzles")
-    parser.add_argument("--method", type=str, help="Method to use", choices=["foa", "tot", "got"], default="foa")
+    parser.add_argument("--method", type=str, help="Method to use", choices=["foa", "tot", "got", "rap"], default="foa")
     parser.add_argument("--conf_path", type=str, help="Path to corresponding config")
     parser.add_argument("--value_cache", action="store_true", help="Use value cache")
     args = parser.parse_args()
