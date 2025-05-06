@@ -14,12 +14,11 @@ class RAPWorldModel(WorldModel[State, str]):
     """
     def __init__(
         self,
-        model: Model,
         step_agent: Agent,
         step_params: DecodingParameters,
         env: Environment
     ):
-        super().__init__(model=model)
+        super().__init__()
         self.step_agent = step_agent
         self.step_params = step_params
         self.env = env
