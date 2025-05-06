@@ -1,15 +1,64 @@
-# # ReST-MCTS*
-act = '''Given a science problem, you need to answer the problem based on your existing knowledge. The input may include some existing steps to solve the question and you should continue to complete the solution based on these existing steps.
+react = '''Given a science problem, you need to answer the problem based on your existing knowledge. The input may include some existing steps to solve the question and you should continue to complete the solution based on these existing steps.
 
 If the input does not provide any existing steps, you need to analyze the problem and then give the first step in solving or calculating the problem. If partial solution steps are provided, you need to output the next step along the lines of the existing steps.
-The output format is limited to: "Next step: ..."
-where ... indicates omitted output information, which is the next step in the answer that you should give. Your output must be a complete reasoning step, which should include detailed calculations, reasoning, choosing answers, etc.
+The output format is limited to: "Next step: ..." where ... indicates omitted output information, which is the next step in the answer that you should give. Your output must be a complete reasoning step, which should include detailed calculations, reasoning, choosing answers, etc.
+
+If the existing steps are already sufficient, you can output "The final answer is: $...$" where ... indicates the final answer to the question. 
+
+Before providing the next step, provide a short thought on the problem and the existing steps. Use the following format:
+"Thought: $...$"
+Next step: $...$".
+
 Below is the input, please follow the specified format for your output.
 
 Problem: {problem}
 Existing steps:
 {existing_steps}
 Output:'''
+
+# # ReST-MCTS*
+act = '''Given a science problem, you need to answer the problem based on your existing knowledge. The input may include some existing steps to solve the question and you should continue to complete the solution based on these existing steps. 
+
+If the input does not provide any existing steps, you need give the first step in solving or calculating the problem. If partial solution steps are provided, you need to output the next step along the lines of the existing steps.
+The output format is limited to: "Next step: ..." where ... indicates omitted output information, which is the next step in the answer that you should give. Your output must be a complete step, which may include detailed calculations, reasoning, choosing answers, etc. but no reasoning.
+
+If the existing steps are already sufficient, you can output "The final answer is: $...$" where ... indicates the final answer to the question. 
+
+Below is the input, please follow the specified format for your output.
+
+Problem: {problem}
+Existing steps:
+{existing_steps}
+Output:'''
+
+
+
+bfs = '''Given a science problem, you need to answer the problem based on your existing knowledge. The input may include some existing steps to solve the question and you should continue to complete the solution based on these existing steps. 
+
+If the input does not provide any existing steps, you need give the first step in solving or calculating the problem. If partial solution steps are provided, you need to output the next step along the lines of the existing steps.
+The output format is limited to: "Next step: ..." where ... indicates omitted output information, which is the next step in the answer that you should give. Your output must be a complete step, which may include detailed calculations, reasoning, choosing answers, etc. but no reasoning.
+
+If the existing steps are already sufficient, you can output "The final answer is: $...$" where ... indicates the final answer to the question. 
+
+Please provide MULTIPLE alternative next steps. Use the following format:
+"Next step: $...$
+Next step: $...$
+Next step: $...$".
+
+Below is the input, please follow the specified format for your output.
+
+Problem: {problem}
+Existing steps:
+{existing_steps}
+Output:'''
+
+# Summary prompt (ReST-MCTS*)
+summary = '''
+Given a math problem and its corresponding solution, your task is to extract the final answer obtained in the solution.
+You should summarize the answer using the format: "The final answer is $...$". Replace "..." with the answer obtained in the solution.
+Problem: {problem}
+Solution: {existing_steps}
+Extracted answer:'''
 
 # ReST-MCTS* (Translated using google translate)
 evaluate = '''Your task is to assess whether the provided solution steps can successfully solve the given science/mathematics problem and output a score.
@@ -20,11 +69,11 @@ First provide an analysis, then the score. Your analysis and scoring should be e
 
 {examples}
 
-Below is a question and the existing steps, with analysis and scoring. Be careful not to output the next steps in the analysis, and the scoring should be based entirely on the steps given in the input.
+Below is a problem and the existing steps, with analysis and scoring. Be careful not to output the next steps in the analysis, and the scoring should be based entirely on the steps given in the input.
 The output format is limited to: "Analysis:...\nScore:...", where ... indicates omitted output content, which is the part you need to fill in.
 
 Input:
-Question: {problem}
+Problem: {problem}
 Existing steps:
 {existing_steps}
 Output:'''

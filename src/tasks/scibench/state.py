@@ -1,5 +1,5 @@
-from dataclasses import dataclass
-from typing import List
+from dataclasses import dataclass, field
+from typing import List, Dict
 
 from ...typedefs import State
 
@@ -19,6 +19,12 @@ class StateSciBench(State):
 
     # A random number associated with the state
     randomness: int
+    
+    # The number of steps taken so far
+    step_n: int = 0
+
+    # The value that the state had at its last evaluation
+    values: Dict = field(default_factory=dict)
 
     def serialize(self) -> dict:
         """
@@ -38,6 +44,8 @@ class StateSciBench(State):
             current_state=self.current_state,
             steps=self.steps,
             answer=self.answer,
+            step_n=self.step_n,
+            values=self.values,
             randomness=randomness or self.randomness)
     
     def get_seed(self) -> int:

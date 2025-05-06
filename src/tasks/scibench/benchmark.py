@@ -66,6 +66,7 @@ class BenchmarkSciBench(Benchmark):
             puzzle=x,
             current_state="",
             steps=[],
+            step_n=0,
             answer=y,
             randomness=None
         )
