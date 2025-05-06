@@ -11,10 +11,6 @@ Action = TypeVar("Action")
 Example = TypeVar("Example")
 Trace = tuple[list[State], list[Action]]
 
-def create_directory_if_not_exists(directory):
-    if not os.path.exists(directory):
-        os.makedirs(directory)
-
 
 class Dynamics(ABC, Generic[State, Action]):
 
