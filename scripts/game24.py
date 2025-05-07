@@ -158,12 +158,12 @@ async def run(args):
             logger.info(f"\t{r}")
     for result in results:
         evaluations = sorted([EnvironmentGame24.evaluate(state) for state in result], key=lambda x: x[1])
-        if evaluations:
+        if evaluations: # check is needed as a result can have 0 evaluations
             finished.append(evaluations[-1][0])
             correct.append(evaluations[-1][1])
     acc_finished = sum(finished) / len(finished)
     acc_correct = sum(correct) / len(correct)
-    if args.provider == "groq":
+    if args.provider == "groq": # GroqAPI is free so no costs
         costs = {key: {"in": 0, "out": 0, "total": 0} for key in api.tokens.keys()}
     else:
         costs = {key:tokens2cost(api.tokens[key], args.model) for key in api.tokens.keys()}
