@@ -8,3 +8,6 @@ torch
 langchain
 langchain-community
 wikipedia
+groq
+lazykey
+python-dotenv

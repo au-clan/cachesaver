@@ -14,7 +14,7 @@ sys.path.append(os.getcwd())
 
 from src.utils import tokens2cost
 from src.algorithms import *
-from src.models import OnlineLLM, API
+from src.models import OnlineLLM, API, GroqAPILLM
 from src.typedefs import DecodingParameters
 from src.tasks.game24 import EnvironmentGame24, BenchmarkGame24, AgentActGame24, AgentAggregateGame24, AgentEvaluateGame24, AgentBfsGame24, AgentReactGame24
 
@@ -32,12 +32,16 @@ async def run(args):
         client = AsyncTogether()
     elif args.provider == "local":
         raise NotImplementedError("Local client is not implemented yet.")
+    elif args.provider == "groq":
+        pass  # skip this check as groq model initializes its own client
     else:
         raise ValueError("Invalid provider. Choose 'openai', 'together', or 'local'.")
     
     # CacheSaver model layer
     if args.provider in ["openai", "together"]:
         model = OnlineLLM(client=client)
+    elif args.provider == "groq":
+        model = GroqAPILLM(use_multiple_keys=(not args.use_single_key))
     else:
         raise NotImplementedError("Local model is not implemented yet.")
 
@@ -154,11 +158,15 @@ async def run(args):
             logger.info(f"\t{r}")
     for result in results:
         evaluations = sorted([EnvironmentGame24.evaluate(state) for state in result], key=lambda x: x[1])
-        finished.append(evaluations[-1][0])
-        correct.append(evaluations[-1][1])
+        if evaluations:
+            finished.append(evaluations[-1][0])
+            correct.append(evaluations[-1][1])
     acc_finished = sum(finished) / len(finished)
     acc_correct = sum(correct) / len(correct)
-    costs = {key:tokens2cost(api.tokens[key], args.model) for key in api.tokens.keys()}
+    if args.provider == "groq":
+        costs = {key: {"in": 0, "out": 0, "total": 0} for key in api.tokens.keys()}
+    else:
+        costs = {key:tokens2cost(api.tokens[key], args.model) for key in api.tokens.keys()}
 
     print(f"Method: {args.method}")
     print(f"Finished: {acc_finished}")
@@ -168,7 +176,8 @@ async def run(args):
     
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Solve Game 24 using LLMs.")
-    parser.add_argument("--provider", type=str, help="LLM Provider", choices=["openai", "together", "local"], default="openai")
+    parser.add_argument("--provider", type=str, help="LLM Provider", choices=["openai", "together", "local", "groq"], default="openai")
+    parser.add_argument("--use_single_key", type=bool, help="Allows the usage of single key instead of multiple in groq")
     parser.add_argument("--model", type=str, help="LLM Model",  default="gpt-4o-mini")
     parser.add_argument("--base_url", type=str, help="Base URL for the API", default=None)
     parser.add_argument("--batch_size", type=int, help="CacheSaver's batch size", default=300)
