@@ -9,7 +9,17 @@ def tokens2cost(tokens: dict, model_name: str) -> dict:
         "meta-llama/Llama-3.2-90B-Vision-Instruct-Turbo" : {"in": 0.88, "out": 0.88},
         "gpt-4o": {"in": 2.50, "out": 10.00},
         "gpt-4o-mini": {"in": 0.15, "out": 0.60},
-        "gpt-3.5-turbo": {"in": 0.50, "out": 1.50}
+        "gpt-3.5-turbo": {"in": 0.50, "out": 1.50},
+        
+        # GPT-4.1 models
+        "gpt-4.1-nano": {"in": 0.10, "out": 0.40},
+        "gpt-4.1-mini": {"in": 0.40, "out": 1.60},
+        "gpt-4.1": {"in": 2.00, "out": 8.00},
+
+        # LLama 4 models (Together AI)
+        "meta-llama/Llama-4-Scout-17B-16E-Instruct" : {"in": 0.18, "out": 0.59},
+        "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8" : {"in": 0.27, "out": 0.85},
+
     }
 
     catalog["llama-3.3-70b-specdec"] = catalog["meta-llama/Llama-3.3-70B-Instruct-Turbo"]
