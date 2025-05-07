@@ -26,7 +26,7 @@ class EnvironmentSonnetWriting(Environment):
             puzzle=state.puzzle,
             current_state=action,
             steps=state.steps + [action],
-            target=state.target
+            target=state.target,
             randomness=randomness
         )
 
