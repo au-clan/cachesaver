@@ -3,15 +3,15 @@
 # Source the base script
 source "$(dirname "$0")/game24_base.sh"
 
-# OpenAI specific parameters
+# vLLM specific parameters
 PROVIDER="openai"
-BASE_URL=""  # Empty for default OpenAI endpoint
+BASE_URL="http://localhost:8000/v1"
 
 # Models to test
 MODELS=(
-    "gpt-4o-mini"
-    "gpt-4o"
-    "gpt-3.5-turbo"
+    "meta-llama/Llama-3.1-8B-Instruct"
+    "unsloth/Llama-4-Scout-17B-16E-Instruct"
+    "unsloth/Llama-4-Maverick-17B-128E-Instruct-FP8"
 )
 
 # Run all tests for all models
