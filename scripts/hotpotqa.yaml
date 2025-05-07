@@ -12,3 +12,9 @@ tot:
   num_selections: 3
   num_steps: 5
   num_evaluations: 3
+
+got:
+  num_selections: 3
+  num_steps: 5
+  num_evaluations: 3
+  num_best: 2

@@ -4,3 +4,7 @@ zzz*
 *.pyc
 local
 .DS_Store
+.venv
+.env
+secret.py
+__pycache__

@@ -1,7 +1,9 @@
+import time
+from abc import ABC
 from ..typedefs import Model, SingleRequestModel, DecodingParameters, Request
-from typing import List
+from typing import List, Union
 
-class API(SingleRequestModel):
+class API(ABC):
     """
     API class for the cachesaver API
     """
@@ -16,8 +18,9 @@ class API(SingleRequestModel):
             "duplicator": {"in": 0, "out": 0},
             "cacher_duplicator": {"in": 0, "out": 0},
         }
+        self.latencies = []
     
-    async def request(self, prompt: str, n: int, request_id: str, namespace: str, params: DecodingParameters) -> List[str]:
+    async def request(self, prompt: Union[str, List[str]], n: int, request_id: str, namespace: str, params: DecodingParameters) -> List[str]:
         """
         Send a request to the pipeline
         """
@@ -34,7 +37,11 @@ class API(SingleRequestModel):
             logprobs=params.logprobs
         )
 
+        start = time.perf_counter()
         response = await self.pipeline.request(request)
+        end = time.perf_counter()
+
+        self.latencies.append(end - start)
 
         self.calls = {
             "total": self.calls["total"] + len(response.data),

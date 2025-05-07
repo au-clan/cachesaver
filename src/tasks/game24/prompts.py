@@ -39,6 +39,41 @@ Input: {input}
 Possible next steps:
 '''
 
+aggregate = '''
+Please select {n_select_sample} step from the proposed step list, which you believe can reach 24. Do not explain, just list the selected steps as well as all the remaining numbers and nothing else. See the examples for how you are expected to respond.
+ 
+Example: 2 8 8 14
+Proposed next steps:
+(1) 8 / 2 = 4 (left: 4 8 14)
+(2) 14 + 2 = 16 (left: 8 8 16)
+Best Next Step:
+(1) 8 / 2 = 4 (left: 4 8 14)
+
+Example: 4 8 8
+Proposed next steps:
+(1) 8 * 8 = 64 (left: 4 64)
+(2) 4 * 8 = 32 (left: 8 32)
+Best Next Step:
+(2) 4 * 8 = 32 (left: 8 32)
+
+Example: 4 8 8
+Proposed next steps:
+(1) 4 * 8 = 32 (left: 8 32)
+(2) 8 * 8 = 64 (left: 4 64)
+(3) 4 - 8 = -4 (left: -4 8)
+(4) 8 - 8 = 0 (left: 0 4)
+(5) 8 / 4 = 2 (left: 2 8)
+Best Next Step Set:
+(1) 4 * 8 = 32 (left: 8 32)
+(2) 8 * 8 = 64 (left: 4 64)
+(5) 8 / 4 = 2 (left: 2 8)
+
+Input: {state}
+Proposed next steps:
+{proposal}
+Best Next Step:
+'''
+
 cot = '''Use numbers and basic arithmetic operations (+ - * /) to obtain 24. Return only the complete answer.
 
 Example: 4 4 6 8
@@ -159,3 +194,29 @@ impossible
 Input: {input}
 Answer: {answer}
 Judge:'''
+
+# React prompt for Game24
+react = '''Use numbers and basic arithmetic operations (+ - * /) to obtain 24. Each step, you are only allowed to choose two of the remaining numbers to obtain a new number. Think step by step and plan your moves carefully.
+
+Example: 2 8 8 14
+Thought: I need to get to 24. Let me analyze the numbers and plan my moves.
+Action: 14 + 2 = 16 (left: 8 8 16)
+Thought: Now I have 8, 8, and 16. I can multiply 8 and 8 to get 64, but that's too big. Let me try another approach.
+Action: 8 * 8 = 64 (left: 16 64)
+Thought: 64 is too big. Let me try a different combination.
+Action: 16 - 8 = 8 (left: 8 8)
+Thought: Now I have two 8s. I can multiply them to get 64, but that's too big. Let me try another approach.
+Action: 8 + 8 = 16 (left: 16)
+Thought: I'm stuck. Let me try a different initial move.
+Action: 8 / 2 = 4 (left: 4 8 14)
+Thought: This looks promising. Now I have 4, 8, and 14.
+Action: 14 - 4 = 10 (left: 8 10)
+Thought: Now I have 8 and 10. I can multiply them to get 80, but that's too big. Let me try another approach.
+Action: 10 - 8 = 2 (left: 2)
+Thought: I'm stuck again. Let me try one more initial move.
+Action: 2 * 8 = 16 (left: 8 14 16)
+Thought: Now I have 8, 14, and 16. I can add 8 and 16 to get 24!
+Action: 8 + 16 = 24 (left: 24)
+
+Input: {input}
+'''
