@@ -16,7 +16,7 @@ from src.utils import tokens2cost
 from src.algorithms import *
 from src.models import OnlineLLM, API
 from src.typedefs import DecodingParameters
-from src.tasks.game24 import EnvironmentGame24, BenchmarkGame24, AgentActGame24, AgentAggregateGame24, AgentEvaluateGame24, AgentBfsGame24
+from src.tasks.game24 import EnvironmentGame24, BenchmarkGame24, AgentActGame24, AgentAggregateGame24, AgentEvaluateGame24, AgentBfsGame24, AgentReactGame24
 
 cache = Cache(f"caches/game24")
 
@@ -117,6 +117,22 @@ async def run(args):
             num_best=config.got.num_best,
             num_evaluations=config.got.num_evaluations,
         )
+    elif args.method == "rap":
+        agents = AgentDictRAP(
+            step=AgentReactGame24,
+            evaluate=AgentEvaluateGame24,
+            step_params=params,
+            eval_params=params,
+        )
+        method = AlgorithmRAP(
+            model=api,
+            agents=agents,
+            env=EnvironmentGame24,
+            num_iterations=config.rap.num_iterations,
+            num_samples=config.rap.num_samples,
+            num_evaluations=config.rap.num_evaluations,
+            exploration_constant=config.rap.exploration_constant,
+        )
     else:
         raise NotImplementedError(f"Method {args.method} is not implemented yet.")
     
@@ -161,6 +177,7 @@ if __name__ == "__main__":
     parser.add_argument("--split", type=str, help="Split of the dataset", choices=["mini", "train", "validation", "test"], default="mini")
     parser.add_argument("--share_ns", action="store_true", help="Share namespace between puzzles")
     parser.add_argument("--method", type=str, help="Method to use", choices=["foa", "tot", "got"], default="foa")
+    parser.add_argument("--method", type=str, help="Method to use", choices=["foa", "tot", "rap"], default="foa")
     parser.add_argument("--conf_path", type=str, help="Path to corresponding config")
     parser.add_argument("--value_cache", action="store_true", help="Use value cache")
     args = parser.parse_args()

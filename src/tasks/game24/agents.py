@@ -140,7 +140,30 @@ class AgentEvaluateGame24(Agent):
         return value
 
 
-# Helper functions
+class AgentReactGame24(Agent):
+    """
+    Agent for React algorithm
+    """
+    @staticmethod
+    async def act(model: Model, state: StateGame24, n: int, namespace: str, request_id: str, params: DecodingParameters) -> List[str]:
+        if state.current_state == "24":
+            prompt = prompts.cot.format(input=state.puzzle) + "\nSteps:\n" + '\n'.join(state.steps) + "\nAnswer: "
+        else:
+            current_numbers = get_current_numbers(state)
+            prompt = prompts.react.format(input=current_numbers)
+
+        responses = await model.request(
+            prompt=prompt,
+            n=n,
+            request_id=request_id,
+            namespace=namespace,
+            params=params
+        )
+
+        proposals = [r.strip() for r in responses]
+        return proposals
+
+
 def get_current_numbers(state: StateGame24) -> str:
     """
     Returns the current numbers in the state.
