@@ -1,8 +1,6 @@
 import random
 from typing import Tuple, Set, Dict, Any
 
-from src.typedefs import State
-
 from .state import StateSonnetWriting
 from ...typedefs import Environment, MAX_SEED
 
@@ -26,7 +24,7 @@ class EnvironmentSonnetWriting(Environment):
             puzzle=state.puzzle,
             current_state=action,
             steps=state.steps + [action],
-            target=state.target
+            target=state.target,
             randomness=randomness
         )
 
@@ -50,10 +48,10 @@ class EnvironmentSonnetWriting(Environment):
         Evaluates the current state.
         """
         current_state = state.current_state
-        rhyme_scheme = state.target.split(", ")[0]
+        target = state.target
 
         try:
-            errors = sonnet_errors(current_state, rhyme_scheme)
+            errors = sonnet_errors(current_state, target)
             if not errors:
                 return True, 1.0
             return False, 0.0
