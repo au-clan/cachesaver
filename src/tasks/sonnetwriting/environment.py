@@ -29,6 +29,7 @@ class EnvironmentSonnetWriting(Environment):
             target=state.target,
             randomness=randomness
         )
+        return state
 
     @staticmethod
     def is_valid(state: StateSonnetWriting, action: str) -> bool:
