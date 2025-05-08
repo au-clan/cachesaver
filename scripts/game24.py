@@ -204,7 +204,7 @@ if __name__ == "__main__":
                         choices=["mini", "train", "validation", "test", "single"], default="mini")
     parser.add_argument("--share_ns", action="store_true", help="Share namespace between puzzles")
     parser.add_argument("--method", type=str, help="Method to use", choices=["foa", "tot", "rafa", "got"],
-                        default="rafa")
+                        default="tot")
     parser.add_argument("--conf_path", type=str, help="Path to corresponding config")
     parser.add_argument("--value_cache", action="store_true", help="Use value cache")
     args = parser.parse_args()

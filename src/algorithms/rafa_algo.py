@@ -105,7 +105,7 @@ class AlgorithmRAFA(Algorithm):
                 ""]  # current output candidates
             infos = []
             # for step in range(4 - len(self_history)): todo this doesnt make any sense as there are only 3 steps in total
-            for step in range(3 - len(self_history)):
+            for step in range(4 - len(self_history)):
                 # get proposals (plan suggestions/generate)
                 coroutines = []
                 for output_candidate in current_output_candidates:

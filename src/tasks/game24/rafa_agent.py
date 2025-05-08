@@ -35,36 +35,15 @@ class AgentRafaGame24_eval(Agent):
         if idx == 1:
             original_nums = [float(num) for num in last_step.split(" ")]
         else:
-            original_nums = [float(num) for num in last_step.split('left:')[-1].replace(",", "").strip("()").split() if
-                        num != '']
-
-        # formula output: ['0', '+', '4', '=', '4']
-        # formula input: '0 + 4 = 4 (left: 4, 6)'
+            original_nums = [float(num) for num in last_step.split('left:')[-1].strip("()").split(" ") if
+                             num != '']
         formula = [op for op in cur_step.split('left:')[0].strip("()").split(" ") if op != '']
-        # try:
-        #     new_nums = [float(num) for num in cur_step.split('left:')[-1].strip("()").split(" ") if num != '']
+        new_nums = [float(num) for num in cur_step.split('left:')[-1].strip("()").split(" ") if num != '']
 
-        # new nums output: [2.0, 4.0, 6.0]
-        # new nums input: '1 + 1 = 2 (left: 2 4 6)'
-        #uncommented method doesnt support last step with no left in it
-        # new_nums = [float(num) for num in cur_step.split('left:')[-1].replace(",", "").strip("()").split() if
-        #                 num != '']
-
-        if 'left:' in cur_step:
-            left_part = cur_step.split('left:')[-1].strip("()").strip()
-            new_nums = (
-                [float(num) for num in left_part.replace(",", "").split() if num != '']
-                if left_part else ''
-            )
-        else:
-            new_nums = ''
-        # except ValueError:
-        #     print("The formula is invalid.")
-        # new_nums = [float(num) for num in cur_step.split('left:')[-1].strip("()").split(" ") if num != '']
 
 
         try:
-            # print(original_nums, new_nums, formula)
+            print(original_nums, new_nums, formula)
             original_nums.remove(float(eval(formula[0])))
             original_nums.remove(float(eval(formula[2])))
             for num in original_nums:
@@ -95,11 +74,11 @@ class AgentRafaGame24_eval(Agent):
 
     @staticmethod
     def check_twentyfour(cur_step):
-        cards = [float(num) for num in cur_step.split('left:')[-1].replace(",", "").strip("()").split() if
-                        num != '']
+        # cards = [float(num) for num in cur_step.split('left:')[-1].replace(",", "").strip("()").split() if
+        #                 num != '']
 
         # cards = [float(num) for num in cur_step.split('left:')[-1].strip("()").split(" ") if num != '']
-
+        cards = [float(num) for num in cur_step.split('left:')[-1].strip("()").split(" ") if num != '']
         try:
             for nums in itertools.permutations(cards):  # 四个数
                 for ops in itertools.product('+-*/', repeat=len(cards) - 1):  # 三个运算符（可重复！）
@@ -414,62 +393,14 @@ class AgentRAFA_plan(Agent):
                                          logprobs=history_messages.logprobs,
                                      )
                                      )
-        result_list = []
-        for block in result:
-            result_list.extend(block.strip().split('\n'))
-
-        result_list_finish = [line.strip() for line in result_list if line.strip() and re.search(r'[+\-*/=\d]', line)]
-        proposals = result_list_finish[:min(len(result_list_finish), n_propose_sample)]
-        # pattern = r'[-\d]+\.\s+([^\n]+?\(left: [^\n]+?\))|-\s+([^\n]+?\(left: [^\n]+?\))'
-        pattern = re.compile(r'^([-\d]+\.\s+[^\n]*?\(left: [^\n]+?\)|-\s+[^\n]*?\(left: [^\n]+?\))$')
-        cleaned_data = [
-            line for line in result_list_finish
-            if line.strip() != 'Possible next steps:' # and not pattern.match(line.strip())
-        ]
+        proposal_list= [x.split('\n') for x in result]
+        proposals = []
+        for p in proposal_list:
+            proposals.extend(p)
+        proposals = proposals[:min(len(proposals), n_propose_sample)]
         return [candidate + _ + '\n' for _ in proposals]
 
-        pattern = r'[-\d]+\.\s+([^\n]+?\(left: [^\n]+?\))|-\s+([^\n]+?\(left: [^\n]+?\))'
-        all_matches = []
 
-        ####testing:
-        # all_matches1 = []
-        # pattern1 = r'(?:[-\d]+\.\s+|\-\s+)?([^\n=]+=[^\n]+)'
-        # for text in result:
-        #     matches = re.findall(pattern1, text)
-        #     for m in matches:
-        #         cleaned = m.strip()
-        #         all_matches1.append(cleaned)
-        #
-        # ####
-
-        for text in result:
-            matches = re.findall(pattern, text)
-            cleaned = [m[0] if m[0] else m[1] for m in matches]
-            all_matches.extend(cleaned)
-
-        proposals = all_matches[:min(len(all_matches), n_propose_sample)]
-        if len(all_matches)==0:
-            all_matches1 = []
-            all_matches2 = []
-            all_matches3 = []
-            pattern1 = r'(?:[-\d]+\.\s+|\-\s+)?([^\n=]+=[^\n]+)'
-            pattern2 = r'(?:[-\d]+\.\s+|\-\s+|\*\*)*([0-9\s\+\-\*/]+=\s*-?\d+(?:\.\d+)?)'
-            pattern3 = r'\b\d+(?:\.\d+)?\s*[\+\-\*/]\s*\d+(?:\.\d+)?\s*=\s*-?\d+(?:\.\d+)?\b'
-            for text in result:
-                matches = re.findall(pattern1, text)
-                matches2 = re.findall(pattern2, text)
-                matches3 = re.findall(pattern3, text)
-                cleaned = [m.strip() for m in matches]
-                cleaned1 = [m.strip() for m in matches2 if m.strip()]
-                cleaned2 = [m.strip() for m in matches3 if m.strip()]
-                all_matches1.extend(cleaned)
-                all_matches2.extend(cleaned1)
-                all_matches3.extend(cleaned2)
-            proposals = all_matches3[:min(len(all_matches3), n_propose_sample)]
-            return [candidate + _ + '\n' for _ in proposals]
-            print("no suggestions found, maybe look at the number of steps in algo solver") #todo maybe find a better way to solve this issue
-            return [candidate + current_numbers+'\n']
-        return [candidate + _ + '\n' for _ in proposals]
 
 
 class AgentRAFA_plan_evaluate(Agent):
