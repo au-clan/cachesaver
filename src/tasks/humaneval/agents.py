@@ -79,8 +79,7 @@ class AgentAggregateHumanEval(Agent):
         user_prompt = prompts.aggregate_prompt.format(
             prompt=state.current_state, k=k, implementations="\n".join(actions)
         )
-        print("AGGREGATE")
-        print(state.current_state)
+    
         # Generate the response
 
         responses = await model.request(
