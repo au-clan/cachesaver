@@ -55,7 +55,7 @@ class EnvironmentSonnetWriting(Environment):
             errors = sonnet_errors(current_state, target)
             if not errors:
                 return True, 1.0
-            return False, 0.0
+            return True, 0.0
         except Exception as e:
             return False, 0.0
 

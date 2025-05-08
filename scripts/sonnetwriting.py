@@ -16,9 +16,9 @@ from src.utils import tokens2cost
 from src.algorithms import *
 from src.models import OnlineLLM, API
 from src.typedefs import DecodingParameters
-from src.tasks.humaneval import EnvironmentHumanEval, BenchmarkHumanEval, AgentActHumanEval, AgentAggregateHumanEval, AgentEvaluateHumanEval
+from src.tasks.sonnetwriting import EnvironmentSonnetWriting, BenchmarkSonnetWriting, AgentActSonnetWriting, AgentAggregateSonnetWriting, AgentEvaluateSonnetWriting
 
-cache = Cache(f"caches/humaneval")
+cache = Cache(f"caches/sonnetwriting")
 
 async def run(args):
     if args.provider == "openai":
@@ -59,9 +59,9 @@ async def run(args):
 
     if args.method == "got":
         agents = AgentDictGOT(
-            step=AgentActHumanEval,
-            aggregate=AgentAggregateHumanEval,
-            evaluate=AgentEvaluateHumanEval,
+            step=AgentActSonnetWriting,
+            aggregate=AgentAggregateSonnetWriting,
+            evaluate=AgentEvaluateSonnetWriting,
             step_params=params,
             aggregate_params=params,
             eval_params=params,
@@ -69,7 +69,7 @@ async def run(args):
         method = AlgorithmGOT(
             model=api,
             agents=agents,
-            env=EnvironmentHumanEval,
+            env=EnvironmentSonnetWriting,
             num_selections=config.got.num_selections,
             num_steps=config.got.num_steps,
             num_generate=config.got.num_generate,
@@ -79,7 +79,7 @@ async def run(args):
     else:
         raise NotImplementedError(f"Method {args.method} is not implemented yet.")
     
-    benchmark = BenchmarkHumanEval(path=args.dataset_path, split=args.split)
+    benchmark = BenchmarkSonnetWriting(path=args.dataset_path, split=args.split)
     results = await method.benchmark(
         benchmark=benchmark,
         share_ns=args.share_ns,
@@ -92,7 +92,7 @@ async def run(args):
         for r in result:
             logger.info(f"\t{r}")
     for result in results:
-        evaluations = sorted([EnvironmentHumanEval.evaluate(state) for state in result], key=lambda x: x[1])
+        evaluations = sorted([EnvironmentSonnetWriting.evaluate(state) for state in result], key=lambda x: x[1])
         finished.append(evaluations[-1][0])
         correct.append(evaluations[-1][1])
     acc_finished = sum(finished) / len(finished)
@@ -106,9 +106,10 @@ async def run(args):
         print(f"\t{key}: {value['total']:.3f}$")
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Solve humaneval using LLMs.")
+    parser = argparse.ArgumentParser(description="Solve Sonnet Writing using LLMs.")
     parser.add_argument("--provider", type=str, help="LLM provider", choices=["openai", "together", "local"], default="openai")
     parser.add_argument("--model", type=str, help="LLM model", default="gpt-4o-mini")
+    parser.add_argument("--base_url", type=str, help="Base URL for the API", default=None)
     parser.add_argument("--batch_size", type=int, help="CacheSaver's batch size", default=300)
     parser.add_argument("--timeout", type=float, help="CacheSaver's timeout", default=0.05)
     parser.add_argument("--temperature", type=float, help="Temperature for the model", default=1.0)
@@ -124,9 +125,9 @@ if __name__ == "__main__":
     parser.add_argument("--value_cache", action="store_true", help="Use value cache")
     args = parser.parse_args()
 
-    if not os.path.exists("logs/humaneval"):
-        os.makedirs("logs/humaneval")
+    if not os.path.exists("logs/sonnetwriting"):
+        os.makedirs("logs/sonnetwriting")
     
-    logging.basicConfig(level=logging.INFO, filename=f"logs/humaneval/{args.method}.log", filemode="w")
+    logging.basicConfig(level=logging.INFO, filename=f"logs/sonnetwriting/{args.method}.log", filemode="w")
 
     asyncio.run(run(args))

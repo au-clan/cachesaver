@@ -103,7 +103,7 @@ def evaluate_code_python(code: str, entry_point: str, test: str) -> Tuple[bool, 
     if result[0] == "passed":
         return True, 1.0
     else:
-        return False, 0.0
+        return True, 0.0
     
 def evaluate_code_rust(code: str, entry_point: str, test: str) -> Tuple[bool, float]:
     """
@@ -130,7 +130,7 @@ def evaluate_code_rust(code: str, entry_point: str, test: str) -> Tuple[bool, fl
     errs = grab_compile_errs(res[0])
     if len(errs) > 0:
         cleanup()
-        return False, 0.0
+        return True, 0.0
 
     res = run_with_timeout("cargo run", tmp_dir, timeout=TIMEOUT)
     cleanup()
@@ -140,9 +140,9 @@ def evaluate_code_rust(code: str, entry_point: str, test: str) -> Tuple[bool, fl
     else:
         errs = grab_runtime_errs(res[0] + "\n" + res[1])
         if len(errs) > 0:
-            return False, 0.0
+            return True, 0.0
         
-        return len(errs) == 0, 1.0
+        return True, 1.0
     
 
 
