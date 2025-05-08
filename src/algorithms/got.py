@@ -83,7 +83,7 @@ class AlgorithmGOT(Algorithm):
             for state, actions in zip(states, actions):
                 for action in actions:
                     proposed_states.append(self.env.step(state, action))
-    
+
             # Evaluate all proposals
             value_coroutines = [
                 self.eval_agent.act(

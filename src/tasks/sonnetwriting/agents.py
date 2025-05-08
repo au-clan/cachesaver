@@ -1,5 +1,4 @@
 from typing import List
-import re
 
 from . import prompts as prompts
 from .state import StateSonnetWriting
@@ -57,16 +56,21 @@ class AgentEvaluateSonnetWriting(Agent):
     Returns the evaluations of states for the Sonnet Writing task.
     """
     @staticmethod
-    async def act(model: Model, state: StateSonnetWriting, n: int, namespace: str, request_id: str, params: DecodingParameters) -> float:
+    async def act(model: Model, state: StateSonnetWriting, n: int, namespace: str, request_id: str, params: DecodingParameters, cache: dict = None) -> float:
+        
+        # Check if the state is already in the cache
+        if cache is not None and state.current_state in cache:
+            return cache[state.current_state]
+        
         # Format prompt
         seperator ='---END-OF-SONNET---'
-        examples = '(Example)\n' + '\n\n(Example)\n'.join(prompts.examples_evaluate[[0, 2, 3]])
+        examples = '(Example)\n' + '\n\n(Example)\n'.join(prompts.examples_evaluate[1:])
         rhyme_scheme, words = state.target.split(', ')
         sonnet = state.current_state + f'\n {seperator}'
         prompt = prompts.evaluate.format(rhyme_scheme=rhyme_scheme, words=words, examples=examples, sonnet=sonnet)
 
         # Generate response
-        response = await model.request(
+        responses = await model.request(
             prompt=prompt,
             n=n,
             request_id=request_id,
@@ -75,7 +79,8 @@ class AgentEvaluateSonnetWriting(Agent):
         )
 
         # Parse response
-        evaluation = response[0].lower().replace("evaluation: ", "")
-        return float(evaluation.strip())
+        evaluations = [r.lower().replace("evaluation: ", "").strip() for r in responses]
+        value = sum([int(e) for e in evaluations]) / n
+        return value
 
 
