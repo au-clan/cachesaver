@@ -27,6 +27,7 @@ class AgentActGame24(Agent):
 
         # Parse the response
         proposals = [r.strip() for r in responses]
+        proposals = [r.split(")")[0] + ")" for r in proposals]
         return proposals
     
 class AgentAggregateGame24(Agent):
@@ -84,6 +85,8 @@ class AgentBfsGame24(Agent):
             namespace=namespace,
             params=params
         )
+        for r in response:
+            print(r)
 
         # Parse the response
         if state.current_state != "24":
@@ -119,11 +122,17 @@ class AgentEvaluateGame24(Agent):
             namespace=namespace,
             params=params
         )
+        for r in responses:
+            print(r)
+            print("===")
 
         # Parse the response
-        codes = [r.split('\n')[-1].lower() for r in responses]
-        code_map = {'impossible': 0.001, 'likely': 1, 'sure': 20}
-        value = sum(value * codes.count(code) for code, value in code_map.items())
+        codes = [r.split('\n')[-1].lower().strip() for r in responses]
+        code_map = {r'impossible': 0.001, r'likely': 1, r'sure': 20}
+        value = 0
+        for pattern, weight in code_map.items():
+            matches = [code for code in codes if re.search(pattern, code)]
+            value += weight * len(matches)
 
         # Cache the value
         if cache is not None:
@@ -131,7 +140,30 @@ class AgentEvaluateGame24(Agent):
         return value
 
 
-# Helper functions
+class AgentReactGame24(Agent):
+    """
+    Agent for React algorithm
+    """
+    @staticmethod
+    async def act(model: Model, state: StateGame24, n: int, namespace: str, request_id: str, params: DecodingParameters) -> List[str]:
+        if state.current_state == "24":
+            prompt = prompts.cot.format(input=state.puzzle) + "\nSteps:\n" + '\n'.join(state.steps) + "\nAnswer: "
+        else:
+            current_numbers = get_current_numbers(state)
+            prompt = prompts.react.format(input=current_numbers)
+
+        responses = await model.request(
+            prompt=prompt,
+            n=n,
+            request_id=request_id,
+            namespace=namespace,
+            params=params
+        )
+
+        proposals = [r.strip() for r in responses]
+        return proposals
+
+
 def get_current_numbers(state: StateGame24) -> str:
     """
     Returns the current numbers in the state.
