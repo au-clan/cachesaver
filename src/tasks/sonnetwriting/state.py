@@ -32,7 +32,7 @@ class StateSonnetWriting(State):
         Returns a new instance of StateHotpotQA with an optional new randomness value.
         """
         return StateSonnetWriting(
-            input=self.puzzle,
+            puzzle=self.puzzle,
             current_state=self.current_state,
             steps=self.steps,
             target=self.target,
