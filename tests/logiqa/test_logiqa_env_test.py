@@ -5,16 +5,33 @@ import pytest
 
 class TestLogiQAEnvironment:
     env = EnvironmentLogiQA()
-    benchmark = BenchmarkLogiQA(path="datasets/dataset_logiqa.csv.gz", split="single")
+    benchmark = BenchmarkLogiQA(path="datasets/dataset_logiqa.csv.gz", split="mini")
 
     def test_environment_step(self):
-        _, state = self.benchmark[0]
-        
-        action = state.option_a
-        new_state = self.env.step(state, action)
+        for _, state in self.benchmark:
+            action = state.option_a
+            new_state = self.env.step(state, action)
 
-        assert new_state.current_state != state.current_state
-        assert new_state.current_state == 'a'
+            assert new_state.current_state != state.current_state
+            assert new_state.current_state == 'a'
+
+            action = state.option_b
+            new_state = self.env.step(state, action)
+
+            assert new_state.current_state != state.current_state
+            assert new_state.current_state == 'b'
+
+            action = state.option_c
+            new_state = self.env.step(state, action)
+
+            assert new_state.current_state != state.current_state
+            assert new_state.current_state == 'c'
+
+            action = state.option_d
+            new_state = self.env.step(state, action)
+
+            assert new_state.current_state != state.current_state
+            assert new_state.current_state == 'd'
 
     def test_environment_step_int_given(self):
         _, state = self.benchmark[0]
@@ -37,11 +54,11 @@ class TestLogiQAEnvironment:
 
         action = state.correct_option
         new_state = self.env.step(state, action)
+        print(action)
+        finished, correct = self.env.evaluate(new_state)
 
-        correct, points = self.env.evaluate(new_state)
-
-        assert correct
-        assert points == 1.0
+        assert finished
+        assert correct == 1.0
 
     def test_environment_evaluate_incorrect(self):
         _, state = self.benchmark[0]
@@ -49,7 +66,15 @@ class TestLogiQAEnvironment:
         action = state.option_d
         new_state = self.env.step(state, action)
 
-        solved, points = self.env.evaluate(new_state)
+        finished, points = self.env.evaluate(new_state)
 
-        assert not solved
+        assert finished
         assert points == 0.0
+
+    def test_not_final(self):
+        _, state = self.benchmark[0]
+
+        finished, correct = self.env.evaluate(state)
+
+        assert not finished
+        assert correct == 0.0

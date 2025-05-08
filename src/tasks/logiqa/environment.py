@@ -1,3 +1,4 @@
+from gc import is_finalized
 import random
 from typing import Tuple
 
@@ -11,13 +12,7 @@ class EnvironmentLogiQA(Environment):
         """
         Takes a step in the environment based on the given action.
         """
-        valid_options = "abcd"
-        action_taken = action.strip().lower()
-        if action_taken not in valid_options:
-            try:
-                action_taken = valid_options[int(action_taken)-1]
-            except: # If the whole option from state is passed as last option.
-                action_taken = action_taken[0].strip().lower()
+        action_taken = get_answer(action)
 
         random.seed(state.randomness)
         randomness = random.randint(0, MAX_SEED)
@@ -49,16 +44,33 @@ class EnvironmentLogiQA(Environment):
         """
         Checks if the current state is a final state.
         """
-        raise NotImplementedError("is_final is not implemented yet.")
+        current_state = get_answer(state.current_state)
+
+        return current_state in "abcd"
     
     @staticmethod
     def evaluate(state: StateLogiQA) -> Tuple[bool | float]:
         """
         Evaluates the current state.
         """
-        answer = state.current_state.strip().lower()
-        correct_answer = state.correct_option.strip().lower()
-        if answer == correct_answer:
-            return True, 1.0
+        if EnvironmentLogiQA().is_final(state):
+            answer = state.current_state.strip().lower()
+            correct_answer = state.correct_option.strip().lower()
+            if answer == correct_answer:
+                return True, 1.0
+            else:
+                return True, 0.0
         else:
             return False, 0.0
+
+
+# ---Helper functions---
+def get_answer(text) -> str:
+    valid_options = "abcd"
+    action_taken = text.strip().lower()
+    if action_taken not in valid_options and len(action_taken) == 1:
+        action_taken = valid_options[int(action_taken)-1]
+    elif action_taken not in valid_options:
+        action_taken = action_taken.replace(".", " ").split(" ")[0].strip()
+
+    return action_taken
