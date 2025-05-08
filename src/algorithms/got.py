@@ -19,6 +19,7 @@ class AlgorithmGOT(Algorithm):
                  env: Environment, 
                  num_selections: int, 
                  num_steps: int,
+                 num_generate: int,
                  num_best: int,
                  num_evaluations: int,
                  ):
@@ -34,6 +35,7 @@ class AlgorithmGOT(Algorithm):
 
         self.num_selections = num_selections
         self.num_steps = num_steps
+        self.num_generate = num_generate
         self.num_best = num_best
         self.num_evaluations = num_evaluations
 
@@ -49,11 +51,12 @@ class AlgorithmGOT(Algorithm):
                 self.step_agent.act(
                     model=self.model,
                     state=state,
+                    n=self.num_generate,
                     namespace=namespace,
-                    request_id=f"idx{idx}-step{step}-{hash(state)}",
+                    request_id=f"idx{idx}-step{step}-{hash(state)}-agent{i}",
                     params=self.step_params,
                 )
-                for state in states
+                for i, state in enumerate(states)
             ]
             actions = await asyncio.gather(*action_coroutines)
 
@@ -65,10 +68,10 @@ class AlgorithmGOT(Algorithm):
                     actions=action,
                     k=self.num_selections,
                     namespace=namespace,
-                    request_id=f"idx{idx}-aggregate{step}-{hash(state)}",
+                    request_id=f"idx{idx}-aggregate{step}-{hash(state)}-agent{i}",
                     params=self.aggregate_params,
                 )
-                for state, action in zip(states, actions)
+                for i, (state, action) in enumerate(zip(states, actions))
             ]
 
             actions = await asyncio.gather(*aggregate_coroutines)
@@ -86,11 +89,11 @@ class AlgorithmGOT(Algorithm):
                     state=state,
                     n=self.num_evaluations,
                     namespace=namespace,
-                    request_id=f"idx{idx}-evaluation{step}-{hash(state)}",
+                    request_id=f"idx{idx}-evaluation{step}-{hash(state)}-agent{i}",
                     params=self.eval_params,
                     cache=value_cache
                 )
-                for state in proposed_states
+                for i, state in enumerate(proposed_states)
             ]
             values = await asyncio.gather(*value_coroutines)
 
