@@ -35,7 +35,6 @@ class AgentActGame24(Agent):
                 namespace=namespace,
                 params=params
             )
-            
             # Parse the response
             if state.current_state != "24":
                 response = [response[0].rpartition(")")[0] + ")"]
@@ -126,7 +125,7 @@ class AgentEvaluateGame24(Agent):
             return cache[state.current_state]
 
         # Format the prompt
-        if "left" not in state.steps[-1]:
+        if state.steps and "left" not in state.steps[-1]:
             formula = get_formula(state)
             prompt = prompts.evaluate_answer.format(input=state.puzzle, answer=formula)
         else:
@@ -164,5 +163,9 @@ def get_current_numbers(state: StateGame24) -> str:
     return last_line.split('left: ')[-1].split(')')[0]
 
 def get_formula(state: StateGame24) -> str:
-    formula = state.steps[-1].lower().replace("answer: ", "")
-    return formula
+    if state.steps:
+        formula = state.steps[-1].lower().replace("answer: ", "")
+        return formula
+    else:
+        # Should do some error handling here but for the moment we'll take it as it is
+        return ""

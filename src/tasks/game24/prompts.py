@@ -17,7 +17,7 @@ Input: {input}
 Possible next step:
 '''
 
-bfs = '''Use numbers and basic arithmetic operations (+ - * /). Each step, you are only allowed to choose two of the remaining numbers to obtain a new number. Do not explain simply list possible next steps as well as all the remaining numbers and nothing else.
+bfs = '''Use numbers and basic arithmetic operations (+ - * /). Each step, you are only allowed to choose two of the remaining numbers to obtain a new number.  Follow the format of the following examples. Do not explain simply list possible next steps as well as all the remaining numbers and nothing else.
 
 Example: 2 8 8 14
 Possible next steps:
@@ -40,7 +40,7 @@ Possible next steps:
 '''
 
 aggregate = '''
-Please select {n_select_sample} step from the proposed step list, which you believe can reach 24. Do not explain, just list the selected steps as well as all the remaining numbers and nothing else. See the examples for how you are expected to respond.
+Please select {n_select_sample} step from the proposed step list, which you believe can reach 24. Do not explain, just list the selected steps as well as all the remaini§ng numbers and nothing else. See the examples for how you are expected to respond.
  
 Example: 2 8 8 14
 Proposed next steps:
