@@ -1,7 +1,22 @@
+import re
 import random
 from typing import List
 import numpy as np 
-from collections import namedtuple
+
+def clean_log(file_path: str):
+
+    # Define the pattern to match the lines you want to remove
+    pattern = re.compile(r'^INFO:httpx:HTTP Request: POST https://api\.openai\.com/v1/chat/completions "HTTP/1\.1 200 OK"$')
+
+    # Read the file and filter out matching lines
+    with open(file_path, 'r') as file:
+        lines = file.readlines()
+
+    # Write back only the lines that do not match the pattern
+    with open(file_path, 'w') as file:
+        for line in lines:
+            if not pattern.match(line.strip()):
+                file.write(line)
 
 def tokens2cost(tokens: dict, model_name: str) -> dict:
     catalog = {
