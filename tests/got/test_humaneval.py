@@ -10,7 +10,7 @@ from src.models import API
 from src.typedefs import DecodingParameters
 from src.tasks.humaneval import (
     EnvironmentHumanEval,
-    AgentGenerateHumanEval,
+    AgentActHumanEval,
     AgentAggregateHumanEval,
     AgentEvaluateHumanEval,
     StateHumanEval,
@@ -38,7 +38,7 @@ class TestGoTHumanEval:
     @pytest.mark.asyncio()
     async def test_aggregate_humaneval(self, offline_model) -> None:
         benchmark = BenchmarkHumanEval("datasets/humaneval-py-sorted.csv.gz", "mini")
-        generate = AgentGenerateHumanEval()
+        generate = AgentActHumanEval()
         aggregate = AgentAggregateHumanEval
         _, state = benchmark[0]
         states = [state.clone(randomness=1235)]
@@ -83,7 +83,7 @@ class TestGoTHumanEval:
 
         env = EnvironmentHumanEval()
         agents = AgentDictGOT(
-            step=AgentGenerateHumanEval,
+            step=AgentActHumanEval,
             aggregate=AgentAggregateHumanEval,
             evaluate=AgentEvaluateHumanEval,
             step_params=self.params,
@@ -127,7 +127,7 @@ class TestGoTHumanEval:
 
         env = EnvironmentHumanEval()
         agents = AgentDictGOT(
-            step=AgentGenerateHumanEval,
+            step=AgentActHumanEval,
             aggregate=AgentAggregateHumanEval,
             evaluate=AgentEvaluateHumanEval,
             step_params=self.params,
