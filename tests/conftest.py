@@ -191,7 +191,7 @@ class LazyMockOnlineLLMOpenAI(Model):
         return completions  
 
 @pytest.fixture(scope="function")
-def cache(self):
+def cache():
     """Provide a temporary cache for each test."""
     with tempfile.TemporaryDirectory() as tmpdir:
         with Cache(tmpdir) as cache:

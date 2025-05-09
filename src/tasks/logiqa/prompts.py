@@ -47,12 +47,12 @@ Answer: a
 
 Selected answers:
 Answer: a
-Answer: b
+Answer: a
 Answer: a
 
 (End of example)
 
-Remember, your task is to select exactly {k} possible answers, which you think is correct with respect to the question and paragraph. Do not add any explanation, comments, introduction or conclusion, you shall only return your selected answers.
+Remember, your task is to select exactly {k} possible answers, which you think is correct with respect to the question and paragraph. Do not add any explanation, comments, introduction, conclusion, or modification, you shall only return your selected answers.
 
 {paragraph}
 

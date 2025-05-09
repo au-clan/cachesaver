@@ -91,7 +91,7 @@ class AgentEvaluateLogiQA(Agent):
 
         # Format the prompt
         choices = '\n'.join(get_choices(state))
-        examples = "(Example)\n" + "\n\n(Example)\n".join([prompts.evaluate_examples[1:]])
+        examples = "(Example)\n" + "\n\n(Example)\n".join(prompts.evaluate_examples[1:])
         prompt = prompts.evaluate.format(examples=examples, paragraph=state.context, question=state.question, choices=choices, answer=state.current_state)
 
         # Format the request
