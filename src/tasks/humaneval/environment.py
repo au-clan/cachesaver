@@ -82,7 +82,7 @@ class EnvironmentHumanEval(Environment):
 def parse_action(string) -> str | None:
     pattern = r'```[^`]+```'
     match = re.match(pattern, string)
-    return "\n".join(match.group(0).split('\n')[1:-1]) if match else None
+    return "\n".join(match.group(0).split('\n')[1:-1]) if match else string
 
 def evaluate_code_python(code: str, entry_point: str, test: str) -> Tuple[bool, float]: # NOTE: Only works on a UNIX system as we are using signal. Need to change this to use a different method for Windows or general case if needed.
     """
@@ -103,7 +103,7 @@ def evaluate_code_python(code: str, entry_point: str, test: str) -> Tuple[bool, 
     if result[0] == "passed":
         return True, 1.0
     else:
-        return False, 0.0
+        return True, 0.0
     
 def evaluate_code_rust(code: str, entry_point: str, test: str) -> Tuple[bool, float]:
     """
@@ -130,7 +130,7 @@ def evaluate_code_rust(code: str, entry_point: str, test: str) -> Tuple[bool, fl
     errs = grab_compile_errs(res[0])
     if len(errs) > 0:
         cleanup()
-        return False, 0.0
+        return True, 0.0
 
     res = run_with_timeout("cargo run", tmp_dir, timeout=TIMEOUT)
     cleanup()
@@ -140,9 +140,9 @@ def evaluate_code_rust(code: str, entry_point: str, test: str) -> Tuple[bool, fl
     else:
         errs = grab_runtime_errs(res[0] + "\n" + res[1])
         if len(errs) > 0:
-            return False, 0.0
+            return True, 0.0
         
-        return len(errs) == 0, 1.0
+        return True, 1.0
     
 
 
