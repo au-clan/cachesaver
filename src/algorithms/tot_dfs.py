@@ -37,7 +37,6 @@ class AlgorithmTOT_DFS(Algorithm):
         random.seed(randomness)
         states = [state.clone(randomness=random.randint(0, MAX_SEED))]
 
-        ## dfs specific
         output = []
         # Track the number of iterations and convergence status
         iteration_count = 0

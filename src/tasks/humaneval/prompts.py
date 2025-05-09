@@ -15,3 +15,30 @@ Implementations:
 {implementations}
 Chosen implementation:
 """
+
+evaluation_prompt = """You are a programming assistant, who is helping the user to evaluate a generated code. You will be given a single implementation of a function, and you should evaluate it based on the following criteria:
+
+1. **Correctness**: Does the implementation return the correct output for different inputs?
+2. **Efficiency**: Is the implementation efficient in terms of time and space complexity?
+3. **Readability**: Is the code readable and understandable? Is it easy to follow?
+4. **Style**: Does the implementation follow the style guide of the language (naming conventions, indentation, etc.)?
+5. **Testability**: Is the implementation testable? Can it be easily tested with unit tests?
+
+Evaluate the code on each criterion with a score from 1 to 10 (integers only, no fractions). Then give an overall score as the sum of all scores.
+
+Function signature and docstring:
+{prompt}
+
+Implementation:
+{implementation}
+
+Evaluation scores:
+- Correctness: <score>
+- Efficiency: <score>
+- Readability: <score>
+- Style: <score>
+- Testability: <score>
+
+Overall Score: <final score>
+
+Do not include any further thoughts or reasoning, just the evaluation scores and the final overall score."""
