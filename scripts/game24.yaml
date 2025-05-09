@@ -18,3 +18,9 @@ got:
   num_steps: 4
   num_evaluations: 3
   num_best: 2
+
+rap:
+  num_iterations: 50
+  num_samples: 5
+  num_evaluations: 3
+  exploration_constant: 1.0

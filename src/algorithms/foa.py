@@ -7,8 +7,8 @@ from ..utils import Resampler
 logger = logging.getLogger(__name__)
 
 class AgentDictFOA(TypedDict):
-    step: Agent
-    evaluate: Agent
+    step: Agent # ActAgent
+    evaluate: Agent # EvaluateAgent
     step_params: DecodingParameters
     eval_params: DecodingParameters
 

@@ -16,14 +16,18 @@ from src.utils import tokens2cost
 from src.algorithms import *
 from src.models import OnlineLLM, API
 from src.typedefs import DecodingParameters
-from src.tasks.game24 import EnvironmentGame24, BenchmarkGame24, AgentActGame24, AgentAggregateGame24, AgentEvaluateGame24, AgentBfsGame24
+from src.tasks.game24 import EnvironmentGame24, BenchmarkGame24, AgentActGame24, AgentAggregateGame24, AgentEvaluateGame24, AgentBfsGame24, AgentReactGame24
 
 cache = Cache(f"caches/game24")
 
 async def run(args):
     # LLM Provider
     if args.provider == "openai":
-        client = AsyncOpenAI()
+        if args.base_url and "localhost" in args.base_url:
+            # For local vLLM servers, use a dummy API key
+            client = AsyncOpenAI(base_url=args.base_url, api_key="dummy-key")
+        else:
+            client = AsyncOpenAI(base_url=args.base_url) if args.base_url else AsyncOpenAI()
     elif args.provider == "together":
         client = AsyncTogether()
     elif args.provider == "local":
@@ -117,6 +121,22 @@ async def run(args):
             num_best=config.got.num_best,
             num_evaluations=config.got.num_evaluations,
         )
+    elif args.method == "rap":
+        agents = AgentDictRAP(
+            step=AgentReactGame24,
+            evaluate=AgentEvaluateGame24,
+            step_params=params,
+            eval_params=params,
+        )
+        method = AlgorithmRAP(
+            model=api,
+            agents=agents,
+            env=EnvironmentGame24,
+            num_iterations=config.rap.num_iterations,
+            num_samples=config.rap.num_samples,
+            num_evaluations=config.rap.num_evaluations,
+            exploration_constant=config.rap.exploration_constant,
+        )
     else:
         raise NotImplementedError(f"Method {args.method} is not implemented yet.")
     
@@ -148,8 +168,9 @@ async def run(args):
     
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Solve Game 24 using LLMs.")
-    parser.add_argument("--provider", type=str, help="LLM provider", choices=["openai", "together", "local"], default="openai")
-    parser.add_argument("--model", type=str, help="LLM model", default="gpt-4o-mini")
+    parser.add_argument("--provider", type=str, help="LLM Provider", choices=["openai", "together", "local"], default="openai")
+    parser.add_argument("--model", type=str, help="LLM Model",  default="gpt-4o-mini")
+    parser.add_argument("--base_url", type=str, help="Base URL for the API", default=None)
     parser.add_argument("--batch_size", type=int, help="CacheSaver's batch size", default=300)
     parser.add_argument("--timeout", type=float, help="CacheSaver's timeout", default=0.05)
     parser.add_argument("--temperature", type=float, help="Temperature for the model", default=1.0)
@@ -161,6 +182,7 @@ if __name__ == "__main__":
     parser.add_argument("--split", type=str, help="Split of the dataset", choices=["mini", "train", "validation", "test"], default="mini")
     parser.add_argument("--share_ns", action="store_true", help="Share namespace between puzzles")
     parser.add_argument("--method", type=str, help="Method to use", choices=["foa", "tot", "got"], default="foa")
+    parser.add_argument("--method", type=str, help="Method to use", choices=["foa", "tot", "rap"], default="foa")
     parser.add_argument("--conf_path", type=str, help="Path to corresponding config")
     parser.add_argument("--value_cache", action="store_true", help="Use value cache")
     args = parser.parse_args()

@@ -11,7 +11,7 @@ python scripts/hotpotqa.py\
     --split train\
     --share_ns \
     --method tot\
-    --conf_path scripts/game24.yaml\
+    --conf_path scripts/hotpotqa.yaml\
     --value_cache
 
 python scripts/hotpotqa.py\
