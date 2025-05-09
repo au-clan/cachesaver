@@ -30,8 +30,9 @@ class AlgorithmTOT_DFS(Algorithm):
         self.num_steps = num_steps
         self.num_evaluations = num_evaluations
 
-    async def solve_dfs(self, idx:int, state: State, namespace: str,convergence_threshold : int =None,pruning_threshold : int = 0,confidence_threshold: int = 20, max_iterations :int = 10 ,convergence_count : int = 20, value_cache: dict = None):
+    async def solve_dfs(self, idx:int, state: State, namespace: str, convergence_threshold : int =0.6, pruning_threshold : int = 0.1, confidence_threshold: int = 20, max_iterations :int = 10 , convergence_count : int = 20, value_cache: dict = None):
 
+        ## cachesaver
         randomness = idx
         random.seed(randomness)
         states = [state.clone(randomness=random.randint(0, MAX_SEED))]
@@ -81,6 +82,7 @@ class AlgorithmTOT_DFS(Algorithm):
                 values = await asyncio.gather(*value_coroutines)
                 state_value_pairs = zip(state_proposals, values)
                 best_state, best_value = max(state_value_pairs, key=lambda x: x[1])
+                
                 # Store only the best thought and its evaluation value
                 output.append((best_state, best_value))
 

@@ -37,11 +37,13 @@ Remember, your task is to find the immediate next thought and action. Answer the
 Question: {question}
 {current_state}"""
 
-bfs = """We're solving a question answering task with sequential Action steps. Your task is to propose possible next actions given the current trajectory. Action can be three types:
+bfs = """We're solving a question answering task with sequential Action steps. Your task is to propose multiple possible next actions given the current trajectory. Action can be three types:
 
 (1) Search[entity], which searches the exact entity on Wikipedia and returns the first paragraph if it exists. If not, it will return some similar entities to search.
 (2) Lookup[keyword], which returns the next sentence containing keyword in the last passage successfully found by Search.
-(3) Finish[answer], which returns the answer and finishes the task.
+(3) Finish[answer], which returns the answer and finishes the task. When you provide your answer, only state the essential information, without full sentences or explanations.
+
+
 You may take as many steps as necessary.
 
 Below some examples are given. The examples also include the observations after each action, which you should not use in your answer.
@@ -50,7 +52,7 @@ Below some examples are given. The examples also include the observations after 
 
 (END OF EXAMPLES)
 
-Remember, your task is to propose immediate next actions. Answer in the format given by the examples and mention nothing more.
+Remember, your task is to propose multiple immediate next actions. Answer in the format given by the examples and mention nothing more.
 
 Question: {question}
 {current_state}
@@ -60,9 +62,9 @@ Possible Actions:
 
 evaluate = '''Analyze the trajectories of a solution to a question answering
 task. The trajectories are labeled by environmental observations about the situation, thoughts that can reason about the current situation and actions that can be three types: 
-(1) Search[entity], which searches the exact entity on Wikipedia and returns the first paragraph if it exists. If not, it will return some similar entities to search.
-(2) Lookup[keyword], which returns the next sentence containing keyword in the current passage.
-(3) Finish[answer], which returns the answer and finishes the task.
+(1) Search[entity]: In this case, your evaluation should be influenced based on whether useful information is found in the resulting observation.
+(2) Lookup[keyword]: ]: In this case, your evaluation should be influenced based on whether useful information is found in the resulting observation.
+(3) Finish[answer]: In this case, your evaluation should be influenced based on whether the answer is correct or not which will be presented in the resulting observation.
 
 Given a question and a trajectory, evaluate its correctness and provide your reasoning and analysis in detail. Focus on the latest available thought, action, and observation. Incomplete trajectories can be correct if the thoughts and actions so far are correct, even if the answer is not found yet. Do not generate additional thoughts or actions. Then at the last line conclude with your value estimation which can be an integer number from 1 to 10.
 
@@ -72,7 +74,7 @@ Below some examples are give.
 
 (END OF EXAMPLES)
 
-Remember, your task is to evaluate the correctness of the latest available thought, action, and observation based on your reasoning analysis. Answer in the format given by the examples and mention nothing more.
+Remember, your task is to evaluate the correctness of the latest available thought (if available), action, and observation based on your reasoning analysis. Answer in the format given by the examples and mention nothing more. Make sure to indicate the correctness score at the end of your answer in the following format: "Correctness score : <score>".
 
 Question: {question}
 {current_state}
@@ -108,8 +110,7 @@ Selected actions:
 ###---Examples for fewshot---###
 ################################
 examples_bfs = [
-"""
-Which documentary is about Finnish rock groups, Adam Clayton Powell or The Saimaa Gesture?
+"""Question: Which documentary is about Finnish rock groups, Adam Clayton Powell or The Saimaa Gesture?
 
 Possible Actions:
 Search[Adam Clayton Powell (film)]
