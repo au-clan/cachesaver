@@ -45,7 +45,7 @@ class AlgorithmGOT(Algorithm):
         randomness = idx
         random.seed(randomness)
         states = [state.clone(randomness=random.randint(0, MAX_SEED))]
-
+        logger.info(f"Solving game: {idx}")
         for step in range(self.num_steps):
 
             # Generate actions for each state
@@ -61,6 +61,8 @@ class AlgorithmGOT(Algorithm):
                 for i, state in enumerate(states)
             ]
             actions = await asyncio.gather(*action_coroutines)
+
+            logger.info(f"Actions generated for task {idx}; \n {actions}")
 
             # Aggregate actions
             aggregate_coroutines = [
@@ -78,11 +80,15 @@ class AlgorithmGOT(Algorithm):
 
             actions = await asyncio.gather(*aggregate_coroutines)
 
+            logger.info(f"Actions selected for task {idx}: \n{actions}")
+
             # Execute actions on environment
             proposed_states = []
             for state, actions in zip(states, actions):
                 for action in actions:
                     proposed_states.append(self.env.step(state, action))
+            
+            logger.info(f"Env step for task {idx}: \n{proposed_states}")
     
             # Evaluate all proposals
             value_coroutines = [
@@ -98,6 +104,8 @@ class AlgorithmGOT(Algorithm):
                 for i, state in enumerate(proposed_states)
             ]
             values = await asyncio.gather(*value_coroutines)
+
+            logger.info(f"Values given for task {idx}: \n{values}")
 
             # Choose the best states based on their value
             state_value_pairs = list(zip(proposed_states, values))

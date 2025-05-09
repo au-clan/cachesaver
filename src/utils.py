@@ -12,7 +12,8 @@ def tokens2cost(tokens: dict, model_name: str) -> dict:
         "unsloth/Llama-4-Maverick-17B-128E-Instruct-FP8" : {"in": 0.15, "out": 0.15},  # guesstimated values
         "gpt-4o": {"in": 2.50, "out": 10.00},
         "gpt-4o-mini": {"in": 0.15, "out": 0.60},
-        "gpt-3.5-turbo": {"in": 0.50, "out": 1.50}
+        "gpt-3.5-turbo": {"in": 0.50, "out": 1.50},
+        "gpt-4.1-nano": {"in": 0.10, "out": 0.40}
     }
 
     catalog["llama-3.3-70b-specdec"] = catalog["meta-llama/Llama-3.3-70B-Instruct-Turbo"]
