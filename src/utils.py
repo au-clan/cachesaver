@@ -22,6 +22,9 @@ def tokens2cost(tokens: dict, model_name: str) -> dict:
     catalog = {
         "meta-llama/Llama-3.3-70B-Instruct-Turbo" : {"in": 0.88, "out": 0.88},
         "meta-llama/Llama-3.2-90B-Vision-Instruct-Turbo" : {"in": 0.88, "out": 0.88},
+        "meta-llama/Llama-3.1-8B-Instruct" : {"in": 0.05, "out": 0.05},  # guesstimated values
+        "unsloth/Llama-4-Scout-17B-16E-Instruct" : {"in": 0.15, "out": 0.15},  # guesstimated values
+        "unsloth/Llama-4-Maverick-17B-128E-Instruct-FP8" : {"in": 0.15, "out": 0.15},  # guesstimated values
         "gpt-4o": {"in": 2.50, "out": 10.00},
         "gpt-4o-mini": {"in": 0.15, "out": 0.60},
         "gpt-3.5-turbo": {"in": 0.50, "out": 1.50},
@@ -39,6 +42,9 @@ def tokens2cost(tokens: dict, model_name: str) -> dict:
 
     catalog["llama-3.3-70b-specdec"] = catalog["meta-llama/Llama-3.3-70B-Instruct-Turbo"]
     catalog["llama-3.2-90b-vision-preview"] = catalog["meta-llama/Llama-3.2-90B-Vision-Instruct-Turbo"]
+    catalog["llama-3.1-8b-instruct"] = catalog["meta-llama/Llama-3.1-8B-Instruct"]
+    catalog["llama-4-scout-17b"] = catalog["unsloth/Llama-4-Scout-17B-16E-Instruct"]
+    catalog["llama-4-maverick-17b"] = catalog["unsloth/Llama-4-Maverick-17B-128E-Instruct-FP8"]
     
     price_in = catalog[model_name]["in"] * tokens["in"] / 1e6
     price_out = catalog[model_name]["out"] * tokens["out"] / 1e6
