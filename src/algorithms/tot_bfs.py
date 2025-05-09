@@ -39,7 +39,9 @@ class AlgorithmTOT(Algorithm):
         states = [state.clone(randomness=random.randint(0, MAX_SEED))]
 
         for step in range(self.num_steps):
-            
+
+            print(f"Step {step} ({idx})")
+
             # Generate actions for each state
             action_coroutines = [
                 self.step_agent.act(
@@ -55,7 +57,7 @@ class AlgorithmTOT(Algorithm):
 
             # Execute actions
             state_proposals = []
-            for state, actions in zip(states, actions):
+            for state, actions in zip(states, actions): # Bad practice
                 for action in actions:
                     state_proposals.append(self.env.step(state, action))
 
@@ -78,7 +80,12 @@ class AlgorithmTOT(Algorithm):
             state_value_pairs = list(zip(state_proposals, values))
             sorted_pairs = sorted(state_value_pairs, key=lambda x: x[1], reverse=True)
             states, values = map(list, zip(*sorted_pairs[:self.num_selections]))
-    
+            
+            # Early stopping condition
+            for state in states:
+                if self.env.evaluate(state)[1]:
+                    return states
+
         return states
 
     async def benchmark(self, benchmark: Benchmark, share_ns: bool=False, cache: bool=True):
