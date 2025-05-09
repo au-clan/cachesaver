@@ -82,7 +82,7 @@ class EnvironmentHumanEval(Environment):
 def parse_action(string) -> str | None:
     pattern = r'```[^`]+```'
     match = re.match(pattern, string)
-    return "\n".join(match.group(0).split('\n')[1:-1]) if match else None
+    return "\n".join(match.group(0).split('\n')[1:-1]) if match else string
 
 def evaluate_code_python(code: str, entry_point: str, test: str) -> Tuple[bool, float]: # NOTE: Only works on a UNIX system as we are using signal. Need to change this to use a different method for Windows or general case if needed.
     """
