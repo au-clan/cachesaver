@@ -75,7 +75,10 @@ class BenchmarkSonnetWriting(Benchmark):
         # Create a state object
         # Note: Left None for randomness, which enforces a state.clone() call in the algorithm
         state = StateSonnetWriting(
-            input=input,
-            target=target
+            puzzle=input,
+            current_state=input,
+            steps=[],
+            target=target,
+            randomness=None
         )
         return index, state
