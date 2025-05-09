@@ -6,8 +6,17 @@ import pandas as pd
 from .state import StateMathArena
 from ...typedefs import Benchmark
 
+import sys
+
+from .matharena_ethz.src.matharena.parser import parse_grading
+def get_split_sizes(total_size, proportions=(0.1, 0.4, 0.25, 0.25)):
+        """Calculate split sizes based on total dataset size"""
+        sizes = [max(1, int(total_size * p)) for p in proportions]
+        return sizes
 
 class BenchmarkMathArena(Benchmark):
+    
+
     def __init__(self, path: str, split: str = "mini"):
         """
         Initializes the benchmark with the dataset.
@@ -19,26 +28,32 @@ class BenchmarkMathArena(Benchmark):
         df = pd.read_json(path, lines=True,
                           compression='gzip')
         df.reset_index(inplace=True)
-        # todo 200 entires in this dataset
-        data = list(
-            zip(df['problem_idx'], df['problem'], df['answer']))
+        
+        # Parse the problems using the MathArena parser
+        df['parsed_problem'] = df['problem'].apply(parse_grading)
+
+        # Prepare the dataset
+        data = list(zip(df['problem_idx'], df['parsed_problem'], df['answer']))
 
         # Compute the idxs for each subset
         valid_idxs = set(range(len(data)))
 
+        total_samples = len(data)
+        mini, train, val, test = get_split_sizes(total_samples)
 
         random.seed(0)
-        mini_set_idxs = random.sample(list(valid_idxs), 10)
+        
+        mini_set_idxs = random.sample(list(valid_idxs), mini)
         valid_idxs = valid_idxs - set(mini_set_idxs)
 
-        train_set_idxs = random.sample(list(valid_idxs), 50)
+        train_set_idxs = random.sample(list(valid_idxs), min(train, len(valid_idxs)))
         valid_idxs = valid_idxs - set(train_set_idxs)
 
-        validation_set_idxs = random.sample(list(valid_idxs), 50)
+        validation_set_idxs = random.sample(list(valid_idxs), min(val, len(valid_idxs)))
         valid_idxs = valid_idxs - set(validation_set_idxs)
 
-        test_set_idxs = random.sample(list(valid_idxs), 50)
-        valid_idxs = valid_idxs - set(validation_set_idxs)
+        test_set_idxs = random.sample(list(valid_idxs), min(test, len(valid_idxs)))
+        # valid_idxs = valid_idxs - set(validation_set_idxs)
 
         if split == "single":
             self.data = data[:1]
@@ -67,19 +82,18 @@ class BenchmarkMathArena(Benchmark):
             idx (int): Index of the data point.
 
         Returns:
-            Tuple[int, StateHotpotQA]: Index and the corresponding state.
+            Tuple[int, StateMathArena]: Index and the corresponding state.
         """
         index = self.data[idx][0]
-        problem_idx = self.data[idx][1]
-        problem = self.data[idx][2]
-        answer = self.data[idx][3]
-
+        parsed_problem = self.data[idx][1]
+        answer = self.data[idx][2]
 
         # Create a state object
-        # Note: Left None for randomness, which enforces a state.clone() call in the algorithm
         state = StateMathArena(
-            problem_idx=problem_idx,
-            problem=problem,
+            problem_idx=index,
+            problem=parsed_problem,
+            current_state="",
+            steps=[],
             answer=answer
         )
         return index, state

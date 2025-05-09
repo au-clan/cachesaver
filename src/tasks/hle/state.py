@@ -1,5 +1,5 @@
-from dataclasses import dataclass
-
+from dataclasses import dataclass, field
+from typing import List
 from ...typedefs import State
 
 
@@ -17,6 +17,8 @@ class StateHLE(State):
     raw_subject: str
     category: str
     canary: str
+    steps: List[str] = field(default_factory=list)
+    randomness: int = 0
 
     def serialize(self) -> dict:
         """
@@ -34,12 +36,14 @@ class StateHLE(State):
             "rationale_image": self.rationale_image,
             "raw_subject": self.raw_subject,
             "category": self.category,
-            "canary": self.canary
+            "canary": self.canary,
+            "steps": self.steps,
+            "randomness": self.randomness
         }
 
     def clone(self, randomness: int = None) -> "StateHLE":
         """
-        Returns a new instance of StateHotpotQA with an optional new randomness value.
+        Returns a new instance of StateHLE with an optional new randomness value.
         """
         return StateHLE(
             id=self.id,
@@ -53,7 +57,9 @@ class StateHLE(State):
             rationale_image=self.rationale_image,
             raw_subject=self.raw_subject,
             category=self.category,
-            canary=self.canary
+            canary=self.canary,
+            steps=self.steps,
+            randomness=randomness or self.randomness
         )
 
     def get_seed(self) -> int:
