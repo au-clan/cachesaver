@@ -147,7 +147,7 @@ class MockOnlineLLMOpenAI(Model):
         requests = [self.request(request) for request in batch.requests]
         completions = await asyncio.gather(*requests)
         return completions
-
+    
 class LazyMockOnlineLLMOpenAI(Model):
     def __init__(self) -> None:
         self.client = AsyncOpenAI()

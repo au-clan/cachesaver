@@ -1,6 +1,6 @@
 foa:
-  num_agents: 12
-  num_steps: 12
+  num_agents: 7
+  num_steps: 7
   k: 1
   backtrack: 0.5
   resampling: "linear_filtered"
@@ -8,8 +8,8 @@ foa:
   num_evaluations: 3
   origin: 120
 
-tot:
-  num_selections: 5
+tot_bfs:
+  num_selections: 3
   num_steps: 4
   num_evaluations: 3
 
@@ -18,9 +18,3 @@ got:
   num_steps: 4
   num_evaluations: 3
   num_best: 2
-
-rap:
-  num_iterations: 50
-  num_samples: 5
-  num_evaluations: 3
-  exploration_constant: 1.0

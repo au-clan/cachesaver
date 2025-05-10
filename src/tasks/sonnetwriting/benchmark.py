@@ -21,7 +21,7 @@ class BenchmarkSonnetWriting(Benchmark):
         df.reset_index(inplace=True)
         # todo 200 entires in this dataset
         data = list(
-            zip(df['input'], df['target']))
+            zip(df['index'], df['input'], df['target']))
 
         # Compute the idxs for each subset
         valid_idxs = set(range(len(data)))
@@ -41,7 +41,7 @@ class BenchmarkSonnetWriting(Benchmark):
 
         if split == "single":
             self.data = data[:1]
-        if split == "mini":
+        elif split == "mini":
             self.data = [data[i] for i in mini_set_idxs]
         elif split == "train":
             self.data = [data[i] for i in train_set_idxs]
@@ -75,7 +75,10 @@ class BenchmarkSonnetWriting(Benchmark):
         # Create a state object
         # Note: Left None for randomness, which enforces a state.clone() call in the algorithm
         state = StateSonnetWriting(
-            input=input,
-            target=target
+            puzzle=input,
+            current_state=input,
+            steps=[],
+            target=target,
+            randomness=None
         )
         return index, state

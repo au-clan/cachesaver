@@ -16,7 +16,7 @@ from src.utils import tokens2cost
 from src.algorithms import *
 from src.models import OnlineLLM, API
 from src.typedefs import DecodingParameters
-from src.tasks.humaneval import EnvironmentHumanEval, BenchmarkHumanEval, AgentGenerateHumanEval, AgentAggregateHumanEval, AgentEvaluateHumanEval
+from src.tasks.humaneval import EnvironmentHumanEval, BenchmarkHumanEval, AgentActHumanEval, AgentAggregateHumanEval, AgentEvaluateHumanEval
 
 cache = Cache(f"caches/humaneval")
 
@@ -59,7 +59,7 @@ async def run(args):
 
     if args.method == "got":
         agents = AgentDictGOT(
-            step=AgentGenerateHumanEval,
+            step=AgentActHumanEval,
             aggregate=AgentAggregateHumanEval,
             evaluate=AgentEvaluateHumanEval,
             step_params=params,
