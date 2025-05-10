@@ -5,7 +5,6 @@ from . import prompts as prompts
 from .state import StateHumanEval
 from ...typedefs import Request, Agent, Model, DecodingParameters
 
-
 class AgentActHumanEval(Agent):
     @staticmethod
     async def act(
@@ -72,11 +71,12 @@ class AgentAggregateHumanEval(Agent):
             namespace=namespace,
             params=params,
         )
+        
 
         # Parse the response
         pattern = r"```[^`]+```"
         matchs = re.findall(pattern, responses[0])
-        return matchs
+        return matchs if matchs else responses[0]
 
 
 class AgentBfsHumanEval(Agent):

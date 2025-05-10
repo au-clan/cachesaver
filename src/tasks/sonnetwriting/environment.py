@@ -1,8 +1,6 @@
 import random
 from typing import Tuple, Set, Dict, Any
 
-from src.typedefs import State
-
 from .state import StateSonnetWriting
 from ...typedefs import Environment, MAX_SEED
 
@@ -36,14 +34,14 @@ class EnvironmentSonnetWriting(Environment):
         """
         Checks if the action taken is valid.
         """
-        pass
+        raise NotImplementedError("is_valid have not been implemented yet.")
 
     @staticmethod
     def is_final(state: StateSonnetWriting) -> bool:
         """
         Checks if the current state is a final state.
         """
-        pass
+        raise NotImplementedError("is_final have not been implemented yet.")
 
     @staticmethod
     def evaluate(state: StateSonnetWriting) -> Tuple[bool | float]:
@@ -51,13 +49,13 @@ class EnvironmentSonnetWriting(Environment):
         Evaluates the current state.
         """
         current_state = state.current_state
-        rhyme_scheme = state.target.split(", ")[0]
+        target = state.target
 
         try:
-            errors = sonnet_errors(current_state, rhyme_scheme)
+            errors = sonnet_errors(current_state, target)
             if not errors:
                 return True, 1.0
-            return False, 0.0
+            return True, 0.0
         except Exception as e:
             return False, 0.0
 
