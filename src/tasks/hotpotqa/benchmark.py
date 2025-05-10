@@ -34,19 +34,24 @@ class BenchmarkHotpotQA(Benchmark):
                             468, 6210, 2399, 6733, 4159, 7315, 6109, 7031, 4099, 4094, 5926,
                             4545,  996,   37,   61,  472,  101, 3340, 4205, 6446, 3450, 3734,
                             3317]
-        valid_idxs = valid_idxs - set(test_set_idxs)
+        valid_idxs -= set(test_set_idxs)
 
         random.seed(0)
-        mini_set_idxs = random.sample(list(valid_idxs), 10)
-        valid_idxs = valid_idxs - set(mini_set_idxs)
+        single_set_idxs = random.sample(list(valid_idxs), 1)
+        valid_idxs -= set(single_set_idxs)
+
+        mini_set_idxs = random.sample(list(valid_idxs), 5)
+        valid_idxs -= set(mini_set_idxs)
 
         train_set_idxs = random.sample(list(valid_idxs), 50)
-        valid_idxs = valid_idxs - set(train_set_idxs)
+        valid_idxs -= set(train_set_idxs)
 
         validation_set_idxs = random.sample(list(valid_idxs), 50)
-        valid_idxs = valid_idxs - set(validation_set_idxs)
+        valid_idxs -= set(validation_set_idxs)
 
-        if split == "mini":
+        if split == "single":
+            self.data = [data[i] for i in single_set_idxs]
+        elif split == "mini":
             self.data = [data[i] for i in mini_set_idxs]
         elif split == "train":
             self.data = [data[i] for i in train_set_idxs]

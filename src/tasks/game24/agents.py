@@ -1,9 +1,12 @@
-from typing import List
 import re
+import random
+from typing import List
 
 from . import prompts as prompts
 from .state import StateGame24
 from ...typedefs import Request, Agent, Model, DecodingParameters
+
+act_cache = {}
 
 class AgentActGame24(Agent):
     """
@@ -14,21 +17,34 @@ class AgentActGame24(Agent):
             prompt = prompts.cot.format(input=state.puzzle) + "\nSteps:\n" + '\n'.join(state.steps) + "\nAnswer: "
         else:
             current_numbers = get_current_numbers(state)
-            prompt = prompts.act.format(input=current_numbers)
+            prompt = prompts.bfs.format(input=current_numbers)
 
-        # Generate the response
-        responses = await model.request(
-            prompt=prompt,
-            n=n,
-            request_id=request_id,
-            namespace=namespace,
-            params=params
-        )
-
-        # Parse the response
-        proposals = [r.strip() for r in responses]
-        proposals = [r.split(")")[0] + ")" for r in proposals]
-        return proposals
+        if prompt in act_cache:
+            proposals = act_cache[prompt][:n]
+            act_cache[prompt] = act_cache[prompt][n:]
+        else:
+            proposals = []
+            act_cache[prompt] = []
+        
+        while len(proposals) < n:
+            # Generate the response
+            response = await model.request(
+                prompt=prompt,
+                n=1,
+                request_id=request_id,
+                namespace=namespace,
+                params=params
+            )
+            # Parse the response
+            if state.current_state != "24":
+                response = [response[0].rpartition(")")[0] + ")"]
+            proposals.extend(r.strip() for r in response[0].split("\n"))
+            if 'Possible next steps:' in proposals:
+                    proposals.remove('Possible next steps:')
+        random.seed(state.randomness)
+        random.shuffle(proposals)
+        act_cache[prompt].extend(proposals[n:])
+        return proposals[:n]
     
 class AgentAggregateGame24(Agent):
 
@@ -72,7 +88,8 @@ class AgentBfsGame24(Agent):
         """
         # Format the prompt
         if len(state.current_state.strip().split(' ')) == 1:
-            prompt = prompts.cot.format(input=state.puzzle) + "\nSteps:\n" + '\n'.join(state.steps) + "\nAnswer: "
+            prompt = prompts.cot.format(input=state.puzzle) + "\nSteps:\n" + '\n'.join(state.steps).strip() + "\nAnswer: "
+
         else:
             current_numbers = get_current_numbers(state)
             prompt = prompts.bfs.format(input=current_numbers)
@@ -85,13 +102,13 @@ class AgentBfsGame24(Agent):
             namespace=namespace,
             params=params
         )
-        for r in response:
-            print(r)
 
         # Parse the response
         if state.current_state != "24":
             response = [response[0].rpartition(")")[0] + ")"]
         proposals = [r.strip() for r in response[0].split("\n")]
+        if 'Possible next steps:' in proposals:
+                proposals.remove('Possible next steps:')
         return proposals
 
 
@@ -108,7 +125,7 @@ class AgentEvaluateGame24(Agent):
             return cache[state.current_state]
 
         # Format the prompt
-        if "left" not in state.steps[-1]:
+        if state.steps and "left" not in state.steps[-1]:
             formula = get_formula(state)
             prompt = prompts.evaluate_answer.format(input=state.puzzle, answer=formula)
         else:
@@ -122,9 +139,6 @@ class AgentEvaluateGame24(Agent):
             namespace=namespace,
             params=params
         )
-        for r in responses:
-            print(r)
-            print("===")
 
         # Parse the response
         codes = [r.split('\n')[-1].lower().strip() for r in responses]
@@ -172,5 +186,9 @@ def get_current_numbers(state: StateGame24) -> str:
     return last_line.split('left: ')[-1].split(')')[0]
 
 def get_formula(state: StateGame24) -> str:
-    formula = state.steps[-1].lower().replace("answer: ", "")
-    return formula
+    if state.steps:
+        formula = state.steps[-1].lower().replace("answer: ", "")
+        return formula
+    else:
+        # Should do some error handling here but for the moment we'll take it as it is
+        return ""

@@ -12,3 +12,6 @@ joblib
 pyphen
 syllables
 pronouncing
+groq
+lazykey
+python-dotenv
