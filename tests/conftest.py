@@ -7,6 +7,8 @@ from typing import List
 import secret
 import asyncio
 import pytest
+import tempfile
+from diskcache import Cache
 
 from src.typedefs import Model, DecodingParameters
 
@@ -99,7 +101,7 @@ class LazyMockOnlineLLM(Model):
         requests = [self.request(request) for request in batch.requests]
         completions = await asyncio.gather(*requests)
         return completions
-    
+
 class MockOnlineLLMOpenAI(Model):
     def __init__(self, model: str) -> None:
         self.client = AsyncOpenAI()
@@ -186,8 +188,14 @@ class LazyMockOnlineLLMOpenAI(Model):
     async def batch_request(self, batch: Batch) -> List[Response]:
         requests = [self.request(request) for request in batch.requests]
         completions = await asyncio.gather(*requests)
-        return completions
-    
+        return completions  
+
+@pytest.fixture(scope="function")
+def cache():
+    """Provide a temporary cache for each test."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        with Cache(tmpdir) as cache:
+            yield cache
 
 @pytest.fixture
 def offline_model() -> Model:
