@@ -1,13 +1,13 @@
 # Updated
-act = '''Use numbers and basic arithmetic operations (+ - * /). Each step, you are only allowed to choose two of the remaining numbers to obtain a new number. Do not explain simply list one possible next step, as well as all the remaining numbers and nothing else.
+act = '''Use numbers and basic arithmetic operations (+ - * /) to obtain 24. Each step, you are only allowed to choose two of the remaining numbers to obtain a new number. Do not explain simply list one possible next step, as well as all the remaining numbers and nothing else.
 
 Example: 2 8 8 14
 Possible next step:
 14 + 2 = 16 (left: 8 8 16)
 
 Example: 1 4 6
-Possible next steps:
-1 * 4 = 4 (left: 6 4)
+Possible next step:
+1 * 4 = 4 (left: 4 6)
 
 Example: 1 3
 Possible next step:
@@ -17,7 +17,7 @@ Input: {input}
 Possible next step:
 '''
 
-bfs = '''Use numbers and basic arithmetic operations (+ - * /). Each step, you are only allowed to choose two of the remaining numbers to obtain a new number. Do not explain simply list possible next steps as well as all the remaining numbers and nothing else.
+bfs = '''Use numbers and basic arithmetic operations (+ - * /). Each step, you are only allowed to choose two of the remaining numbers to obtain a new number.  Follow the format of the following examples. Do not explain simply list possible next steps as well as all the remaining numbers and nothing else.
 
 Example: 2 8 8 14
 Possible next steps:
@@ -40,7 +40,7 @@ Possible next steps:
 '''
 
 aggregate = '''
-Please select {n_select_sample} step from the proposed step list, which you believe can reach 24. Do not explain, just list the selected steps as well as all the remaining numbers and nothing else. See the examples for how you are expected to respond.
+Please select {n_select_sample} step from the proposed step list, which you believe can reach 24. Do not explain, just list the selected steps as well as all the remaini§ng numbers and nothing else. See the examples for how you are expected to respond.
  
 Example: 2 8 8 14
 Proposed next steps:
@@ -74,7 +74,7 @@ Proposed next steps:
 Best Next Step:
 '''
 
-cot = '''Use numbers and basic arithmetic operations (+ - * /) to obtain 24. Return only the complete answer.
+cot = '''Use numbers and basic arithmetic operations (+ - * /) to obtain 24. Return only the complete answer. If the steps are already given, just return the final expression following the given steps. Do not make any simplifications.
 
 Example: 4 4 6 8
 Steps:

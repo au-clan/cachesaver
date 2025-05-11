@@ -102,7 +102,7 @@ async def run(args):
         )
     elif  args.method == "got":
         agents = AgentDictGOT(
-            step=AgentBfsHotpotQA,
+            step=AgentActHotpotQA,
             aggregate=AgentAggregateHotpotQA,
             evaluate=AgentEvaluateHotpotQA,
             step_params=params,
@@ -115,6 +115,7 @@ async def run(args):
             env=EnvironmentHotpotQA,
             num_selections=config.got.num_selections,
             num_steps=config.got.num_steps,
+            num_generate=config.got.num_generate,
             num_best=config.got.num_best,
             num_evaluations=config.got.num_evaluations,
         )

@@ -61,6 +61,7 @@ class AlgorithmGOT(Algorithm):
                 for i, state in enumerate(states)
             ]
             actions = await asyncio.gather(*action_coroutines)
+            logger.info(f"Actions taken: {actions}")
 
             logger.info(f"Actions generated for task {idx}; \n {actions}")
 
@@ -79,6 +80,7 @@ class AlgorithmGOT(Algorithm):
             ]
 
             actions = await asyncio.gather(*aggregate_coroutines)
+            logger.info(f"Actions chosen: {actions}")
 
             logger.info(f"Actions selected for task {idx}: \n{actions}")
 
@@ -89,7 +91,6 @@ class AlgorithmGOT(Algorithm):
                     proposed_states.append(self.env.step(state, action))
             
             logger.info(f"Env step for task {idx}: \n{proposed_states}")
-    
             # Evaluate all proposals
             value_coroutines = [
                 self.eval_agent.act(
@@ -104,6 +105,7 @@ class AlgorithmGOT(Algorithm):
                 for i, state in enumerate(proposed_states)
             ]
             values = await asyncio.gather(*value_coroutines)
+            logger.info(f"Evaluations of states: {values}")
 
             logger.info(f"Values given for task {idx}: \n{values}")
 
