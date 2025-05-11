@@ -220,3 +220,34 @@ Action: 8 + 16 = 24 (left: 24)
 
 Input: {input}
 '''
+
+# Self-evaluation prompts for Game24
+self_evaluate_step = '''You are evaluating a reasoning step in the Game of 24. Given the current numbers and the proposed step, determine if this step is correct and logical. Consider:
+1. Does the step use valid arithmetic operations?
+2. Is the step a logical move towards reaching 24?
+3. Does it follow the rules of using exactly two numbers at a time?
+
+Previous steps:
+{previous_steps}
+
+Current numbers: {input}
+Proposed step: {step}
+
+Is this reasoning step correct? Answer with a single word: Yes or No.
+'''
+
+self_evaluate_answer = '''You are evaluating a complete solution to the Game of 24. Given the input numbers, the steps taken, and the final answer, determine if the solution is correct. Consider:
+1. Does it use each input number exactly once?
+2. Are all arithmetic operations valid?
+3. Does it correctly reach 24?
+4. Are the steps logically connected?
+
+Input numbers: {input}
+
+Steps taken:
+{steps}
+
+Final answer: {answer}
+
+Is this solution correct? Answer with a single word: Yes or No.
+'''
