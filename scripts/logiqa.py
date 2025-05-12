@@ -16,7 +16,7 @@ from src.utils import tokens2cost
 from src.algorithms import *
 from src.models import OnlineLLM, API
 from src.typedefs import DecodingParameters
-from src.tasks.logiqa import EnvironmentLogiQA, BenchmarkLogiQA, AgentActLogiQA, AgentAggregateLogiQA, AgentEvaluateLogiQA
+from src.tasks.logiqa import EnvironmentLogiQA, BenchmarkLogiQA, AgentActLogiQA, AgentAggregateLogiQA, AgentEvaluateLogiQA, AgentReactLogiQA, AgentSelfEvaluateLogiQA
 
 cache = Cache(f"caches/logiqa")
 
@@ -86,6 +86,22 @@ async def run(args):
             num_generate=config.got.num_generate,
             num_best=config.got.num_best,
             num_evaluations=config.got.num_evaluations,
+        )
+    elif args.method == "rap":
+        agents = AgentDictRAP(
+            step=AgentReactLogiQA,
+            evaluate=AgentSelfEvaluateLogiQA,
+            step_params=params,
+            eval_params=params,
+        )
+        method = AlgorithmRAP(
+            model=api,
+            agents=agents,
+            env=EnvironmentLogiQA,
+            num_iterations=config.rap.num_iterations,
+            num_samples=config.rap.num_samples,
+            num_evaluations=config.rap.num_evaluations,
+            exploration_constant=config.rap.exploration_constant,
         )
     else:
         raise NotImplementedError(f"Method {args.method} is not implemented yet.")

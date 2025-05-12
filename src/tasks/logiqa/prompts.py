@@ -116,3 +116,87 @@ Answer: a
 ---
 incorrect'''
 ]
+
+# React prompt for LogiQA
+react = '''You are solving a logical reasoning task. Think step by step and analyze the given information carefully. You will be given a paragraph and a question with multiple choices. Your task is to determine the correct answer through logical reasoning.
+
+For each step:
+1. Think about what information is given in the paragraph
+2. Analyze how this information relates to the question
+3. Consider each choice and evaluate its validity
+4. Make a logical conclusion
+
+Example:
+Paragraph: In the planning of a new district in a township, it was decided to build a special community in the southeast, northwest, centered on the citizen park. These four communities are designated as cultural area, leisure area, commercial area and administrative service area. It is known that the administrative service area is southwest of the cultural area, and the cultural area is southeast of the leisure area.
+
+Question: Based on the above statement, which of the following can be derived?
+Choices:
+A. Civic Park is north of the administrative service area
+B. The leisure area is southwest of the cultural area
+C. The cultural district is in the northeast of the business district
+D. The business district is southeast of the leisure area
+
+Thought: Let me analyze the given information step by step. The paragraph describes the relative positions of different areas. I know that:
+1. Administrative service area is southwest of cultural area
+2. Cultural area is southeast of leisure area
+3. These areas are centered on the citizen park
+
+Action: Let me evaluate each choice:
+A. Civic Park's position relative to administrative service area is not directly stated
+B. This contradicts the given information (cultural area is southeast of leisure area)
+C. The position of business district relative to cultural district is not stated
+D. The position of business district relative to leisure area is not stated
+
+Thought: Based on the given information, none of the choices can be definitively derived. The paragraph only gives relative positions between administrative service area, cultural area, and leisure area.
+
+Action: Finish[None of the given choices can be definitively derived from the paragraph]
+
+{paragraph}
+
+{question}
+{choices}
+
+Current reasoning:
+{current_state}
+
+Remember to think step by step and make logical conclusions based on the given information.'''
+
+# Self-evaluation prompts for LogiQA
+self_evaluate_step = '''You are evaluating a reasoning step in a logical reasoning task. Given the paragraph, question, choices, and the proposed reasoning step, determine if this step is correct and logical. Consider:
+1. Does the reasoning follow from the given information?
+2. Is the analysis of the choices accurate?
+3. Are the logical connections valid?
+4. Does it avoid making unsupported assumptions?
+
+Paragraph: {paragraph}
+
+Question: {question}
+Choices: {choices}
+
+Previous steps:
+{previous_steps}
+
+Current step: {step}
+
+Is this reasoning step correct? Answer with a single word: Yes or No.
+'''
+
+self_evaluate_answer = '''You are evaluating a complete solution to a logical reasoning task. Given the paragraph, question, choices, and the reasoning process, determine if the solution is correct. Consider:
+1. Does the reasoning process follow logically from the given information?
+2. Is the analysis of each choice thorough and accurate?
+3. Are all logical connections valid and well-supported?
+4. Does the final answer follow from the reasoning?
+5. Are there any unsupported assumptions?
+
+Paragraph: {paragraph}
+
+Question: {question}
+Choices: {choices}
+
+Reasoning steps:
+{steps}
+
+Final answer: {answer}
+
+Is this solution correct? Answer with a single word: Yes or No.
+'''
