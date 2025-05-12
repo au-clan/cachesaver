@@ -198,11 +198,11 @@ class AgentSelfEvaluateHotpotQA(Agent):
                 # Look for Yes token probability
                 yes_prob = next((prob for token, prob in first_token_logprobs.items() 
                                if token.lower() in ['yes', 'yes.', 'yes!']), 0.0)
-                yes_probabilities.append(np.exp(yes_prob))  # Convert logprob to probability
+                yes_probabilities.append(np.exp(yes_prob))
 
         if yes_probabilities:
             value = sum(yes_probabilities) / len(yes_probabilities)
-            value = value * 20  # Scale up the value similar to Game24
+            value = value * 20
         else:
             value = 0.001
 
