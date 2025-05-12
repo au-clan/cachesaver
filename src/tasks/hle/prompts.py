@@ -70,7 +70,7 @@ Below some examples are given.
 
 (END OF EXAMPLES)
 
-Remember, your task is to evaluate the correctness of the latest available thought, action, and observation based on your reasoning analysis. Answer in the format given by the examples and mention nothing more.
+Remember, your task is to evaluate the correctness of the latest available thought, action, and observation based on your reasoning analysis. Answer in the format given by the examples and mention nothing more. Make sure to indicate the correctness score at the end of your answer in the following format: "Correctness score : <score>".
 
 Question: {question}
 {current_state}
