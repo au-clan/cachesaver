@@ -1,7 +1,7 @@
 from abc import ABC
 from typing import List, Union
 
-from ..typedefs import Model, ModelRequestOptions, Request
+from ..typedefs import Model, DecodingParameters, Request
 
 
 class API(ABC):
@@ -21,7 +21,7 @@ class API(ABC):
         }
 
     async def request(self, prompt: Union[str, List[str]], n: int, request_id: str, namespace: str,
-                      params: ModelRequestOptions) -> List[str]:
+                      params: DecodingParameters) -> List[str]:
         """
         Send a request to the pipeline
         """

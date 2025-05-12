@@ -7,7 +7,7 @@ import secret
 import asyncio
 import pytest
 
-from src.typedefs import Model, ModelRequestOptions
+from src.typedefs import Model, DecodingParameters
 
 
 class MockLLM(Model):
@@ -21,7 +21,7 @@ class MockLLM(Model):
         n: int,
         request_id: int,
         namespace: str,
-        params: ModelRequestOptions,
+        params: DecodingParameters,
     ):
         sleep = 1
         while True:

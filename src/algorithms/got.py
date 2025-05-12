@@ -2,15 +2,15 @@ import random
 import asyncio
 from tqdm.asyncio import tqdm
 from typing import TypedDict
-from ..typedefs import Algorithm, Model, Agent, Environment, ModelRequestOptions, State, Benchmark, MAX_SEED
+from ..typedefs import Algorithm, Model, Agent, Environment, DecodingParameters, State, Benchmark, MAX_SEED
 
 class AgentDictGOT(TypedDict):
     step: Agent
     aggregate: Agent
     evaluate: Agent
-    step_params: ModelRequestOptions
-    aggregate_params: ModelRequestOptions
-    eval_params: ModelRequestOptions
+    step_params: DecodingParameters
+    aggregate_params: DecodingParameters
+    eval_params: DecodingParameters
 
 class AlgorithmGOT(Algorithm):
     def __init__(self, 

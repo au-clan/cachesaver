@@ -7,7 +7,7 @@ import sympy
 
 from . import prompts as prompts, StateHotpotQA
 from ...algorithm_options.rafa import RafaRequest, RAFAOptions
-from ...typedefs import Agent, Model, ModelRequestOptions
+from ...typedefs import Agent, Model, DecodingParameters
 
 
 class AgentRafaGame24_eval_hotpot_qa(Agent):
@@ -243,7 +243,7 @@ class AgentRAFA_reflect_hotpot_qa(Agent):
             n=reflect_messages.n,
             request_id=reflect_messages.request_id,
             namespace=reflect_messages.namespace,
-            params=ModelRequestOptions(
+            params=DecodingParameters(
                 max_completion_tokens=reflect_messages.max_completion_tokens,
                 temperature=reflect_messages.temperature,
                 top_p=reflect_messages.top_p,
@@ -286,7 +286,7 @@ class AgentRAFA_reflect_value_hotpot_qa(Agent):
                                              n=value_reflects_messages.n,
                                              request_id=value_reflects_messages.request_id,
                                              namespace=value_reflects_messages.namespace,
-                                             params=ModelRequestOptions(
+                                             params=DecodingParameters(
                                                  max_completion_tokens=value_reflects_messages.max_completion_tokens,
                                                  temperature=value_reflects_messages.temperature,
                                                  top_p=value_reflects_messages.top_p,
@@ -353,7 +353,7 @@ class AgentRAFA_plan_hotpot_qa(Agent):
                                      n=history_messages.n,
                                      request_id=history_messages.request_id,
                                      namespace=history_messages.namespace,
-                                     params=ModelRequestOptions(
+                                     params=DecodingParameters(
                                          max_completion_tokens=history_messages.max_completion_tokens,
                                          temperature=history_messages.temperature,
                                          top_p=history_messages.top_p,
@@ -446,7 +446,7 @@ class AgentRAFA_plan_evaluate_hotpot_qa(Agent):
                                                     n=history_messages.n,
                                                     request_id=history_messages.request_id,
                                                     namespace=history_messages.namespace,
-                                                    params=ModelRequestOptions(
+                                                    params=DecodingParameters(
                                                         max_completion_tokens=history_messages.max_completion_tokens,
                                                         temperature=history_messages.temperature,
                                                         top_p=history_messages.top_p,

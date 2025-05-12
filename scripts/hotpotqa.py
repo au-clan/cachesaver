@@ -23,7 +23,7 @@ sys.path.append(os.getcwd())
 from src.utils import tokens2cost
 from src.algorithms import *
 from src.models import OnlineLLM, API
-from src.typedefs import ModelRequestOptions
+from src.typedefs import DecodingParameters
 from src.tasks.hotpotqa import EnvironmentHotpotQA, BenchmarkHotpotQA, AgentBfsHotpotQA, AgentEvaluateHotpotQA, \
     AgentActHotpotQA, AgentAggregateHotpotQA
 
@@ -68,7 +68,7 @@ async def run(args):
     )
 
     # Decoding parameters
-    params = ModelRequestOptions(
+    params = DecodingParameters(
         temperature=args.temperature,
         max_completion_tokens=args.max_completion_tokens,
         top_p=args.top_p,

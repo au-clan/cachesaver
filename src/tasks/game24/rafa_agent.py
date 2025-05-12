@@ -7,7 +7,7 @@ import sympy
 
 from . import prompts as prompts, StateGame24
 from ...algorithm_options.rafa import RafaRequest
-from ...typedefs import Agent, Model, ModelRequestOptions
+from ...typedefs import Agent, Model, DecodingParameters
 
 
 class AgentRafaGame24_eval(Agent):
@@ -293,7 +293,7 @@ class AgentRAFA_reflect(Agent):
             n=reflect_messages.n,
             request_id=reflect_messages.request_id,
             namespace=reflect_messages.namespace,
-            params=ModelRequestOptions(
+            params=DecodingParameters(
                 max_completion_tokens=reflect_messages.max_completion_tokens,
                 temperature=reflect_messages.temperature,
                 top_p=reflect_messages.top_p,
@@ -337,7 +337,7 @@ class AgentRAFA_reflect_value(Agent):
                                              n=value_reflects_messages.n,
                                              request_id=value_reflects_messages.request_id,
                                              namespace=value_reflects_messages.namespace,
-                                             params=ModelRequestOptions(
+                                             params=DecodingParameters(
                                                  max_completion_tokens=value_reflects_messages.max_completion_tokens,
                                                  temperature=value_reflects_messages.temperature,
                                                  top_p=value_reflects_messages.top_p,
@@ -406,7 +406,7 @@ class AgentRAFA_plan(Agent):
                                      n=history_messages.n,
                                      request_id=f"{history_messages.request_id}-randomnes-{random.randint(1, 10000)}",
                                      namespace=history_messages.namespace,
-                                     params=ModelRequestOptions(
+                                     params=DecodingParameters(
                                          max_completion_tokens=history_messages.max_completion_tokens,
                                          temperature=history_messages.temperature,
                                          top_p=history_messages.top_p,
@@ -539,7 +539,7 @@ class AgentRAFA_plan_evaluate(Agent):
                                                 n=history_messages.n,
                                                 request_id=history_messages.request_id,
                                                 namespace=history_messages.namespace,
-                                                params=ModelRequestOptions(
+                                                params=DecodingParameters(
                                                     max_completion_tokens=history_messages.max_completion_tokens,
                                                     temperature=history_messages.temperature,
                                                     top_p=history_messages.top_p,
