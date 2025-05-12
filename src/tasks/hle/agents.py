@@ -33,6 +33,32 @@ class AgentActHLE(Agent):
         # Parse the responses
         actions = [r.strip() for r in responses]
         return actions
+    
+class AgentAggregateHLE(Agent):
+    """
+    Agent performing the Aggregate operation for the HLE task.
+    """
+
+    @staticmethod
+    async def act(model: Model, state: StateHLE, actions: List[str], k: int, namespace: str, request_id: str, params: DecodingParameters) -> List[str]:
+        """
+        Returns a list of k selected actions for the HLE task.
+        """
+        # Format the prompt
+        prompt = prompts.aggregate.format(k=k, question=state.question, actions='\n'.join(actions))
+
+        # Generate the responses
+        responses = await model.request(
+            prompt=prompt,
+            n=1,
+            request_id=request_id,
+            namespace=namespace,
+            params=params
+        )
+
+        # Parse the responses
+        selected_actions = [r.strip() for r in responses[0].split("\n")]
+        return selected_actions
 
 class AgentBfsHLE(Agent):
     """

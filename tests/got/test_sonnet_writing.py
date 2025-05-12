@@ -9,7 +9,6 @@ import itertools
 
 from src.algorithms import AgentDictGOT, AlgorithmGOT
 from src.models import API
-from src.tasks.game24 import benchmark
 from src.tasks.sonnetwriting.benchmark import BenchmarkSonnetWriting
 from src.typedefs import Algorithm, DecodingParameters
 from src.tasks.sonnetwriting import (

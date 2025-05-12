@@ -57,6 +57,20 @@ Question: {question}
 
 Possible Actions:"""
 
+aggregate = """We're solving a human-labeled explanation task with sequential Action steps. Your task is to select the {k} best actions from the given list. Action can be three types:
+
+(1) Analyze[topic], which analyzes the given topic in the context of the question and image.
+(2) Explain[aspect], which provides explanations about specific aspects of the topic.
+(3) Finish[answer], which returns the answer and finishes the task.
+
+Remember, your task is to select the {k} best actions from the proposes actions list. Answer only with the selected actions, without any explanation, introduction, conclusion, or modifications.
+
+Question: {question}
+Possible Actions:
+{actions}
+Selected {k} Actions:
+"""
+
 evaluate = '''Analyze the trajectories of a solution to a human-labeled explanation task. The trajectories are labeled by environmental observations about the situation, thoughts that can reason about the current situation and actions that can be three types:
 (1) Analyze[topic], which analyzes the given topic in the context of the question and image.
 (2) Explain[aspect], which provides explanations about specific aspects of the topic.
