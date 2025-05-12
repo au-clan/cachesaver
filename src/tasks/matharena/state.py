@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import List, Optional
 from ...typedefs import State
-from .matharena_ethz.src.matharena.parser import parse_grading
+from matharena_ethz.src.matharena.parser import parse_grading
 
 @dataclass(frozen=True)
 class StateMathArena(State):

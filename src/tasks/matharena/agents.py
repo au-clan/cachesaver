@@ -35,6 +35,36 @@ class AgentActMathArena(Agent):
                 actions.append(response.strip())
 
         return actions
+    
+class AgentAggregateMathArena(Agent):
+    """
+    Agent performing the Aggregate operation for the MathArena task.
+    """
+
+    @staticmethod
+    async def act(model: Model, state: StateMathArena, actions: List[str], k: int, namespace: str, request_id: str, params: DecodingParameters) -> List[str]:
+        """
+        Returns a list of k selected actions for the MathArena task.
+        """
+        # Format the prompt
+        prompt = prompts.aggregate.format(input=state.problem, approaches='\n'.join(actions), k=k)
+
+        # Generate the response
+        response = await model.request(
+            prompt=prompt,
+            n=1,
+            request_id=request_id,
+            namespace=namespace,
+            params=params
+        )
+
+        # Parse the response
+        selected_actions = []
+        for line in response[0].split('\n'):
+            if any(line.startswith(prefix) for prefix in ["Analyze[", "Explain[", "Finish["]):
+                selected_actions.append(line.strip())
+        return selected_actions
+        
 
 class AgentBfsMathArena(Agent):
     """

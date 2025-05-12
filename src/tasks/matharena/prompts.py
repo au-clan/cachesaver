@@ -13,6 +13,27 @@ Input Problem: {input}
 Next step:
 '''
 
+aggregate = '''Given a math problem, and possible approaches to help you solve it. Select the {k} most relevant approaches to solve the problem.
+
+Example Problem: Find the derivative of y = x² + 3x
+Possible approaches:
+Analyze[problem] Focus on identifying function components
+Explain[math concepts] Review power rule and derivative rules
+Analyze[solution approach] Apply derivative rules step by step
+Explain[solution steps] Show each term's derivative
+Finish[y' = 2x + 3]
+
+Selected 3 approaches:
+Analyze[problem] Focus on identifying function components
+Explain[solution steps] Show each term's derivative
+Finish[y' = 2x + 3]
+
+Input Problem: {input}
+Possible approaches:
+{approaches}
+Selected {k} approaches:
+'''
+
 # Brainstorming multiple approaches prompt
 bfs = '''Given a math problem, list multiple possible approaches to solve it.
 
