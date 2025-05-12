@@ -42,6 +42,7 @@ class AgentActGame24(Agent):
             proposals.extend(r.strip() for r in response[0].split("\n"))
             if 'Possible next steps:' in proposals:
                     proposals.remove('Possible next steps:')
+
         random.seed(state.randomness)
         random.shuffle(proposals)
         act_cache[prompt].extend(proposals[n:])
@@ -54,7 +55,7 @@ class AgentAggregateGame24(Agent):
         """
         Returns the aggregated actions for the Game of 24 task.
         """
-        if any("left" not in action for action in actions):
+        if state.current_state.strip=="24" and any("left" not in action for action in actions):
             return [action for action in actions if "left" not in action]
         
         # Format the prompt
@@ -62,7 +63,7 @@ class AgentAggregateGame24(Agent):
         for idx, action in enumerate(actions):
             proposals += f'({idx + 1}) ' + action + '\n'
 
-        prompt = prompts.aggregate.format(state=state.current_state, proposal=proposals, n_select_sample=k)
+        prompt = prompts.aggregate.format(state=state.current_state, proposal=proposals.strip(), n_select_sample=k)
 
         responses = await model.request(
             prompt=prompt,
@@ -73,11 +74,12 @@ class AgentAggregateGame24(Agent):
         )
 
         # Parse the response
-        pattern = r"\(\d+\)\s(\d+ [+\-*/] \d+ = \d+ \(left: [^)]+\))"
-        matchs = re.findall(pattern, responses[0])
-
-        proposal = [match.strip() for match in matchs]
-        return proposal
+        actions = [
+            match.group(1)
+            for action in responses[0].split("\n")
+            if (match := re.match(r"\(\d+\)\s(.*)", action.strip()))
+        ]
+        return actions
 
 
 class AgentBfsGame24(Agent):
