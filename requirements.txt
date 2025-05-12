@@ -10,7 +10,6 @@ langchain-community
 wikipedia
 cachesaver~=0.0.1
 numpy~=1.26.4
-torch~=2.6.0
 tenacity~=9.0.0
 deepdiff~=8.4.2
 pytest~=8.3.5
@@ -20,6 +19,5 @@ joblib
 pyphen
 syllables
 pronouncing
-groq
 lazykey
 python-dotenv
