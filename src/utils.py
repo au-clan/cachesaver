@@ -1,21 +1,50 @@
+import re
 import random
 from typing import List
+import numpy as np 
 
-import numpy as np
+def clean_log(file_path: str):
 
+    # Define the pattern to match the lines you want to remove
+    pattern = re.compile(r'^INFO:httpx:HTTP Request: POST https://api\.openai\.com/v1/chat/completions "HTTP/1\.1 200 OK"$')
+
+    # Read the file and filter out matching lines
+    with open(file_path, 'r') as file:
+        lines = file.readlines()
+
+    # Write back only the lines that do not match the pattern
+    with open(file_path, 'w') as file:
+        for line in lines:
+            if not pattern.match(line.strip()):
+                file.write(line)
 
 def tokens2cost(tokens: dict, model_name: str) -> dict:
     catalog = {
         "meta-llama/Llama-3.3-70B-Instruct-Turbo" : {"in": 0.88, "out": 0.88},
         "meta-llama/Llama-3.2-90B-Vision-Instruct-Turbo" : {"in": 0.88, "out": 0.88},
+        "meta-llama/Llama-3.1-8B-Instruct" : {"in": 0.05, "out": 0.05},  # guesstimated values
+        "unsloth/Llama-4-Scout-17B-16E-Instruct" : {"in": 0.15, "out": 0.15},  # guesstimated values
+        "unsloth/Llama-4-Maverick-17B-128E-Instruct-FP8" : {"in": 0.15, "out": 0.15},  # guesstimated values
         "gpt-4o": {"in": 2.50, "out": 10.00},
         "gpt-4o-mini": {"in": 0.15, "out": 0.60},
         "gpt-3.5-turbo": {"in": 0.50, "out": 1.50},
-        "gpt-4.1-nano": {"in": 0.1, "out": 0.40}
+        
+        # GPT-4.1 models
+        "gpt-4.1-nano": {"in": 0.10, "out": 0.40},
+        "gpt-4.1-mini": {"in": 0.40, "out": 1.60},
+        "gpt-4.1": {"in": 2.00, "out": 8.00},
+
+        # LLama 4 models (Together AI)
+        "meta-llama/Llama-4-Scout-17B-16E-Instruct" : {"in": 0.18, "out": 0.59},
+        "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8" : {"in": 0.27, "out": 0.85},
+
     }
 
     catalog["llama-3.3-70b-specdec"] = catalog["meta-llama/Llama-3.3-70B-Instruct-Turbo"]
     catalog["llama-3.2-90b-vision-preview"] = catalog["meta-llama/Llama-3.2-90B-Vision-Instruct-Turbo"]
+    catalog["llama-3.1-8b-instruct"] = catalog["meta-llama/Llama-3.1-8B-Instruct"]
+    catalog["llama-4-scout-17b"] = catalog["unsloth/Llama-4-Scout-17B-16E-Instruct"]
+    catalog["llama-4-maverick-17b"] = catalog["unsloth/Llama-4-Maverick-17B-128E-Instruct-FP8"]
     
     price_in = catalog[model_name]["in"] * tokens["in"] / 1e6
     price_out = catalog[model_name]["out"] * tokens["out"] / 1e6

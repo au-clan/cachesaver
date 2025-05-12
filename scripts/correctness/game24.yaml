@@ -1,20 +1,20 @@
 foa:
-  num_agents: 3
-  num_steps: 6
+  num_agents: 7
+  num_steps: 7
   k: 1
   backtrack: 0.5
   resampling: "linear_filtered"
-  min_steps: 1
+  min_steps: 4
   num_evaluations: 3
-  origin: 10
+  origin: 120
 
-tot:
+tot_bfs:
   num_selections: 3
-  num_steps: 5
+  num_steps: 4
   num_evaluations: 3
 
 got:
   num_selections: 3
-  num_steps: 5
+  num_steps: 4
   num_evaluations: 3
   num_best: 2

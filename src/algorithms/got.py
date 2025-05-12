@@ -1,8 +1,10 @@
 import random
 import asyncio
+import logging
 from tqdm.asyncio import tqdm
 from typing import TypedDict
 from ..typedefs import Algorithm, Model, Agent, Environment, DecodingParameters, State, Benchmark, MAX_SEED
+logger = logging.getLogger(__name__)
 
 class AgentDictGOT(TypedDict):
     step: Agent
@@ -19,6 +21,7 @@ class AlgorithmGOT(Algorithm):
                  env: Environment, 
                  num_selections: int, 
                  num_steps: int,
+                 num_generate: int,
                  num_best: int,
                  num_evaluations: int,
                  ):
@@ -34,6 +37,7 @@ class AlgorithmGOT(Algorithm):
 
         self.num_selections = num_selections
         self.num_steps = num_steps
+        self.num_generate = num_generate
         self.num_best = num_best
         self.num_evaluations = num_evaluations
 
@@ -41,7 +45,7 @@ class AlgorithmGOT(Algorithm):
         randomness = idx
         random.seed(randomness)
         states = [state.clone(randomness=random.randint(0, MAX_SEED))]
-
+        logger.info(f"Solving game: {idx}")
         for step in range(self.num_steps):
 
             # Generate actions for each state
@@ -49,13 +53,17 @@ class AlgorithmGOT(Algorithm):
                 self.step_agent.act(
                     model=self.model,
                     state=state,
+                    n=self.num_generate,
                     namespace=namespace,
-                    request_id=f"idx{idx}-step{step}-{hash(state)}",
+                    request_id=f"idx{idx}-step{step}-{hash(state)}-agent{i}",
                     params=self.step_params,
                 )
-                for state in states
+                for i, state in enumerate(states)
             ]
             actions = await asyncio.gather(*action_coroutines)
+            logger.info(f"Actions taken: {actions}")
+
+            logger.info(f"Actions generated for task {idx}; \n {actions}")
 
             # Aggregate actions
             aggregate_coroutines = [
@@ -65,20 +73,24 @@ class AlgorithmGOT(Algorithm):
                     actions=action,
                     k=self.num_selections,
                     namespace=namespace,
-                    request_id=f"idx{idx}-aggregate{step}-{hash(state)}",
+                    request_id=f"idx{idx}-aggregate{step}-{hash(state)}-agent{i}",
                     params=self.aggregate_params,
                 )
-                for state, action in zip(states, actions)
+                for i, (state, action) in enumerate(zip(states, actions))
             ]
 
             actions = await asyncio.gather(*aggregate_coroutines)
+            logger.info(f"Actions chosen: {actions}")
+
+            logger.info(f"Actions selected for task {idx}: \n{actions}")
 
             # Execute actions on environment
             proposed_states = []
             for state, actions in zip(states, actions):
                 for action in actions:
                     proposed_states.append(self.env.step(state, action))
-    
+            
+            logger.info(f"Env step for task {idx}: \n{proposed_states}")
             # Evaluate all proposals
             value_coroutines = [
                 self.eval_agent.act(
@@ -86,13 +98,16 @@ class AlgorithmGOT(Algorithm):
                     state=state,
                     n=self.num_evaluations,
                     namespace=namespace,
-                    request_id=f"idx{idx}-evaluation{step}-{hash(state)}",
+                    request_id=f"idx{idx}-evaluation{step}-{hash(state)}-agent{i}",
                     params=self.eval_params,
                     cache=value_cache
                 )
-                for state in proposed_states
+                for i, state in enumerate(proposed_states)
             ]
             values = await asyncio.gather(*value_coroutines)
+            logger.info(f"Evaluations of states: {values}")
+
+            logger.info(f"Values given for task {idx}: \n{values}")
 
             # Choose the best states based on their value
             state_value_pairs = list(zip(proposed_states, values))
@@ -103,7 +118,7 @@ class AlgorithmGOT(Algorithm):
 
             
     
-    async def benchmark(self, benchmark, share_ns: bool=False, cache: bool=True):
+    async def benchmark(self, benchmark: Benchmark, share_ns: bool=False, cache: bool=True):
         cache = {} if cache else None
         solve_coroutines = [
             self.solve(

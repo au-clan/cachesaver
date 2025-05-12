@@ -16,3 +16,10 @@ deepdiff~=8.4.2
 pytest~=8.3.5
 groq~=0.20.0
 tqdm~=4.67.1
+joblib
+pyphen
+syllables
+pronouncing
+groq
+lazykey
+python-dotenv
