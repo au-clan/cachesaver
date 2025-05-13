@@ -220,3 +220,12 @@ Action: 8 + 16 = 24 (left: 24)
 
 Input: {input}
 '''
+
+self_evaluate_rap = '''You are solving the Game of 24 step by step. Evaluate the following reasoning step and decide whether it is valid and logical. Answer with "yes" or "no".
+
+Current state: {state_before}
+Proposed step: {action}
+Resulting state: {state_after}
+
+Is this step correct?
+'''

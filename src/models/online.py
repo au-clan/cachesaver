@@ -39,10 +39,20 @@ class OnlineLLM(Model):
                 sleep *= 2
         input_tokens = completion.usage.prompt_tokens
         completion_tokens = completion.usage.completion_tokens
-        response = Response(
-            data = [(choice.message.content, input_tokens, completion_tokens/request.n) for choice in completion.choices]
-        )
+        if not request.logprobs:
+            response = Response(
+                data = [(choice.message.content, input_tokens, completion_tokens/request.n) for choice in completion.choices]
+            )
+        else:
+            response = Response(
+                data=[(choice.message.content, input_tokens, completion_tokens / request.n,
+                       list(zip(choice.logprobs.tokens, choice.logprobs.token_logprobs))
+                       ) for choice in
+                      completion.choices]
+            )
+
         return response
+
     
     async def batch_request(self, batch: Batch) -> List[Response]:
         requests = [self.request(request) for request in batch.requests]

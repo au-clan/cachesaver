@@ -40,6 +40,9 @@ class WorldModel(Dynamics, Generic[State, Action, Example]):
             self.prompt = prompt
         self.example = example
 
+    async def is_solved(self, state: State) -> bool:
+        raise NotImplementedError
+
 class Environment(Dynamics, Generic[State, Action]):
     def __init__(self) -> None:
         self.env = None
