@@ -1,7 +1,8 @@
 import time
 from abc import ABC
 from ..typedefs import Model, SingleRequestModel, DecodingParameters, Request
-from typing import List, Union
+from typing import List, Union, Tuple
+
 
 class API(ABC):
     """
@@ -20,7 +21,7 @@ class API(ABC):
         }
         self.latencies = []
     
-    async def request(self, prompt: Union[str, List[str]], n: int, request_id: str, namespace: str, params: DecodingParameters) -> List[str]:
+    async def request(self, prompt: Union[str, List[str]], n: int, request_id: str, namespace: str, params: DecodingParameters, return_logprobs: bool = False) -> List[str] | Tuple[List[str], List[Tuple[str, float]]]:
         """
         Send a request to the pipeline
         """
@@ -48,8 +49,13 @@ class API(ABC):
             "cached": self.calls["cached"] + sum(response.cached),
             "duplicated": self.calls["duplicated"] + sum(response.duplicated)
         }
-
-        messages, tokin, tokout = zip(*response.data)
+        if len(response) == 3:
+            messages, tokin, tokout = zip(*response.data)
+            token_logprobs = []
+        elif len(response) == 4:
+            messages, tokin, tokout, token_logprobs = zip(*response.data)
+        else:
+            raise Exception("Response from model is malformed")
 
         total_in = total_out = 0
         cached_in = cached_out = 0
@@ -86,8 +92,8 @@ class API(ABC):
         self.tokens["cacher_duplicator"]["in"] += cacher_duplicator_in
         self.tokens["cacher_duplicator"]["out"] += cacher_duplicator_out
 
-        return messages
-
-        
-    
+        if return_logprobs:
+            return messages, token_logprobs
+        else:
+            return messages
     

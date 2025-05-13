@@ -119,7 +119,7 @@ class MCTS(SearchAlgorithm, Generic[State, Action, Example]):
     def __init__(self,
                  output_trace_in_each_iter: bool = False,
                  w_exp: float = 1.,
-                 depth_limit: int = 5,
+                 depth_limit: int = 10,
                  n_iters: int = 10,
                  cum_reward: Callable[[list[float]], float] = sum,
                  calc_q: Callable[[list[float]], float] = np.mean,
@@ -234,7 +234,7 @@ class MCTS(SearchAlgorithm, Generic[State, Action, Example]):
             # to the reward function with **aux without repetitive computation
             node.reward, node.reward_details = await self.search_config. \
                 reward(node.parent.state, node.action, **node.fast_reward_details, **aux)
-            node.is_terminal = self.world_model.is_terminal(node.state)
+            node.is_terminal = node.is_terminal or (await self.world_model.is_solved(node.state) or self.world_model.is_terminal(node.state))
 
         if node.is_terminal:
             return
@@ -245,7 +245,9 @@ class MCTS(SearchAlgorithm, Generic[State, Action, Example]):
             fast_reward, fast_reward_details = await self.search_config.fast_reward(node.state, action)
             child = MCTSNode(state=None, action=action, parent=node,
                              fast_reward=fast_reward, fast_reward_details=fast_reward_details, calc_q=self.calc_q)
+            child.is_terminal = await self.world_model.is_solved(child.state)
             children.append(child)
+
 
         node.children = children
 
@@ -283,7 +285,9 @@ class MCTS(SearchAlgorithm, Generic[State, Action, Example]):
     async def search(self):
         self._output_cum_reward = -math.inf
         self._output_iter = None
+
         self.root = MCTSNode(state=self.world_model.init_state(), action=None, parent=None, calc_q=self.calc_q)
+        self.root.is_terminal = await self.world_model.is_solved(self.root.state)
         if self.output_trace_in_each_iter:
             self.trace_in_each_iter = []
 
