@@ -1,6 +1,8 @@
 ###################
 ###---Prompts---###
 ###################
+
+
 act = """Solve a question answering task with sequential Action steps. Action can be three types:
 
 (1) Search[entity], which searches the exact entity on Wikipedia and returns the first paragraph if it exists. If not, it will return some similar entities to search.
@@ -383,3 +385,56 @@ Finish[director, screenwriter, actor]
 Finish[film director, screenwriter, actor]
 Finish[director, screenwriter and actor]""",
 ]
+##For RAFA
+reflect_prompt=  '''Solve a question answering task with sequential Action steps. Action can be three types:
+
+(1) Search[entity], which searches the exact entity on Wikipedia and returns the first paragraph if it exists. If not, it will return some similar entities to search.
+(2) Lookup[keyword], which returns the next sentence containing keyword in the last passage successfully found by Search.
+(3) Finish[answer], which returns the answer and finishes the task.
+You may take as many steps as necessary.
+
+Analyze the trajectories of a solution to a question answering
+task. The trajectories are labeled by environmental observations about the situation, thoughts that can reason about the current situation and actions that can be three types: 
+(1) Search[entity]: In this case, your evaluation should be influenced based on whether useful information is found in the resulting observation.
+(2) Lookup[keyword]: ]: In this case, your evaluation should be influenced based on whether useful information is found in the resulting observation.
+(3) Finish[answer]: In this case, your evaluation should be influenced based on whether the answer is correct or not which will be presented in the resulting observation.
+
+Given a question and a trajectory, evaluate its correctness and provide your reasoning and analysis in detail. Focus on the latest available thought, action, and observation. Incomplete trajectories can be correct if the thoughts and actions so far are correct, even if the answer is not found yet. Do not generate additional thoughts or actions. Then at the last line conclude with your value estimation which can be an integer number from 1 to 10.
+
+Below some examples are give.
+
+{examples}
+
+(END OF EXAMPLES)
+
+Remember, your task is to evaluate the correctness of the latest available thought (if available), action, and observation based on your reasoning analysis. Answer in the format given by the examples and mention nothing more. Make sure to indicate the correctness score at the end of your answer in the following format: "Correctness score : <score>".
+
+Question: {question}
+{current_state}
+We have the following feedback:
+{feedback}
+Evaluation:
+'''
+#todo i think it should only be one reflect as they are pretty close?
+value_reflect_prompt=  '''Analyze the trajectories of a solution to a question answering
+task. The trajectories are labeled by environmental observations about the situation, thoughts that can reason about the current situation and actions that can be three types: 
+(1) Search[entity]: In this case, your evaluation should be influenced based on whether useful information is found in the resulting observation.
+(2) Lookup[keyword]: ]: In this case, your evaluation should be influenced based on whether useful information is found in the resulting observation.
+(3) Finish[answer]: In this case, your evaluation should be influenced based on whether the answer is correct or not which will be presented in the resulting observation.
+
+Given a question and a trajectory, evaluate its correctness and provide your reasoning and analysis in detail. Focus on the latest available thought, action, and observation. Incomplete trajectories can be correct if the thoughts and actions so far are correct, even if the answer is not found yet. Do not generate additional thoughts or actions. Then at the last line conclude with your value estimation which can be an integer number from 1 to 10.
+
+Below some examples are give.
+
+{examples}
+
+(END OF EXAMPLES)
+
+Remember, your task is to evaluate the correctness of the latest available thought (if available), action, and observation based on your reasoning analysis. Answer in the format given by the examples and mention nothing more. Make sure to indicate the correctness score at the end of your answer in the following format: "Correctness score : <score>".
+
+Question: {question}
+{current_state}
+We have the following feedback:
+{feedback}
+Evaluation:
+'''

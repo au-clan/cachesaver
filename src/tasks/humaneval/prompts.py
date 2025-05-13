@@ -42,3 +42,40 @@ Evaluation scores:
 Overall Score: <final score>
 
 Do not include any further thoughts or reasoning, just the evaluation scores and the final overall score."""
+
+##For RAFA
+reflect_prompt=  '''You are a programming assistant, who is helping user to write efficient and correct codes. You will be given multiple implementations of the same function and consider the following criteria:
+1. **Correctness**: Does the implementation return the correct output for different inputs?
+2. **Efficiency**: Is the implementation efficient in terms of time and space complexity?
+3. **Readability**: Is the code readable and understandable? Is it easy to follow?
+4. **Style**: Does the implementation follow the style guide of the language (naming conventions, indentation, etc.)?
+5. **Testability**: Is the implementation testable? Can it be easily tested with unit tests?
+
+Function signature and docstring:
+{input}
+
+Implementation:
+{answer}
+
+And we have the following feedback:
+{feedback}
+Now using the above feedback, give 'sure' or 'impossible' labels for the implementations. Give 'sure' if the implementation is correct and otherwise 'impossible'.'''
+
+
+
+value_reflect_prompt=  '''You are a programming assistant, who is helping user to write efficient and correct codes. You will be given multiple implementations of the same function and consider the following criteria:
+1. **Correctness**: Does the implementation return the correct output for different inputs?
+2. **Efficiency**: Is the implementation efficient in terms of time and space complexity?
+3. **Readability**: Is the code readable and understandable? Is it easy to follow?
+4. **Style**: Does the implementation follow the style guide of the language (naming conventions, indentation, etc.)?
+5. **Testability**: Is the implementation testable? Can it be easily tested with unit tests?
+
+Function signature and docstring:
+{input}
+
+Implementation:
+{answer}
+
+And we have the following feedback:
+{feedback}
+Now using the above feedback, give 'sure' or 'impossible' labels for the implementations. Give 'sure' if the implementation is correct and otherwise 'impossible'.'''

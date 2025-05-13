@@ -104,8 +104,8 @@ class AlgorithmRAFA(Algorithm):
             current_output_candidates = ["\n".join(self_history) + "\n"] if len(self_history) else [
                 ""]  # current output candidates
             infos = []
-            # for step in range(4 - len(self_history)): todo this doesnt make any sense as there are only 3 steps in total
-            for step in range(3 - len(self_history)):
+            # todo this doesnt make any sense as there are only 3 steps in total
+            for step in range(4 - len(self_history)):
                 # get proposals (plan suggestions/generate)
                 coroutines = []
                 for output_candidate in current_output_candidates:
@@ -136,7 +136,7 @@ class AlgorithmRAFA(Algorithm):
                                                      :self.rafa_options.n_select_sample]
                 best_candidates_list = [candidate for candidate, _ in selected_top_candidates_with_score]
 
-                # for logging i guess
+                # for logging
                 infos.append(
                     {'step': step,
                      'x': state.puzzle,

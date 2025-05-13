@@ -291,7 +291,7 @@ And we have the following feedback:
 {feedback}
 Now using the above feedback, give 'sure' or 'impossible' labels for each formula with left numbers from each step. Give 'sure' if the formula is correct and can lead to 24 and give 'impossible' if the formula is incorrect or illegal. First repeat the formula with left numbers from each step above and then give the label, with the following form: {{formula}} (left: {{left numbers}}): {{label}}.
 '''
-
+#todo i think it is okay to only have reflect_prompt
 value_reflect_prompt = '''
 Now we would like to play a game of 24. That is, given 4 numbers, try to use them with arithmetic operations (+ - * /) to get 24. Now we consider the following puzzle: {input}. 
 Here is an attempt answer:

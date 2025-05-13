@@ -1,19 +1,18 @@
+import asyncio
 import json
 import os
-import asyncio
 from typing import List
 
 from cachesaver.typedefs import Request, Batch, Response
-
-from ..typedefs import Model
+from dotenv import load_dotenv
 from groq import Groq
 from lazykey import KeyHandler
 
-from dotenv import load_dotenv
+from ..typedefs import Model
 
 load_dotenv()
 DEFAULT_MODEL_NAME = os.getenv("DEFAULT_LLM_MODEL_NAME", None)
-GROQ_API_KEY_LIST = os.getenv("GROQ_API_KEY_LIST", "") # GROQ_API_KEY_LIST='["Key1", "Key2"]'
+GROQ_API_KEY_LIST = os.getenv("GROQ_API_KEY_LIST", "")  # GROQ_API_KEY_LIST='["Key1", "Key2"]'
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", None)
 
 

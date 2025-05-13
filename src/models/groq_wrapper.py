@@ -68,7 +68,7 @@ class GroqModel(ModelBasic):
     async def request(self, request: Request) -> Response:
         coroutines = []
         for i in range(request.n):
-            request=replace(request, n=1,request_id=f"{request.request_id}_{i}")
+            request = replace(request, n=1, request_id=f"{request.request_id}_{i}")
             # request = replace(request, n=1, request_id=f"{request.request_id}_{i}")
             coroutines.append(self.single_request(request))
         responses = await asyncio.gather(*coroutines)
