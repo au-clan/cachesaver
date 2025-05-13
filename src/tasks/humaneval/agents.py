@@ -62,13 +62,13 @@ class AgentActHumanEval(Agent):
 class AgentAggregateHumanEval(Agent):
     @staticmethod
     async def act(
-        model: Model,
-        state: StateHumanEval,
-        actions: List[str],
-        k: int,
-        namespace: str,
-        request_id: str,
-        params: DecodingParameters,
+            model: Model,
+            state: StateHumanEval,
+            actions: List[str],
+            k: int,
+            namespace: str,
+            request_id: str,
+            params: DecodingParameters,
     ) -> List[str]:
         """
         Returns the aggregated actions for the HumanEval task.
@@ -79,11 +79,13 @@ class AgentAggregateHumanEval(Agent):
         user_prompt = prompts.aggregate_prompt.format(
             prompt=state.current_state, k=k, implementations="\n".join(actions)
         )
-        # Generate the response
 
+        # Generate the response
         responses = await model.request(
-            system_prompt=instruct,
-            user_prompt=user_prompt,
+            prompt=[
+                {"role": "system", "content": instruct},
+                {"role": "user", "content": user_prompt},
+            ],
             n=1,
             request_id=request_id,
             namespace=namespace,
@@ -93,7 +95,7 @@ class AgentAggregateHumanEval(Agent):
         # Parse the response
         pattern = r"```[^`]+```"
         matchs = re.findall(pattern, responses[0])
-        return matchs
+        return matchs if matchs else responses[0]
 
 class AgentBfsHumanEval(Agent):
     @staticmethod
@@ -105,11 +107,14 @@ class AgentBfsHumanEval(Agent):
         params: DecodingParameters,
     ) -> List[str]:
         language = "py" if "def" in state.puzzle else "rs"
-        instruct = prompts.SIMPLE_CHAT_INSTRUCTION_BFS.format(lang=language, n=3)
+        ### change n, depending on how many to generate
+        instruct = prompts.SIMPLE_CHAT_INSTRUCTION_BFS.format(lang=language, n=5)
 
         responses = await model.request(
-            system_prompt=instruct,
-            user_prompt=state.current_state,
+            prompt=[
+                {"role": "system", "content": instruct},
+                {"role": "user", "content": state.current_state},
+            ],
             n=1,
             request_id=request_id,
             namespace=namespace,
@@ -120,10 +125,10 @@ class AgentBfsHumanEval(Agent):
 
         code_blocks = re.findall(r'(```.*?```)', response_text, flags=re.DOTALL)
 
+        # Strip each code block
         actions = [block.strip() for block in code_blocks]
 
         return actions
-
 
 
 def sum_overall_scores(text):
@@ -159,17 +164,21 @@ class AgentEvaluateHumanEval(Agent):
         instruct = prompts.SIMPLE_CHAT_INSTRUCTION_V2.format(lang=language)
 
         user_prompt = prompts.evaluation_prompt.format(
-            prompt=state.puzzle,
-            implementation=state.current_state
+            prompt=state.puzzle,  # The function signature + docstring
+            implementation=state.current_state  # The code you want to evaluate
         )
 
+        # Generate the response
         responses = await model.request(
-            system_prompt=instruct,
-            user_prompt=user_prompt,
+            prompt=[
+                {"role": "system", "content": instruct},
+                {"role": "user", "content": user_prompt},
+            ],
             n=n,
             request_id=request_id,
             namespace=namespace,
             params=params,
         )
 
+        # do not know how to evaluate for humaneval so just passing on 0
         return sum_overall_scores(responses)
