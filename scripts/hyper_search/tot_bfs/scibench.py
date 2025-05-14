@@ -166,7 +166,7 @@ if __name__ == "__main__":
     parser.add_argument("--num_evaluations", type=int, help="Number of evaluations")
     args = parser.parse_args()
 
-    filename = f"logs/hypersearch/{args.model.split('/')[-1]}/{args.method}/scibench_{args.batch_size}.log"
+    filename = f"logs/hypersearch/{args.model.split('/')[-1]}/{args.method}/scibench__{args.batch_size}.log"
     os.makedirs(os.path.dirname(filename), exist_ok=True)
     logging.basicConfig(level=logging.INFO, filename=filename, filemode="a")
     logger.info("#"*50)
