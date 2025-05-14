@@ -12,14 +12,14 @@ model="gpt-4.1-nano"
 
 # Define number of retrials
 retrials=1
-split="single"
+split="mini"
 
 
 for benchmark in "${benchmarks[@]}"; do
     for method in "${methods[@]}"; do
         for ((i=1; i<=retrials; i++)); do
             echo "Running $benchmark with $method (trial $i/$retrials)"
-            python "scripts/correctness/${benchmark}.py" \
+            python "scripts/single/${benchmark}.py" \
                 --provider "$provider" \
                 --model "$model" \
                 --batch_size 300 \
@@ -30,7 +30,7 @@ for benchmark in "${benchmarks[@]}"; do
                 --dataset_path "datasets/dataset_${benchmark}.csv.gz" \
                 --split "$split" \
                 --method "$method" \
-                --conf_path "scripts/correctness/${benchmark}.yaml" \
+                --conf_path "scripts/single/${benchmark}.yaml" \
                 --correctness 0 \
                 --value_cache
         done
