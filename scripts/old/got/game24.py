@@ -29,7 +29,7 @@ async def run(args, trial, cache_path):
 
     # LLM Provider
     if args.provider == "openai":
-        if args.base_url and "localhost" in args.base_url:
+        if args.base_url and "v1" in args.base_url:
             # For local vLLM servers, use a dummy API key
             client = AsyncOpenAI(base_url=args.base_url, api_key="dummy-key")
         else:
@@ -170,6 +170,7 @@ if __name__ == "__main__":
     parser.add_argument("--num_selections", type=int, help="Tree width")
     parser.add_argument("--num_steps", type=int, help="Number of steps")
     parser.add_argument("--num_evaluations", type=int, help="Number of evaluations")
+    parser.add_argument("--num_generate", type=int, help="Number of evaluations")
     args = parser.parse_args()
 
     filename = f"logs/hypersearch/{args.model.split('/')[-1]}/{args.method}/game24__{args.batch_size}.log"
