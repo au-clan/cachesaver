@@ -19,26 +19,43 @@ class BenchmarkHLE(Benchmark):
         df = pd.read_json(path, lines=True,
                           compression='gzip')
         df.reset_index(inplace=True)
-        #todo 200 entires in this dataset
+        print("Dataset columns:", df.columns)
+
+        # Check if 'image_preview' exists
+        if 'image_preview' not in df.columns:
+            print("Warning: 'image_preview' column is missing from the dataset.")
+            df['image_preview'] = None  # Add a placeholder column if missing
+
+        if 'rationale_image' not in df.columns:
+            print("Warning: 'rationale_image' column is missing from the dataset.")
+            df['rationale_image'] = None 
+
+        # Existing code to process the dataset
         data = list(
-            zip(df['id'], df['question'],df['image'],df['image_preview'],df['answer'],df['answer_type'],df['author_name'],df['rationale'],df['rationale_image'],df['raw_subject'],df['category'],df['canary']))
+            zip(df["index"], df['id'], df['question'], df['image'], df['image_preview'], df['answer'], df['answer_type'],
+                df['author_name'], df['rationale'], df['rationale_image'], df['raw_subject'], df['category'], df['canary'])
+        )
 
-        # Compute the idxs for each subset
         valid_idxs = set(range(len(data)))
-
-        random.seed(0)
-        mini_set_idxs = random.sample(list(valid_idxs), 10)
+    
+        # Ensure integer seed
+        random.seed(0)  # Use explicit integer
+        
+        # Fixed size sampling with integer types
+        mini_size = 10
+        other_size = 50  # for train, validation, test
+        
+        mini_set_idxs = random.sample(list(valid_idxs), mini_size)
         valid_idxs = valid_idxs - set(mini_set_idxs)
 
-        train_set_idxs = random.sample(list(valid_idxs), 50)
+        train_set_idxs = random.sample(list(valid_idxs), other_size)
         valid_idxs = valid_idxs - set(train_set_idxs)
 
-        validation_set_idxs = random.sample(list(valid_idxs), 50)
+        validation_set_idxs = random.sample(list(valid_idxs), other_size)
         valid_idxs = valid_idxs - set(validation_set_idxs)
 
-        test_set_idxs = random.sample(list(valid_idxs), 50)
-        valid_idxs = valid_idxs - set(validation_set_idxs)
-
+        test_set_idxs = random.sample(list(valid_idxs), other_size)
+        valid_idxs = valid_idxs - set(test_set_idxs)
         if split == "single":
             self.data = data[:1]
         if split == "mini":
@@ -80,7 +97,7 @@ class BenchmarkHLE(Benchmark):
         rationale_image = self.data[idx][9]
         raw_subject = self.data[idx][10]
         category = self.data[idx][11]
-        canary = self.data[idx][12]
+        canary = self.data[idx][10]
 
         # Create a state object
         # Note: Left None for randomness, which enforces a state.clone() call in the algorithm
@@ -96,7 +113,8 @@ class BenchmarkHLE(Benchmark):
             rationale_image=rationale_image,
             raw_subject=raw_subject,
             category=category,
-            canary=canary
+            canary=canary,
+            randomness=None
         )
         return index, state
 

@@ -5,7 +5,6 @@ from . import prompts as prompts
 from .state import StateHumanEval
 from ...typedefs import Request, Agent, Model, DecodingParameters
 
-
 class AgentActHumanEval(Agent):
     @staticmethod
     async def act(
@@ -72,11 +71,12 @@ class AgentAggregateHumanEval(Agent):
             namespace=namespace,
             params=params,
         )
+        
 
         # Parse the response
         pattern = r"```[^`]+```"
         matchs = re.findall(pattern, responses[0])
-        return matchs
+        return matchs if matchs else responses[0]
 
 
 class AgentBfsHumanEval(Agent):
@@ -88,9 +88,29 @@ class AgentBfsHumanEval(Agent):
         request_id: str,
         params: DecodingParameters,
     ) -> List[str]:
-        raise NotImplementedError(
-            "The act method for AgentBfsHumanEval is not implemented."
+        """
+        Returns actions generated for the HumanEval task.
+        """
+        # Format the prompt
+        language = "py" if "def" in state.puzzle else "rs"
+        instruct = prompts.SIMPLE_CHAT_INSTRUCTION_V2.format(lang=language)
+
+        # Generate the response
+        responses = await model.request(
+            prompt=[
+                {"role": "system", "content": instruct},
+                {"role": "user", "content": state.current_state},
+            ],
+            n=n,
+            request_id=request_id,
+            namespace=namespace,
+            params=params,
         )
+
+        # Parse the responses
+        actions = [r.strip() for r in responses]
+        return actions
+
 
 
 class AgentEvaluateHumanEval(Agent):
@@ -107,5 +127,38 @@ class AgentEvaluateHumanEval(Agent):
         """
         Returns the evaluation score for the HumanEval task.
         """
-        # do not know how to evaluate for humaneval so just passing on 0
-        return 0.0
+        language = "py" if "def" in state.puzzle else "rs"
+        instruct = prompts.SIMPLE_CHAT_INSTRUCTION_V2.format(lang=language)
+
+        user_prompt = prompts.evaluation_prompt.format(
+            prompt=state.puzzle,  # The function signature + docstring
+            implementation=state.current_state  # The code you want to evaluate
+        )
+
+        responses = await model.request(
+            prompt=[
+                {"role": "system", "content": instruct},
+                {"role": "user", "content": user_prompt},
+            ],
+            n=n,
+            request_id=request_id,
+            namespace=namespace,
+            params=params,
+        )
+
+        return sum_overall_scores(responses)
+
+# Helper function
+def sum_overall_scores(text):
+    if isinstance(text, list):
+        # Flatten and join all items that are strings
+        text = " ".join(
+            [str(item) for sublist in text for item in (sublist if isinstance(sublist, list) else [sublist])]
+        )
+
+    scores = re.findall(r'Overall Score:\s*(\d+)', text)
+
+    if not scores:
+        return None  # or return 0 if preferred
+
+    return sum(int(score) for score in scores)

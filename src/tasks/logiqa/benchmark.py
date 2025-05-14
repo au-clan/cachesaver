@@ -35,7 +35,7 @@ class BenchmarkLogiQA(Benchmark):
 
         if split == "single":
             self.data = data[:1]
-        if split == "mini":
+        elif split == "mini":
             self.data = [data[i] for i in mini_set_idxs]
         elif split == "train":
             self.data = [data[i] for i in train_set_idxs]
@@ -62,12 +62,16 @@ class BenchmarkLogiQA(Benchmark):
         # Create a state object
         # Note: Left None for randomness, which enforces a state.clone() call in the algorithm
         state = StateLogiQA(
-            right_choice=right_choice,
             context=context,
             question=question,
             option_a=option_a,
             option_b=option_b,
             option_c=option_c,
-            option_d=option_d)
+            option_d=option_d,
+            current_state=question,
+            steps=[],
+            correct_option=right_choice,
+            randomness=None
+            )
 
         return index, state

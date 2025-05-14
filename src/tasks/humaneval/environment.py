@@ -82,7 +82,7 @@ class EnvironmentHumanEval(Environment):
 def parse_action(string) -> str | None:
     pattern = r'```[^`]+```'
     match = re.match(pattern, string)
-    return "\n".join(match.group(0).split('\n')[1:-1]) if match else None
+    return "\n".join(match.group(0).split('\n')[1:-1]) if match else string
 
 def evaluate_code_python(code: str, entry_point: str, test: str) -> Tuple[bool, float]: # NOTE: Only works on a UNIX system as we are using signal. Need to change this to use a different method for Windows or general case if needed.
     """
@@ -90,20 +90,19 @@ def evaluate_code_python(code: str, entry_point: str, test: str) -> Tuple[bool, 
     """
     manager = multiprocessing.Manager()
     result = manager.list()
-
-    p = multiprocessing.Process(target=unsafe_execute, args=(code, entry_point, test, TIMEOUT, result))
-    p.start()
-    p.join(timeout=TIMEOUT+1)
-    if p.is_alive():
-        p.kill()
+    ts = separate_tests(test)
+    for t in ts:
+        p = multiprocessing.Process(target=unsafe_execute, args=(code, entry_point, t, TIMEOUT, result))
+        p.start()
+        p.join(timeout=TIMEOUT+1)
+        if p.is_alive():
+            p.kill()
 
     if not result:
         return False, 0.0
     
-    if result[0] == "passed":
-        return True, 1.0
     else:
-        return False, 0.0
+        return True, sum(result) / len(result)
     
 def evaluate_code_rust(code: str, entry_point: str, test: str) -> Tuple[bool, float]:
     """
@@ -130,7 +129,7 @@ def evaluate_code_rust(code: str, entry_point: str, test: str) -> Tuple[bool, fl
     errs = grab_compile_errs(res[0])
     if len(errs) > 0:
         cleanup()
-        return False, 0.0
+        return True, 0.0
 
     res = run_with_timeout("cargo run", tmp_dir, timeout=TIMEOUT)
     cleanup()
@@ -140,13 +139,17 @@ def evaluate_code_rust(code: str, entry_point: str, test: str) -> Tuple[bool, fl
     else:
         errs = grab_runtime_errs(res[0] + "\n" + res[1])
         if len(errs) > 0:
-            return False, 0.0
+            return True, 0.0
         
-        return len(errs) == 0, 1.0
+        return True, 1.0
     
 
-
-
+def separate_tests(test):
+    parts = test.split("def check(candidate):")
+    tests = parts[-1].strip().split("\n")
+    tests = [parts[0] + f"""def check(candidate):
+    {t.strip()}""".strip() for t in tests]
+    return tests
 
 #---Context Managers---#
 # From HumanEval repo for evaluating code with timelimit and a bit more securely. Still recommending to do it inside a sandbox.
@@ -173,9 +176,9 @@ def unsafe_execute(code: str, entry_point: str, test: str, timeout: float, resul
             with swallow_io():
                 with time_limit(timeout):
                     exec(program, exec_globals)
-            result.append("passed")
+            result.append(1)
         except Exception:
-            result.append("failed")
+            result.append(0)
 
         # Clean up
         shutil.rmtree = rmtree

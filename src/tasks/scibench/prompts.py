@@ -31,6 +31,17 @@ Existing steps:
 {existing_steps}
 Output:'''
 
+aggregate = '''Given a science proplem, you need to answer the problem based on your existing knowledge. The input may include some existing steps to solve the question and you should choose from the given steps, which best helps you get towards a solution to the question.
+
+From the partial or fully solutions, your task is to select {k} partial or full solutions that best solves or calculates the problem. Your output must be the numbers of the selected partial or full solutions, without any explanation, reasoning, introduction, conclusion or modifucations.
+
+Below is the input, please only output the {k} indexes of your choices.
+
+Problem: {problem}
+Solutions:
+{steps}
+Output:'''
+
 
 
 bfs = '''Given a science problem, you need to answer the problem based on your existing knowledge. The input may include some existing steps to solve the question and you should continue to complete the solution based on these existing steps. 

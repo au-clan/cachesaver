@@ -43,6 +43,19 @@ class GroqAPILLM(Model):
 
         return choice, input_tokens, completion_tokens
 
+
+class GroqAPILLM(Model):
+    def __init__(self, use_multiple_keys: bool = True):
+        if use_multiple_keys:
+            self.client = KeyHandler(json.loads(GROQ_API_KEY_LIST),
+                                     Groq)
+            self.generation_function = self.client.request
+        else:
+            self.client = Groq(
+                api_key=GROQ_API_KEY,
+            )
+            self.generation_function = self.client.chat.completions.create
+
     async def request(self, request: Request) -> Response:
         # TODO GroqAPI doesnt support n>1 so this needs to be done in a simple for loop for now
         # sleep = 1

@@ -95,10 +95,35 @@ class AgentBfsSciBench(Agent):
         proposals = [parse_proposal(r, state.step_n, existing_steps) for r in proposals]
         return proposals
     
+class AgentAggregateSciBench(Agent):
+    
+    @staticmethod
+    async def act(model: Model, state: StateSciBench, actions: List[str], k: int, namespace: str, request_id: str, params: DecodingParameters) -> List[str]:
+        """
+        Returns the aggregated action for SciBench task.
+        """
+        # Format the prompt
+        steps = '\n'.join(actions)
+        prompt = prompts.aggregate.format(problem=state.puzzle, k=k, steps=steps)
+
+        # Generate the response
+        responses = await model.request(
+            prompt=prompt,
+            n=1,
+            request_id=request_id,
+            namespace=namespace,
+            params=params
+        )
+
+        # Parse the response
+        pattern = r'\d+'
+        matchs = re.findall(pattern, responses[0])
+        return [actions[int(i.strip()) - 1] for i in matchs]
+    
 class AgentEvaluateSciBench(Agent):
 
     @staticmethod
-    async def act(model: Model, state: StateSciBench, n: int,namespace: str, request_id: str, params: DecodingParameters, cache: dict=None) -> float:
+    async def act(model: Model, state: StateSciBench, n: int, namespace: str, request_id: str, params: DecodingParameters, cache: dict=None) -> float:
 
         # Check if the state is already in the cache
         if cache is not None and state.current_state in cache:

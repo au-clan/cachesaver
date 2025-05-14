@@ -1,7 +1,42 @@
+import re
 import random
 from typing import List
 import numpy as np 
-from collections import namedtuple
+
+def assign_ns(length: int, fraction: float) -> List[int]:
+    """
+    Assigns a list of integers of valuesfrom 0 to length-1, where a fraction of the list
+    is the same (-1) and the rest are unique integers.
+    """
+    x_same = round(length * fraction)
+    x_unique = length - x_same
+    ns_same = [-1] * x_same
+    ns_unique = list(range(x_unique))
+    ns = ns_same + ns_unique
+    random.seed(0)
+    random.shuffle(ns)
+    assert len(ns) == length, f"Expected output length {length}, but got {len(ns)}"
+    return ns
+
+import re
+
+def clean_log(file_path: str):
+    # Define all patterns you want to remove
+    patterns = [
+        re.compile(r'.*HTTP/1\.1 200 OK$'),
+        re.compile(r'^INFO:openai\._base_client:Retrying request to /chat/completions in \d+(\.\d+)? seconds$')
+    ]
+
+    # Read the file and filter out matching lines
+    with open(file_path, 'r') as file:
+        lines = file.readlines()
+
+    # Write back only the lines that do not match the pattern
+    with open(file_path, 'w') as file:
+        for line in lines:
+            line_stripped = line.strip()
+            if not any(pattern.match(line_stripped) for pattern in patterns):
+                file.write(line)
 
 def tokens2cost(tokens: dict, model_name: str) -> dict:
     catalog = {
@@ -12,7 +47,17 @@ def tokens2cost(tokens: dict, model_name: str) -> dict:
         "unsloth/Llama-4-Maverick-17B-128E-Instruct-FP8" : {"in": 0.15, "out": 0.15},  # guesstimated values
         "gpt-4o": {"in": 2.50, "out": 10.00},
         "gpt-4o-mini": {"in": 0.15, "out": 0.60},
-        "gpt-3.5-turbo": {"in": 0.50, "out": 1.50}
+        "gpt-3.5-turbo": {"in": 0.50, "out": 1.50},
+        
+        # GPT-4.1 models
+        "gpt-4.1-nano": {"in": 0.10, "out": 0.40},
+        "gpt-4.1-mini": {"in": 0.40, "out": 1.60},
+        "gpt-4.1": {"in": 2.00, "out": 8.00},
+
+        # LLama 4 models (Together AI)
+        "meta-llama/Llama-4-Scout-17B-16E-Instruct" : {"in": 0.18, "out": 0.59},
+        "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8" : {"in": 0.27, "out": 0.85},
+
     }
 
     catalog["llama-3.3-70b-specdec"] = catalog["meta-llama/Llama-3.3-70B-Instruct-Turbo"]

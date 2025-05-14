@@ -8,6 +8,10 @@ torch
 langchain
 langchain-community
 wikipedia
+joblib
+pyphen
+syllables
+pronouncing
 cachesaver
 groq
 lazykey

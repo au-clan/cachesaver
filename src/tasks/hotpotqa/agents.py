@@ -1,9 +1,12 @@
 import re
+import random
 from typing import List, Tuple
 
 from . import prompts as prompts
 from .state import StateHotpotQA
 from ...typedefs import Agent, Model, DecodingParameters
+
+act_cache = {}
 
 class AgentActHotpotQA(Agent):
     """
@@ -18,21 +21,34 @@ class AgentActHotpotQA(Agent):
 
         # Format the prompt
         num_examples = 2
-        examples = "(Example)\n" + "\n\n(Example)\n".join([example for example in prompts.examples_act[:num_examples]])
-        prompt = prompts.act.format(examples=examples, question=state.puzzle, current_state=state.current_state)
-        
-        # Generate the responses
-        responses = await model.request(
-            prompt=prompt,
-            n=n,
-            request_id=request_id,
-            namespace=namespace,
-            params=params
-        )
+        examples = "(Example)\n" + "\n\n(Example)\n".join([example for example in prompts.examples_bfs[:num_examples]])
+        prompt = prompts.bfs.format(examples=examples, question=state.puzzle, current_state=state.current_state)
 
-        # Parse the responses
-        actions = [r.strip() for r in responses]
-        return actions
+        if prompt in act_cache:
+            proposals = act_cache[prompt][:n]
+            act_cache[prompt] = act_cache[prompt][n:]
+        else:
+            proposals = []
+            act_cache[prompt] = []
+
+        while len(proposals) < n:
+            
+            # Generate the response
+            response = await model.request(
+                prompt=prompt,
+                n=1,
+                request_id=request_id,
+                namespace=namespace,
+                params=params
+            )
+
+            # Parse the response
+            proposals.extend(r.strip() for r in response[0].split("\n"))
+        random.seed(state.randomness)
+        random.shuffle(proposals)
+        act_cache[prompt].extend(proposals[n:])
+        return proposals[:n]
+        
 
 class AgentBfsHotpotQA(Agent):
     """
@@ -46,7 +62,7 @@ class AgentBfsHotpotQA(Agent):
         """
 
         # Format the prompt
-        num_examples = 3
+        num_examples = 2
         examples = "(Example)\n" + "\n\n(Example)\n".join([example for example in prompts.examples_bfs[:num_examples]])
         prompt = prompts.bfs.format(examples=examples, question=state.puzzle, current_state=state.current_state)
 
@@ -155,11 +171,14 @@ class AgentEvaluateHotpotQA(Agent):
 
         # Parse the responses
         values = []
+        pattern = r"\b(?:correctness[\s_]?score|score for correctness|correctness)\b(?:\s*(?:is|=|:|was|stands at|of))?\s*(-?\d+(?:\.\d+)?)"
+        
         for response in responses:
-            try:
-                value = int(re.search(r"correctness score is (\d+)", response).group(1))
-            except AttributeError:
-                print(f"Unable to parse value from response : {response}")
+            match = re.search(pattern, response, re.IGNORECASE)
+            if match:
+                value = float(match.group(1))
+            else:
+                #print(f"Unable to parse value from response : {response}")
                 value = 1
             values.append(value)
         value = sum(values)
