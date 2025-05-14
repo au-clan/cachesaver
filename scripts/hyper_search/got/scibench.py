@@ -21,73 +21,19 @@ from src.models import OnlineLLM, API
 from src.typedefs import DecodingParameters
 from src.tasks.scibench import *
 
-def build_method(method_name: str, params: DecodingParameters, api: API, config: OmegaConf):
-# Setup the method
-    if method_name == "foa":
-        agents = AgentDictFOA(
-            step=AgentActSciBench,
-            evaluate=AgentEvaluateSciBench,
-            step_params=params,
-            eval_params=params,
-        )
-        method = AlgorithmFOA(
-            model=api,
-            agents=agents,
-            env=EnvironmentSciBench,
-            num_agents=config.foa.num_agents,
-            num_steps=config.foa.num_steps,
-            k=config.foa.k,
-            backtrack=config.foa.backtrack,
-            resampling=config.foa.resampling,
-            origin=config.foa.origin,
-            min_steps=config.foa.min_steps,
-            num_evaluations=config.foa.num_evaluations,
-        )
-    elif method_name == "tot_bfs":
-        agents = AgentDictTOT(
-            step=AgentBfsSciBench,
-            evaluate=AgentEvaluateSciBench,
-            step_params=params,
-            eval_params=params,
-        )
-        method = AlgorithmTOT(
-            model=api,
-            agents=agents,
-            env=EnvironmentSciBench,
-            num_selections=config.tot_bfs.num_selections,
-            num_steps=config.tot_bfs.num_steps,
-            num_evaluations=config.tot_bfs.num_evaluations,
-        )
-    elif method_name == "got":
-        agents = AgentDictGOT(
-            step=AgentBfsSciBench,
-            aggregate=AgentAggregateSciBench,
-            evaluate=AgentEvaluateSciBench,
-            step_params=params,
-            aggregate_params=params,
-            eval_params=params,
-        )
-        method = AlgorithmGOT(
-            model=api,
-            agents=agents,
-            env=EnvironmentSciBench,
-            num_selections=config.got.num_selections,
-            num_steps=config.got.num_steps,
-            num_best=config.got.num_best,
-            num_evaluations=config.got.num_evaluations,
-        )
-    else:
-        raise NotImplementedError(f"Method {method_name} is not implemented yet.")
-    return method
-
 async def run(args, trial, cache_path):
+
     # Cache to be used
     os.makedirs(os.path.dirname(cache_path), exist_ok=True)
     cache = Cache(cache_path)
 
     # LLM Provider
     if args.provider == "openai":
-        client = AsyncOpenAI()
+        if args.base_url and "localhost" in args.base_url:
+            # For local vLLM servers, use a dummy API key
+            client = AsyncOpenAI(base_url=args.base_url, api_key="dummy-key")
+        else:
+            client = AsyncOpenAI(base_url=args.base_url) if args.base_url else AsyncOpenAI()
     elif args.provider == "together":
         client = AsyncTogether()
     elif args.provider == "local":
@@ -130,7 +76,20 @@ async def run(args, trial, cache_path):
     config = OmegaConf.load(args.conf_path)
 
     # Build the method
-    method = build_method(args.method, params, api, config)
+    agents = AgentDictTOT(
+        step=AgentBfsSciBench,
+        evaluate=AgentEvaluateSciBench,
+        step_params=params,
+        eval_params=params,
+    )
+    method = AlgorithmTOT(
+        model=api,
+        agents=agents,
+        env=EnvironmentSciBench,
+        num_selections=args.num_selections,
+        num_steps=args.num_steps,
+        num_evaluations=args.num_evaluations,
+    )
 
     # Load the dataset
     benchmark = BenchmarkSciBench(path=args.dataset_path, split=args.split, task=args.task)
@@ -181,14 +140,12 @@ async def run(args, trial, cache_path):
     logger.info(f"Tokens (detailed): {api.tokens} (trial {trial})")
     logger.info(f"Calls (detailed): {api.calls} (trial {trial})")
     logger.info(f"Reuse (detailed): {reuse} (trial {trial})")
-    
-    print("All good.")
-
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Solve Game 24 using LLMs.")
+    parser = argparse.ArgumentParser(description="Solve SciBench using LLMs.")
     parser.add_argument("--provider", type=str, help="LLM provider")
+    parser.add_argument("--base_url", type=str, help="Base URL for the API")
     parser.add_argument("--model", type=str, help="LLM model")
     parser.add_argument("--batch_size", type=int, help="CacheSaver's batch size")
     parser.add_argument("--timeout", type=float, help="CacheSaver's timeout")
@@ -203,10 +160,13 @@ if __name__ == "__main__":
     parser.add_argument("--conf_path", type=str, help="Path to corresponding config")
     parser.add_argument("--value_cache", action="store_true", help="Use value cache")
     parser.add_argument("--correctness", type=int, help="Use original ('correct') implementation")
-    parser.add_argument("--task", type=str, help="Task to run", default="chemmc")
+    parser.add_argument("--task", type=str, help="Task to run")
+    parser.add_argument("--num_selections", type=int, help="Tree width")
+    parser.add_argument("--num_steps", type=int, help="Number of steps")
+    parser.add_argument("--num_evaluations", type=int, help="Number of evaluations")
     args = parser.parse_args()
 
-    filename = f"logs/correctness/{args.model.split('/')[-1]}/scibench_{args.task}/{args.method}.log"
+    filename = f"logs/hypersearch/{args.model.split('/')[-1]}/{args.method}/scibench_{args.batch_size}.log"
     os.makedirs(os.path.dirname(filename), exist_ok=True)
     logging.basicConfig(level=logging.INFO, filename=filename, filemode="a")
     logger.info("#"*50)
@@ -215,16 +175,15 @@ if __name__ == "__main__":
     with open(filename, "r") as f:
         contents = f.read()
     
+    previous_trials = [int(num) for num in re.findall(r"Shared Namespace and Batch \(trial (\d+)\)", contents)]
+    trial = max(previous_trials) + 1 if previous_trials else 1
+    logger.info(f"Shared Namespace (trial {trial})")
+    logger.info(f"num_selections: {args.num_selections}, num_steps: {args.num_steps}, num_evaluations: {args.num_evaluations} (trial {trial})")
+    
     if args.batch_size == 1:
-        previous_trials = [int(num) for num in re.findall(r"Shared Namespace \(trial (\d+)\)", contents)]
-        trial = max(previous_trials) + 1 if previous_trials else 1
-        logger.info(f"Shared Namespace (trial {trial})")
-        cache_path = f"caches/correctness/scibench/{args.method}/sns_{trial}"
+        cache_path = f"caches/hypersearch/scibench/{args.method}_{trial}"
     else:
-        previous_trials = [int(num) for num in re.findall(r"Shared Namespace and Batch \(trial (\d+)\)", contents)]
-        trial = max(previous_trials) + 1 if previous_trials else 1
-        logger.info(f"Shared Namespace and Batch (trial {trial})")
-        cache_path = f"caches/correctness/scibench/{args.method}/snsb_{trial}"
+        cache_path = f"caches/hypersearch/scibench/{args.method}"
 
     asyncio.run(run(args, trial=trial, cache_path=cache_path))
     logger.info("\n"*3)

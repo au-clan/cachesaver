@@ -22,7 +22,7 @@ from src.typedefs import DecodingParameters
 from src.tasks.game24 import *
 
 async def run(args, trial, cache_path):
-    
+
     # Cache to be used
     os.makedirs(os.path.dirname(cache_path), exist_ok=True)
     cache = Cache(cache_path)
@@ -168,7 +168,7 @@ if __name__ == "__main__":
     parser.add_argument("--num_evaluations", type=int, help="Number of evaluations")
     args = parser.parse_args()
 
-    filename = f"logs/hypersearch/{args.model.split('/')[-1]}/{args.method}/game24_{args.batch_size}.log"
+    filename = f"logs/hypersearch/{args.model.split('/')[-1]}/{args.method}/game24__{args.batch_size}.log"
     os.makedirs(os.path.dirname(filename), exist_ok=True)
     logging.basicConfig(level=logging.INFO, filename=filename, filemode="a")
     logger.info("#"*50)
@@ -177,15 +177,15 @@ if __name__ == "__main__":
     with open(filename, "r") as f:
         contents = f.read()
     
-    previous_trials = [int(num) for num in re.findall(r"Shared Namespace and Batch \(trial (\d+)\)", contents)]
+    previous_trials = [int(num) for num in re.findall(r"Shared Namespace \(trial (\d+)\)", contents)]
     trial = max(previous_trials) + 1 if previous_trials else 1
     logger.info(f"Shared Namespace (trial {trial})")
     logger.info(f"num_selections: {args.num_selections}, num_steps: {args.num_steps}, num_evaluations: {args.num_evaluations} (trial {trial})")
 
     if args.batch_size == 1:
-        cache_path = f"caches/hypersearch/game24/{args.method}_{trial}"
+        cache_path = f"caches/hypersearch/game24_/{args.method}_{trial}"
     else:
-        cache_path = f"caches/hypersearch/game24/{args.method}"
+        cache_path = f"caches/hypersearch/game24_/{args.method}"
 
     asyncio.run(run(args, trial=trial, cache_path=cache_path))
     logger.info("\n"*3)
