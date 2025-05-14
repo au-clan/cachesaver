@@ -22,10 +22,10 @@ split="test"
 # Delete caches if they exist
 
 for num_selections in 5 3 1; do
-    for num_steps in 8 6 4; do # Game of 24
+    for num_steps in 8 6 4; do 
         for num_evaluations in 3 1 2; do
             echo "Running with num_selections: $num_selections, num_steps: $num_steps, num_evaluations: $num_evaluations"
-            carbontracker --log_dir='./logs/carbontracker/hyper_search/tot_bfs/scibench/' python "scripts/hyper_search/${method}/${benchmark}.py" \
+            python "scripts/hyper_search/${method}/${benchmark}.py" \
                 --provider "$provider" \
                 --model "$model" \
                 --base_url "$base_url" \
