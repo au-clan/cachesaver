@@ -4,3 +4,9 @@ got:
   num_generate: 5
   num_evaluations: 3
   num_best: 2
+
+rap:
+  num_iterations: 10
+  num_samples: 5
+  num_evaluations: 3
+  exploration_constant: 1.0

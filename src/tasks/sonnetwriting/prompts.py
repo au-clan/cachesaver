@@ -262,3 +262,113 @@ Selected 2 best sonnets:
 2
 3'''
 ]
+
+# React prompt for SonnetWriting
+react = '''You are fluent in sonnet writing. You will be given a task that specifies the rhyme scheme and words that must be included. Your task is to write a sonnet that follows these requirements while maintaining poetic quality.
+
+You should think step by step about the logical reasoning needed to write the sonnet:
+
+1. First, analyze the rhyme scheme and required words
+2. Then, plan how to incorporate the required words naturally
+3. Next, develop a theme that connects these words meaningfully
+4. Finally, write the sonnet following the required format
+
+(Example)
+Task: Write a sonnet with rhyme scheme ABAB CDCD EFEF GG and include the words: grass, value, jail
+
+Thought: Let me analyze the requirements step by step:
+1. Need to follow ABAB CDCD EFEF GG rhyme scheme
+2. Must include "grass", "value", and "jail" naturally
+3. Should create a theme connecting these words
+4. Need to write in iambic pentameter
+
+Thought: Let me plan the sonnet structure:
+1. First quatrain: Introduce "grass" and set the scene
+2. Second quatrain: Incorporate "jail" and develop theme
+3. Third quatrain: Use "value" and reinforce theme
+4. Couplet: Conclude with a meaningful message
+
+Thought: Now I'll write the sonnet following this plan:
+
+The river bends beside the morning grass (A)
+A shimmer dances on the silver tide (B)
+The hours like golden moments swiftly pass (A)
+And fortune's value flows with gentle pride (B)
+
+The jail of fear breaks open with the breeze (C)
+The open fields forgive the bitter rain (D)
+The grass revives beneath the waking trees (C)
+And songs of hope replace the cries of pain (D)
+
+Bright grasslands whisper secrets to the skies (E)
+The jail of winter thaws beneath the light (F)
+The value found in spring will never die (E)
+But bloom in endless fields beyond our sight (F)
+
+The grass will grow where broken dreams once fall (G)
+And value shines within the hearts of all. (G)
+
+---
+The river bends beside the morning grass (A)
+A shimmer dances on the silver tide (B)
+The hours like golden moments swiftly pass (A)
+And fortune's value flows with gentle pride (B)
+
+The jail of fear breaks open with the breeze (C)
+The open fields forgive the bitter rain (D)
+The grass revives beneath the waking trees (C)
+And songs of hope replace the cries of pain (D)
+
+Bright grasslands whisper secrets to the skies (E)
+The jail of winter thaws beneath the light (F)
+The value found in spring will never die (E)
+But bloom in endless fields beyond our sight (F)
+
+The grass will grow where broken dreams once fall (G)
+And value shines within the hearts of all. (G)
+
+---END-OF-SONNET---
+
+(End of example)
+
+Remember, your task is to think step by step and write a sonnet that follows the required rhyme scheme and includes all specified words naturally. Do not add any explanation, comments, introduction or conclusion, you shall only return your sonnet followed by ---END-OF-SONNET---.
+
+Task: {input}
+
+Current reasoning:
+{current_state}
+
+---
+'''
+
+# Self-evaluation prompts for SonnetWriting
+self_evaluate_step = '''You are evaluating a step in sonnet writing. Given the task requirements and the current step, determine if this step is correct and contributes to a good sonnet. Consider:
+1. Does it follow the required rhyme scheme?
+2. Does it maintain iambic pentameter?
+3. Does it contribute to the overall theme?
+4. Does it use the required words naturally?
+
+Task: {input}
+
+Previous steps:
+{previous_steps}
+
+Current step: {step}
+
+Is this step correct and well-written? Answer with a single word: Yes or No.
+'''
+
+self_evaluate_answer = '''You are evaluating a complete sonnet. Given the task requirements and the sonnet, determine if it meets all criteria. Consider:
+1. Does it follow the required rhyme scheme?
+2. Does it include all required words naturally?
+3. Does it maintain iambic pentameter throughout?
+4. Does it have a coherent theme and imagery?
+5. Is it grammatically correct and poetic?
+
+Task: {input}
+
+Sonnet:
+{sonnet}
+
+Is this sonnet correct and well-written? Answer with a single word: Yes or No.
+'''
