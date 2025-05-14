@@ -76,18 +76,22 @@ async def run(args, trial, cache_path):
     config = OmegaConf.load(args.conf_path)
 
     # Build the method
-    agents = AgentDictTOT(
-        step=AgentBfsSciBench,
+    agents = AgentDictGOT(
+        step=AgentActSciBench,
+        aggregate=AgentAggregateSciBench,
         evaluate=AgentEvaluateSciBench,
         step_params=params,
+        aggregate_params=params,
         eval_params=params,
     )
-    method = AlgorithmTOT(
+    method = AlgorithmGOT(
         model=api,
         agents=agents,
         env=EnvironmentSciBench,
         num_selections=args.num_selections,
         num_steps=args.num_steps,
+        num_generate=args.num_generate,
+        num_best=args.num_best,
         num_evaluations=args.num_evaluations,
     )
 
@@ -166,7 +170,7 @@ if __name__ == "__main__":
     parser.add_argument("--num_evaluations", type=int, help="Number of evaluations")
     args = parser.parse_args()
 
-    filename = f"logs/hypersearch/{args.model.split('/')[-1]}/{args.method}/scibench_{args.batch_size}.log"
+    filename = f"logs/hypersearch/{args.model.split('/')[-1]}/{args.method}/scibench__{args.batch_size}.log"
     os.makedirs(os.path.dirname(filename), exist_ok=True)
     logging.basicConfig(level=logging.INFO, filename=filename, filemode="a")
     logger.info("#"*50)
@@ -175,15 +179,15 @@ if __name__ == "__main__":
     with open(filename, "r") as f:
         contents = f.read()
     
-    previous_trials = [int(num) for num in re.findall(r"Shared Namespace and Batch \(trial (\d+)\)", contents)]
+    previous_trials = [int(num) for num in re.findall(r"Shared Namespace \(trial (\d+)\)", contents)]
     trial = max(previous_trials) + 1 if previous_trials else 1
     logger.info(f"Shared Namespace (trial {trial})")
     logger.info(f"num_selections: {args.num_selections}, num_steps: {args.num_steps}, num_evaluations: {args.num_evaluations} (trial {trial})")
-    
+
     if args.batch_size == 1:
-        cache_path = f"caches/hypersearch/scibench/{args.method}_{trial}"
+        cache_path = f"caches/hypersearch/scibench_/{args.method}_{trial}"
     else:
-        cache_path = f"caches/hypersearch/scibench/{args.method}"
+        cache_path = f"caches/hypersearch/scibench_/{args.method}"
 
     asyncio.run(run(args, trial=trial, cache_path=cache_path))
     logger.info("\n"*3)
