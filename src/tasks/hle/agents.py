@@ -45,7 +45,7 @@ class AgentAggregateHLE(Agent):
         Returns a list of k selected actions for the HLE task.
         """
         # Format the prompt
-        prompt = prompts.aggregate.format(k=k, question=state.question, actions='\n'.join(actions))
+        prompt = prompts.aggregate.format(k=k, question=state.question, actions='\n'.join([f'({i + 1})' + action for i, action in enumerate(actions)]))
 
         # Generate the responses
         responses = await model.request(
@@ -57,8 +57,8 @@ class AgentAggregateHLE(Agent):
         )
 
         # Parse the responses
-        selected_actions = [r.strip() for r in responses[0].split("\n")]
-        return selected_actions
+        selected_actions = [r.strip() for r in responses[0].strip().replace(",", "").split(" ")]
+        return [actions[int(i.strip()) - 1] for i in selected_actions]
 
 class AgentBfsHLE(Agent):
     """
@@ -129,8 +129,8 @@ class AgentEvaluateHLE(Agent):
         Returns an evaluation for the HLE task.
         """
         # Check if the state is already in the cache
-        if cache is not None and state.serialize() in cache:
-            return cache[state.serialize()]
+        if cache is not None and state.steps[-1] in cache:
+            return cache[state.steps[-1]]
 
         # Format the prompt
         num_examples = 2
@@ -159,5 +159,5 @@ class AgentEvaluateHLE(Agent):
 
         # Cache the value
         if cache is not None:
-            cache[state.serialize()] = value
+            cache[state.steps[-1]] = value
         return value

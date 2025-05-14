@@ -11,7 +11,7 @@ from cachesaver.pipelines import OnlineAPI
 logger = logging.getLogger(__name__)
 import sys
 sys.path.append(os.getcwd())
-import pdb
+# import pdb
 
 from src.utils import tokens2cost
 from src.algorithms import *
@@ -19,7 +19,7 @@ from src.models import OnlineLLM, API
 from src.typedefs import DecodingParameters
 from src.tasks.hle.environment import EnvironmentHLE
 from src.tasks.hle.benchmark import BenchmarkHLE
-from src.tasks.hle.agents import AgentActHLE, AgentEvaluateHLE, AgentBfsHLE
+from src.tasks.hle.agents import AgentActHLE, AgentAggregateHLE, AgentEvaluateHLE, AgentBfsHLE
 
 cache = Cache(f"caches/hle")
 
@@ -104,6 +104,25 @@ async def run(args):
             num_steps=config.tot.num_steps,
             num_evaluations=config.tot.num_evaluations,
         )
+    elif args.method == "got":
+        agents = AgentDictGOT(
+            step=AgentActHLE,
+            aggregate=AgentAggregateHLE,
+            evaluate=AgentEvaluateHLE,
+            step_params=params,
+            aggregate_params=params,
+            eval_params=params,
+        )
+        method = AlgorithmGOT(
+            model=api,
+            agents=agents,
+            env=EnvironmentHLE,
+            num_selections=config.got.num_selections,
+            num_steps=config.got.num_steps,
+            num_generate=config.got.num_generate,
+            num_best=config.got.num_best,
+            num_evaluations=config.got.num_evaluations,
+        )
     else:
         raise NotImplementedError("Method not implemented yet.")
     
@@ -121,7 +140,7 @@ async def run(args):
     logger.debug(f"- Share NS: {args.share_ns}")
     logger.debug(f"- Value Cache: {args.value_cache}")
 
-    pdb.set_trace()
+    # pdb.set_trace()
     results = await method.benchmark(
         benchmark=benchmark,
         share_ns=args.share_ns,
@@ -165,7 +184,7 @@ async def run(args):
         logging.error("No tasks were finished. Exiting.")
         return
     
-    pdb.set_trace()
+    # pdb.set_trace()
     acc_finished = sum(finished) / len(finished)
     acc_correct = sum(correct) / len(correct)
     
@@ -195,7 +214,7 @@ if __name__ == "__main__":
     parser.add_argument("--dataset_path", type=str, help="Path to the dataset", default="datasets/dataset_hle_sample_without_images.jsonl.gz")
     parser.add_argument("--split", type=str, help="Split of the dataset", choices=["mini", "train", "validation", "test"], default="mini")
     parser.add_argument("--share_ns", action="store_true", help="Share namespace between puzzles")
-    parser.add_argument("--method", type=str, help="Method to use", choices=["foa", "tot"], default="foa")
+    parser.add_argument("--method", type=str, help="Method to use", choices=["foa", "tot", "got"], default="foa")
     parser.add_argument("--conf_path", type=str, help="Path to corresponding config", default="scripts/hle.yaml")
     parser.add_argument("--value_cache", action="store_true", help="Use value cache")
     args = parser.parse_args()

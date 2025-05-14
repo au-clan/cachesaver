@@ -13,3 +13,10 @@ tot:
   num_selections: 4
   num_steps: 6
   num_evaluations: 3
+
+got:
+  num_selections: 3
+  num_steps: 6
+  num_generate: 5
+  num_evaluations: 3
+  num_best: 2

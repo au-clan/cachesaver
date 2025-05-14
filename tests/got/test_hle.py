@@ -8,7 +8,7 @@ from cachesaver.pipelines import OnlineAPI
 
 from src.algorithms import AgentDictGOT, AlgorithmGOT
 from src.models import API
-from src.typedefs import Algorithm, DecodingParameters
+from src.typedefs import DecodingParameters
 from src.tasks.hle import (
     EnvironmentHLE,
     AgentActHLE,
@@ -21,7 +21,7 @@ from src.tasks.hle import (
 class TestGoTHLE:
     params = DecodingParameters(
         temperature=0.7,
-        max_completion_tokens=4000,
+        max_completion_tokens=400,
         top_p=1.0,
         stop=None,
         logprobs=False,
