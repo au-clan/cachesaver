@@ -191,8 +191,23 @@ Input: {input}
 Answer: {answer}
 Judge:'''
 
-# React prompt for Game24
-react = '''Use numbers and basic arithmetic operations (+ - * /) to obtain 24. Each step, you are only allowed to choose two of the remaining numbers to obtain a new number. Think step by step and plan your moves carefully.
+react = """Use numbers and basic arithmetic operations (+ - * /) to obtain 24. Each step, you are only allowed to choose two of the remaining numbers to obtain a new number. Do not explain simply list one possible next step, as well as all the remaining numbers and nothing else. Before providing the next step, provide a short thought on the problem and the existing steps. 
+
+Use the following format:
+"Thought: $...$"
+Possible next step:
+$...$".
+
+Example: 2 8 8 14
+Thought: 14 is big, maybe I can subtract something from it to get a number I can multiply up to 24.
+Possible next step:
+14 - 8 = 6 (left: 2 8 6)
+
+Input: {input}
+"""
+
+# RAP prompt for Game24
+rap = '''Use numbers and basic arithmetic operations (+ - * /) to obtain 24. Each step, you are only allowed to choose two of the remaining numbers to obtain a new number. Think step by step and plan your moves carefully.
 
 Example: 2 8 8 14
 Thought: I need to get to 24. Let me analyze the numbers and plan my moves.
