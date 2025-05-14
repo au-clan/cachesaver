@@ -150,22 +150,24 @@ class AgentReactLogiQA(Agent):
         )
 
         # Parse the response to extract actions
-        actions = []
+        proposals = []
         for response in responses:
-            # Split response into thought-action pairs
-            pairs = response.split('\n\n')
-            for pair in pairs:
-                if pair.startswith('Action:'):
-                    action = pair.replace('Action:', '').strip()
-                    if action.startswith('Finish['):
-                        # Extract the answer from Finish[answer]
-                        answer = action[7:-1].strip().lower()
-                        if answer in ['a', 'b', 'c', 'd']:
-                            actions.append(answer)
-                    else:
-                        # For intermediate actions, just append the action
-                        actions.append(action)
-        return actions
+            # Look for the answer after the last "---"
+            if "---" in response:
+                answer = response.split("---")[-1].strip()
+                if answer.lower().startswith("answer: "):
+                    answer = answer.lower().replace("answer: ", "").strip()
+                    if answer in ['a', 'b', 'c', 'd']:
+                        proposals.append(answer)
+            else:
+                # If no "---" found, try to extract from the last line
+                last_line = response.strip().split('\n')[-1].lower()
+                if last_line.startswith('answer: '):
+                    answer = last_line.replace('answer: ', '').strip()
+                    if answer in ['a', 'b', 'c', 'd']:
+                        proposals.append(answer)
+
+        return proposals
 
 class AgentSelfEvaluateLogiQA(Agent):
     @staticmethod
@@ -193,7 +195,7 @@ class AgentSelfEvaluateLogiQA(Agent):
                 paragraph=state.context,
                 question=state.question,
                 choices=choices,
-                steps=state.reasoning_steps,
+                steps=state.steps,
                 answer=state.current_state
             )
         else:
@@ -202,7 +204,7 @@ class AgentSelfEvaluateLogiQA(Agent):
                 paragraph=state.context,
                 question=state.question,
                 choices=choices,
-                previous_steps=state.reasoning_steps,
+                previous_steps=state.current_state,
                 step=state.current_state
             )
 
