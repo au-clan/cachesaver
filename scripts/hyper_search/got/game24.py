@@ -90,8 +90,8 @@ async def run(args, trial, cache_path):
         env=EnvironmentGame24,
         num_selections=args.num_selections,
         num_steps=args.num_steps,
-        num_generate=args.num_generate,
-        num_best=args.num_best,
+        num_generate=config.got.num_generate,
+        num_best=config.got.num_best,
         num_evaluations=args.num_evaluations,
     )
 

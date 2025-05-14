@@ -31,7 +31,7 @@ for num_selections in 5 3 1; do
                 --dataset_path "datasets/dataset_${benchmark}.csv.gz" \
                 --split "$split" \
                 --method "$method" \
-                --conf_path "scripts/correctness/${benchmark}.yaml" \
+                --conf_path "scripts/old/${benchmark}.yaml" \
                 --correctness 0 \
                 --value_cache \
                 --num_selections "$num_selections" \
