@@ -181,7 +181,11 @@ if __name__ == "__main__":
     trial = max(previous_trials) + 1 if previous_trials else 1
     logger.info(f"Shared Namespace and Batch (trial {trial})")
     logger.info(f"num_selections: {args.num_selections}, num_steps: {args.num_steps}, num_evaluations: {args.num_evaluations} (trial {trial})")
-    cache_path = f"caches/hypersearch/game24/{args.method}"
+
+    if args.batch_size == 1:
+        cache_path = f"caches/hypersearch/game24/{args.method}_{trial}"
+    else:
+        cache_path = f"caches/hypersearch/game24/{args.method}"
 
     asyncio.run(run(args, trial=trial, cache_path=cache_path))
     logger.info("\n"*3)
