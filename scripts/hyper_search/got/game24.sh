@@ -5,7 +5,7 @@
 benchmark="game24"
 
 # Define methods
-method="tot_bfs" # =("foa" "tot_bfs" "tot_dfs" "got" "rap" "react" "reflexion" "rafa" "rest_mcts")
+method="got" # =("foa" "tot_bfs" "tot_dfs" "got" "rap" "react" "reflexion" "rafa" "rest_mcts")
 
 # Define models
 provider="openai"

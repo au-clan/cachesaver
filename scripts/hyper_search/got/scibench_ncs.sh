@@ -5,7 +5,7 @@
 benchmark="scibench"
 
 # Define methods
-method="tot_bfs" # =("foa" "tot_bfs" "tot_dfs" "got" "rap" "react" "reflexion" "rafa" "rest_mcts")
+method="got" # =("foa" "tot_bfs" "tot_dfs" "got" "rap" "react" "reflexion" "rafa" "rest_mcts")
 
 # Define models
 provider="openai"
@@ -17,7 +17,7 @@ split="test"
 # Delete caches if they exist
 
 for num_selections in 5 3 1; do
-    for num_steps in 4; do # Game of 24
+    for num_steps in 8 6 4; do 
         for num_evaluations in 3 1 2; do
             echo "Running with num_selections: $num_selections, num_steps: $num_steps, num_evaluations: $num_evaluations"
             python "scripts/hyper_search/${method}/${benchmark}.py" \
