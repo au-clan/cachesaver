@@ -116,7 +116,7 @@ async def run(args, trial, cache_path):
 
     # LLM Provider
     if args.provider == "openai":
-        if args.base_url and "localhost" in args.base_url:
+        if args.base_url and "v1" in args.base_url:
             # For local vLLM servers, use a dummy API key
             client = AsyncOpenAI(base_url=args.base_url, api_key="dummy-key")
         else:
