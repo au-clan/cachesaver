@@ -3,10 +3,29 @@ import random
 from typing import List
 import numpy as np 
 
-def clean_log(file_path: str):
+def assign_ns(length: int, fraction: float) -> List[int]:
+    """
+    Assigns a list of integers of valuesfrom 0 to length-1, where a fraction of the list
+    is the same (-1) and the rest are unique integers.
+    """
+    x_same = round(length * fraction)
+    x_unique = length - x_same
+    ns_same = [-1] * x_same
+    ns_unique = list(range(x_unique))
+    ns = ns_same + ns_unique
+    random.seed(0)
+    random.shuffle(ns)
+    assert len(ns) == length, f"Expected output length {length}, but got {len(ns)}"
+    return ns
 
-    # Define the pattern to match the lines you want to remove
-    pattern = re.compile(r'^INFO:httpx:HTTP Request: POST https://api\.openai\.com/v1/chat/completions "HTTP/1\.1 200 OK"$')
+import re
+
+def clean_log(file_path: str):
+    # Define all patterns you want to remove
+    patterns = [
+        re.compile(r'^INFO:httpx:HTTP Request: POST https://api\.openai\.com/v1/chat/completions "HTTP/1\.1 200 OK"$'),
+        re.compile(r'^INFO:openai\._base_client:Retrying request to /chat/completions in \d+(\.\d+)? seconds$')
+    ]
 
     # Read the file and filter out matching lines
     with open(file_path, 'r') as file:
@@ -15,7 +34,8 @@ def clean_log(file_path: str):
     # Write back only the lines that do not match the pattern
     with open(file_path, 'w') as file:
         for line in lines:
-            if not pattern.match(line.strip()):
+            line_stripped = line.strip()
+            if not any(pattern.match(line_stripped) for pattern in patterns):
                 file.write(line)
 
 def tokens2cost(tokens: dict, model_name: str) -> dict:

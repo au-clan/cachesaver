@@ -19,7 +19,7 @@ class AgentActHLE(Agent):
         # Format the prompt
         num_examples = 2
         examples = "(Example)\n" + "\n\n(Example)\n".join([example for example in prompts.examples_act[:num_examples]])
-        prompt = prompts.act.format(examples=examples, question=state.question, current_state=state.serialize())
+        prompt = prompts.act.format(examples=examples, question=state.question, current_state="\n".join(state.steps))
 
         # Generate the responses
         responses = await model.request(
@@ -122,11 +122,14 @@ class AgentEvaluateHLE(Agent):
 
         # Parse the responses
         values = []
+        pattern = r"\b(?:correctness[\s_]?score|score for correctness|correctness)\b(?:\s*(?:is|=|:|was|stands at|of))?\s*(-?\d+(?:\.\d+)?)"
+
         for response in responses:
-            try:
-                value = int(re.search(r"correctness score is (\d+)", response).group(1))
-            except AttributeError:
-                print(f"Unable to parse value from response: {response}")
+            match = re.search(pattern, response, re.IGNORECASE)
+            if match:
+                value = float(match.group(1))
+            else:
+                print(f"Unable to parse value from response : {response}")
                 value = 1
             values.append(value)
         value = sum(values)

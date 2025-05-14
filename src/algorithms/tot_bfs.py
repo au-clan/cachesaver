@@ -54,6 +54,7 @@ class AlgorithmTOT(Algorithm):
                 for i, state in enumerate(states)
             ]
             actions = await asyncio.gather(*action_coroutines)
+                
 
             # Execute actions
             state_proposals = []
@@ -83,7 +84,7 @@ class AlgorithmTOT(Algorithm):
             
             # Early stopping condition
             for state in states:
-                if self.env.evaluate(state)[1]:
+                if self.env.evaluate(state)[1]==1:
                     return states
 
         return states

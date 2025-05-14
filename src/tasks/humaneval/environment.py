@@ -90,20 +90,19 @@ def evaluate_code_python(code: str, entry_point: str, test: str) -> Tuple[bool, 
     """
     manager = multiprocessing.Manager()
     result = manager.list()
-
-    p = multiprocessing.Process(target=unsafe_execute, args=(code, entry_point, test, TIMEOUT, result))
-    p.start()
-    p.join(timeout=TIMEOUT+1)
-    if p.is_alive():
-        p.kill()
+    ts = separate_tests(test)
+    for t in ts:
+        p = multiprocessing.Process(target=unsafe_execute, args=(code, entry_point, t, TIMEOUT, result))
+        p.start()
+        p.join(timeout=TIMEOUT+1)
+        if p.is_alive():
+            p.kill()
 
     if not result:
         return False, 0.0
     
-    if result[0] == "passed":
-        return True, 1.0
     else:
-        return True, 0.0
+        return True, sum(result) / len(result)
     
 def evaluate_code_rust(code: str, entry_point: str, test: str) -> Tuple[bool, float]:
     """
@@ -145,8 +144,12 @@ def evaluate_code_rust(code: str, entry_point: str, test: str) -> Tuple[bool, fl
         return True, 1.0
     
 
-
-
+def separate_tests(test):
+    parts = test.split("def check(candidate):")
+    tests = parts[-1].strip().split("\n")
+    tests = [parts[0] + f"""def check(candidate):
+    {t.strip()}""".strip() for t in tests]
+    return tests
 
 #---Context Managers---#
 # From HumanEval repo for evaluating code with timelimit and a bit more securely. Still recommending to do it inside a sandbox.
@@ -173,9 +176,9 @@ def unsafe_execute(code: str, entry_point: str, test: str, timeout: float, resul
             with swallow_io():
                 with time_limit(timeout):
                     exec(program, exec_globals)
-            result.append("passed")
+            result.append(1)
         except Exception:
-            result.append("failed")
+            result.append(0)
 
         # Clean up
         shutil.rmtree = rmtree

@@ -17,7 +17,12 @@ class AlgorithmTOT_DFS(Algorithm):
                 env: Environment,
                 num_selections: int,
                 num_steps: int,
-                num_evaluations: int
+                num_evaluations: int,
+                convergence_threshold: float,
+                pruning_threshold: float,
+                confidence_threshold: float,
+                max_iterations: int,
+                convergence_count: int
                 ):
         super().__init__(model, agents, env)
         self.step_agent = agents["step"]
@@ -30,7 +35,17 @@ class AlgorithmTOT_DFS(Algorithm):
         self.num_steps = num_steps
         self.num_evaluations = num_evaluations
 
-    async def solve_dfs(self, idx:int, state: State, namespace: str, convergence_threshold : int =0.6, pruning_threshold : int = 0.1, confidence_threshold: int = 20, max_iterations :int = 10 , convergence_count : int = 20, value_cache: dict = None):
+        self.convergence_threshold = convergence_threshold
+        self.pruning_threshold = pruning_threshold
+        self.confidence_threshold = confidence_threshold
+        self.max_iterations = max_iterations
+        self.convergence_count = convergence_count
+
+        """
+        max_iterations: Attempts Unique branches
+        """
+
+    async def solve(self, idx:int, state: State, namespace: str, value_cache: dict = None):
 
         ## cachesaver
         randomness = idx
@@ -87,13 +102,13 @@ class AlgorithmTOT_DFS(Algorithm):
                 output.append((best_state, best_value))
 
                 # Early stopping if confidence is high
-                if confidence_threshold is not None and best_value >= confidence_threshold:
+                if self.confidence_threshold is not None and best_value >= self.confidence_threshold:
                     print(f"Early stopping: Confidence threshold met. Value = {best_value}")
                     return True
 
                 # Check for convergence (if the value has not improved significantly)
-                if prev_best_value is not None and convergence_threshold is not None:
-                    if abs(best_value - prev_best_value) < convergence_threshold:
+                if prev_best_value is not None and self.convergence_threshold is not None:
+                    if abs(best_value - prev_best_value) < self.convergence_threshold:
                         consecutive_convergence_count += 1  # Increase the count if the change is small
                     else:
                         consecutive_convergence_count = 0  # Reset the count if there's a significant change
@@ -102,8 +117,8 @@ class AlgorithmTOT_DFS(Algorithm):
                 iteration_count += 1  # Increment the iteration count
 
                 # Stop if we've reached the max number of iterations or if convergence criteria are met
-                if (max_iterations is not None and iteration_count >= max_iterations) or \
-                        (convergence_count is not None and consecutive_convergence_count >= convergence_count):
+                if (self.max_iterations is not None and iteration_count >= self.max_iterations) or \
+                        (self.convergence_count is not None and consecutive_convergence_count >= self.convergence_count):
                     print(f"Early stopping: Max iterations or convergence criteria met.")
                     return True  # Stop if we've reached the max iteration count or convergence
 
@@ -150,7 +165,7 @@ class AlgorithmTOT_DFS(Algorithm):
             for state2, value in sorted_pairs:
                 if t == 1:
                     # Apply pruning only at depth 1
-                    if value > pruning_threshold:
+                    if value > self.pruning_threshold:
                         if await dfs([state2], t + 1):  # Go one step deeper in the DFS search
                             return True  # Stop and return if a solution is found
                 else:

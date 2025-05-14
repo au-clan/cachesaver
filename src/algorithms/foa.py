@@ -80,7 +80,7 @@ class AlgorithmFOA(Algorithm):
             states = [self.env.step(state, action[0]) for state, action in zip(states, actions)]
 
             # Early stop in case any state is solved
-            if any(self.env.evaluate(state)[1] for state in states):
+            if any(self.env.evaluate(state)[1] == 1 for state in states):
                 solved = True
                 break
 

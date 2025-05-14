@@ -32,7 +32,7 @@ class BenchmarkHLE(Benchmark):
 
         # Existing code to process the dataset
         data = list(
-            zip(df['id'], df['question'], df['image'], df['image_preview'], df['answer'], df['answer_type'],
+            zip(df["index"], df['id'], df['question'], df['image'], df['image_preview'], df['answer'], df['answer_type'],
                 df['author_name'], df['rationale'], df['rationale_image'], df['raw_subject'], df['category'], df['canary'])
         )
 
