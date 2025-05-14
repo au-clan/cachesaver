@@ -166,7 +166,7 @@ if __name__ == "__main__":
     parser.add_argument("--num_evaluations", type=int, help="Number of evaluations")
     args = parser.parse_args()
 
-    filename = f"logs/hypersearch/{args.model.split('/')[-1]}/{args.method}/scibench.log"
+    filename = f"logs/hypersearch/{args.model.split('/')[-1]}/{args.method}/game24_{args.batch_size}.log"
     os.makedirs(os.path.dirname(filename), exist_ok=True)
     logging.basicConfig(level=logging.INFO, filename=filename, filemode="a")
     logger.info("#"*50)
@@ -177,7 +177,7 @@ if __name__ == "__main__":
     
     previous_trials = [int(num) for num in re.findall(r"Shared Namespace and Batch \(trial (\d+)\)", contents)]
     trial = max(previous_trials) + 1 if previous_trials else 1
-    logger.info(f"Shared Namespace and Batch (trial {trial})")
+    logger.info(f"Shared Namespace (trial {trial})")
     logger.info(f"num_selections: {args.num_selections}, num_steps: {args.num_steps}, num_evaluations: {args.num_evaluations} (trial {trial})")
     
     if args.batch_size == 1:
