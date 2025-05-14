@@ -11,7 +11,7 @@ from cachesaver.pipelines import OnlineAPI
 logger = logging.getLogger(__name__)
 import sys
 sys.path.append(os.getcwd())
-# import pdb
+import pdb
 
 from src.utils import tokens2cost
 from src.algorithms import *
@@ -140,7 +140,7 @@ async def run(args):
     logger.debug(f"- Share NS: {args.share_ns}")
     logger.debug(f"- Value Cache: {args.value_cache}")
 
-    # pdb.set_trace()
+    pdb.set_trace()
     results = await method.benchmark(
         benchmark=benchmark,
         share_ns=args.share_ns,
@@ -184,7 +184,7 @@ async def run(args):
         logging.error("No tasks were finished. Exiting.")
         return
     
-    # pdb.set_trace()
+    pdb.set_trace()
     acc_finished = sum(finished) / len(finished)
     acc_correct = sum(correct) / len(correct)
     
