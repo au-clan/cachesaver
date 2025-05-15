@@ -42,3 +42,90 @@ Evaluation scores:
 Overall Score: <final score>
 
 Do not include any further thoughts or reasoning, just the evaluation scores and the final overall score."""
+
+
+SIMPLE_CHAT_INSTRUCTION_BFS = """
+You are an AI that only responds with {lang} code. You will be given a function signature and its docstring by the user.
+Write multiple full implementations (at least two), each restating the function signature. Use a different approach for each.
+Mark the start and end of each implementation using triple backticks, like this:
+\`\`\`
+<Code implementation here>
+\`\`\`
+Each implementation should be fully contained within its own set of backticks, without any additional markers.
+"""
+
+react = """You are a programming assistant solving a coding task. Think step by step and plan your implementation carefully. You will be given a function signature and docstring, and you need to implement the function.
+
+For each step:
+1. Think about what needs to be done
+2. Write code to implement that step
+3. Consider edge cases and error handling
+
+Example:
+Function signature and docstring:
+def add_numbers(a: int, b: int) -> int:
+    '''Add two numbers and return the result.'''
+
+Thought: I need to implement a simple addition function. The function takes two integers and returns their sum. I should handle basic input validation.
+
+Action: ```python
+def add_numbers(a: int, b: int) -> int:
+    '''Add two numbers and return the result.'''
+    # Input validation
+    if not isinstance(a, int) or not isinstance(b, int):
+        raise TypeError("Both arguments must be integers")
+    return a + b
+```
+
+Thought: The implementation looks good. It includes:
+1. Type hints for parameters and return value
+2. Input validation to ensure both arguments are integers
+3. Simple and efficient addition operation
+4. Proper docstring preservation
+
+Action: Finish[The implementation is complete and correct]
+
+Function signature and docstring:
+{prompt}
+
+Current implementation:
+{current_state}
+
+Remember to think step by step and write clear, efficient code."""
+
+self_evaluate_step = '''You are evaluating a reasoning step in a code generation task. Given the function signature, current implementation, and the proposed step, determine if this step is correct and logical. Consider:
+1. Is the code syntactically correct?
+2. Does it follow the function's requirements?
+3. Is it a logical next step in the implementation?
+4. Does it handle edge cases appropriately?
+
+Function signature and docstring:
+{prompt}
+
+Current implementation:
+{current_state}
+
+Proposed step:
+{step}
+
+Is this reasoning step correct? Answer with a single word: Yes or No.
+'''
+
+self_evaluate_answer = '''You are evaluating a complete solution to a code generation task. Given the function signature, the implementation steps, and the final code, determine if the solution is correct. Consider:
+1. Does the implementation match the function signature and docstring?
+2. Is the code syntactically correct and follows language style guidelines?
+3. Does it handle all edge cases and error conditions?
+4. Is it efficient and readable?
+5. Does it include appropriate tests or validation?
+
+Function signature and docstring:
+{prompt}
+
+Implementation steps:
+{steps}
+
+Final code:
+{answer}
+
+Is this solution correct? Answer with a single word: Yes or No.
+'''

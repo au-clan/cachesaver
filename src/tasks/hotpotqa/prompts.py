@@ -383,3 +383,30 @@ Finish[director, screenwriter, actor]
 Finish[film director, screenwriter, actor]
 Finish[director, screenwriter and actor]""",
 ]
+
+self_evaluate_step = '''You are evaluating a reasoning step in a question answering task. Given the current state and the proposed step, determine if this step is correct and logical. Consider:
+1. Is the search/lookup action relevant to finding the answer?
+2. Is the thought process logical and focused on the question?
+3. Does it follow the rules of using Search, Lookup, and Finish actions appropriately?
+
+Current state: {current_state}
+Proposed step: {step}
+
+Is this reasoning step correct? Answer with a single word: Yes or No.
+'''
+
+self_evaluate_answer = '''You are evaluating a complete solution to a question answering task. Given the question, the steps taken, and the final answer, determine if the solution is correct. Consider:
+1. Does it use appropriate search and lookup actions to find relevant information?
+2. Are all actions logically connected and relevant to the question?
+3. Does it correctly answer the question based on the information found?
+4. Are the steps taken efficient and focused?
+
+Question: {question}
+
+Steps taken:
+{steps}
+
+Final answer: {answer}
+
+Is this solution correct? Answer with a single word: Yes or No.
+'''

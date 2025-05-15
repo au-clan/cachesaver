@@ -1,6 +1,7 @@
 import re
 import random
 from typing import List
+import numpy as np
 
 from . import prompts as prompts
 from .state import StateGame24
@@ -41,6 +42,7 @@ class AgentActGame24(Agent):
             proposals.extend(r.strip() for r in response[0].split("\n"))
             if 'Possible next steps:' in proposals:
                     proposals.remove('Possible next steps:')
+
         random.seed(state.randomness)
         random.shuffle(proposals)
         act_cache[prompt].extend(proposals[n:])
@@ -53,7 +55,7 @@ class AgentAggregateGame24(Agent):
         """
         Returns the aggregated actions for the Game of 24 task.
         """
-        if any("left" not in action for action in actions):
+        if state.current_state.strip=="24" and any("left" not in action for action in actions):
             return [action for action in actions if "left" not in action]
         
         # Format the prompt
@@ -61,7 +63,7 @@ class AgentAggregateGame24(Agent):
         for idx, action in enumerate(actions):
             proposals += f'({idx + 1}) ' + action + '\n'
 
-        prompt = prompts.aggregate.format(state=state.current_state, proposal=proposals, n_select_sample=k)
+        prompt = prompts.aggregate.format(state=state.current_state, proposal=proposals.strip(), n_select_sample=k)
 
         responses = await model.request(
             prompt=prompt,
@@ -72,11 +74,12 @@ class AgentAggregateGame24(Agent):
         )
 
         # Parse the response
-        pattern = r"\(\d+\)\s(\d+ [+\-*/] \d+ = \d+ \(left: [^)]+\))"
-        matchs = re.findall(pattern, responses[0])
-
-        proposal = [match.strip() for match in matchs]
-        return proposal
+        actions = [
+            match.group(1)
+            for action in responses[0].split("\n")
+            if (match := re.match(r"\(\d+\)\s(.*)", action.strip()))
+        ]
+        return actions
 
 
 class AgentBfsGame24(Agent):
@@ -160,6 +163,32 @@ class AgentReactGame24(Agent):
     """
     @staticmethod
     async def act(model: Model, state: StateGame24, n: int, namespace: str, request_id: str, params: DecodingParameters) -> List[str]:
+        # Format the prompt
+        if state.current_state == "24":
+            prompt = prompts.cot.format(input=state.puzzle) + "\nSteps:\n" + '\n'.join(state.steps) + "\nAnswer: "
+        else:
+            current_numbers = get_current_numbers(state)
+            prompt = prompts.react.format(input=current_numbers)
+
+        # Generate the response
+        responses = await model.request(
+            prompt=prompt,
+            n=n,
+            request_id=request_id,
+            namespace=namespace,
+            params=params
+        )
+
+        # Parse the response
+        proposals = [r.split("Possible next step:")[-1].strip() for r in responses]
+        return proposals
+
+class AgentRapGame24(Agent):
+    """
+    Agent for React algorithm
+    """
+    @staticmethod
+    async def act(model: Model, state: StateGame24, n: int, namespace: str, request_id: str, params: DecodingParameters) -> List[str]:
         if state.current_state == "24":
             prompt = prompts.cot.format(input=state.puzzle) + "\nSteps:\n" + '\n'.join(state.steps) + "\nAnswer: "
         else:
@@ -176,6 +205,76 @@ class AgentReactGame24(Agent):
 
         proposals = [r.strip() for r in responses]
         return proposals
+
+
+class AgentSelfEvaluateGame24(Agent):
+    """
+    Agent that performs self-evaluation of reasoning steps for Game24.
+    Uses the LLM's own estimation of correctness by evaluating each reasoning step.
+    Uses the probability of "Yes" as a reward signal for correct reasoning.
+    """
+    @staticmethod
+    async def act(model: Model, state: StateGame24, n: int, namespace: str, request_id: str, params: DecodingParameters, cache: dict=None) -> float:
+
+        if cache is not None and state.current_state in cache:
+            return cache[state.current_state]
+
+        # Format the prompt based on whether we're evaluating a final answer or intermediate step
+        if state.steps and "left" not in state.steps[-1]:
+            # Evaluating a final answer
+            formula = get_formula(state)
+            prompt = prompts.self_evaluate_answer.format(
+                input=state.puzzle,
+                answer=formula,
+                steps='\n'.join(state.steps)
+            )
+        else:
+            # Evaluating intermediate reasoning steps
+            current_numbers = get_current_numbers(state)
+            last_step = state.steps[-1] if state.steps else ""
+            prompt = prompts.self_evaluate_step.format(
+                input=current_numbers,
+                step=last_step,
+                previous_steps='\n'.join(state.steps[:-1]) if len(state.steps) > 1 else ""
+            )
+
+        eval_params = DecodingParameters(
+            temperature=params.temperature,
+            max_completion_tokens=params.max_completion_tokens,
+            top_p=params.top_p,
+            stop=params.stop,
+            logprobs=True
+        )
+
+        responses = await model.request(
+            prompt=prompt,
+            n=n,
+            request_id=request_id,
+            namespace=namespace,
+            params=eval_params
+        )
+
+        # Calculate the average probability of "Yes" across all responses
+        yes_probabilities = []
+        for response in responses:
+            # Get the logprobs for the first token after the prompt
+            if hasattr(response, 'logprobs') and response.logprobs:
+                first_token_logprobs = response.logprobs[0]
+                # Look for Yes token probability
+                yes_prob = next((prob for token, prob in first_token_logprobs.items() 
+                               if token.lower() in ['yes', 'yes.', 'yes!']), 0.0)
+                yes_probabilities.append(np.exp(yes_prob))  # Convert logprob to probability
+
+        if yes_probabilities:
+            value = sum(yes_probabilities) / len(yes_probabilities)
+            value = value * 20
+        else:
+            value = 0.001
+
+        if cache is not None:
+            cache[state.current_state] = value
+
+        return value
 
 
 def get_current_numbers(state: StateGame24) -> str:
