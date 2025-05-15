@@ -9,7 +9,7 @@ method="got" # =("foa" "tot_bfs" "tot_dfs" "got" "rap" "react" "reflexion" "rafa
 
 # Define models
 provider="openai"
-base_url="http://139.19.179.51:19999/v1"
+base_url="http://139.19.179.52:19999/v1"
 # llama-4-meverick
 # model="/DS/dsg-ml2/nobackup/cxu/weights/unsloth/Llama-4-Maverick-17B-128E-Instruct-FP8"
 
@@ -37,7 +37,7 @@ for num_selections in 5 3 1; do
                 --dataset_path "datasets/dataset_${benchmark}.csv.gz" \
                 --split "$split" \
                 --method "$method" \
-                --conf_path "scripts/correctness/${benchmark}.yaml" \
+                --conf_path "scripts/old/${benchmark}.yaml" \
                 --correctness 1 \
                 --value_cache \
                 --num_selections "$num_selections" \
