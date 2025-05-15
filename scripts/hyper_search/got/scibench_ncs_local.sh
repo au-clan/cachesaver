@@ -21,6 +21,10 @@ split="test"
 
 # Delete caches if they exist
 
+FLAG_NAME='hyper_search_got_scibench_ncs'
+echo $base_url > $FLAG_NAME.time.log
+echo "START $(date +'%Y%m%d_%H%M%S')" >> $FLAG_NAME.time.log
+
 for num_selections in 5 3 1; do
     for num_steps in 8 6 4; do 
         for num_evaluations in 3 1 2; do
@@ -47,3 +51,5 @@ for num_selections in 5 3 1; do
         done
     done
 done
+
+echo "END__ $(date +'%Y%m%d_%H%M%S')" >> $FLAG_NAME.time.log
