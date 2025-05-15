@@ -8,7 +8,7 @@ foa:
   num_evaluations: 3
   origin: 120
 
-tot:
+tot_bfs:
   num_selections: 5
   num_steps: 4
   num_evaluations: 3
