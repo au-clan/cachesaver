@@ -20,6 +20,9 @@ model="/DS/dsg-ml/nobackup/cxu/weights/Llama-4-Scout-17B-16E-Instruct/"
 split="test"
 
 # Delete caches if they exist
+FLAG_NAME='hyper_search_tot_bfs_game24_ncs'
+echo $base_url > $FLAG_NAME.time.log
+echo "START $(date +'%Y%m%d_%H%M%S')" >> $FLAG_NAME.time.log
 
 for num_selections in 5 3 1; do
     for num_steps in 4; do # Game of 24
@@ -46,3 +49,5 @@ for num_selections in 5 3 1; do
         done
     done
 done
+
+echo "END__ $(date +'%Y%m%d_%H%M%S')" >> $FLAG_NAME.time.log

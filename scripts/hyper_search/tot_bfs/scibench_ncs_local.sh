@@ -18,6 +18,9 @@ model="/DS/dsg-ml/nobackup/cxu/weights/Llama-4-Scout-17B-16E-Instruct/"
 
 # Define number of retrials
 split="test"
+FLAG_NAME='hyper_search_tot_bfs_scibench_ncs'
+echo $base_url > $FLAG_NAME.time.log
+echo "START $(date +'%Y%m%d_%H%M%S')" >> $FLAG_NAME.time.log
 
 # Delete caches if they exist
 
@@ -47,3 +50,5 @@ for num_selections in 5 3 1; do
         done
     done
 done
+
+echo "END__ $(date +'%Y%m%d_%H%M%S')" >> $FLAG_NAME.time.log
