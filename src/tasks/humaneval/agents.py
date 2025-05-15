@@ -139,7 +139,6 @@ class AgentEvaluateHumanEval(Agent):
             prompt=state.puzzle,  # The function signature + docstring
             implementation=state.current_state  # The code you want to evaluate
         )
-
         responses = await model.request(
             prompt=[
                 {"role": "system", "content": instruct},

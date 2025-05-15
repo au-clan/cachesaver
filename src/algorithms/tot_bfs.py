@@ -33,7 +33,7 @@ class AlgorithmTOT(Algorithm):
         self.num_evaluations = num_evaluations
 
     async def solve(self, idx:int, state: State, namespace: str, value_cache: dict = None):
-        
+
         randomness = idx
         random.seed(randomness)
         states = [state.clone(randomness=random.randint(0, MAX_SEED))]
@@ -54,7 +54,6 @@ class AlgorithmTOT(Algorithm):
                 for i, state in enumerate(states)
             ]
             actions = await asyncio.gather(*action_coroutines)
-                
 
             # Execute actions
             state_proposals = []
@@ -81,7 +80,7 @@ class AlgorithmTOT(Algorithm):
             state_value_pairs = list(zip(state_proposals, values))
             sorted_pairs = sorted(state_value_pairs, key=lambda x: x[1], reverse=True)
             states, values = map(list, zip(*sorted_pairs[:self.num_selections]))
-            
+
             # Early stopping condition
             for state in states:
                 if self.env.evaluate(state)[1]==1:
