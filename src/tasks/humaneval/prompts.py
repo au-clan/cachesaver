@@ -42,3 +42,13 @@ Evaluation scores:
 Overall Score: <final score>
 
 Do not include any further thoughts or reasoning, just the evaluation scores and the final overall score."""
+
+SIMPLE_CHAT_INSTRUCTION_BFS = """
+You are an AI that only responds with {lang} code. You will be given a function signature and its docstring by the user.
+Write multiple full implementations (at least two), each restating the function signature. Use a different approach for each.
+Mark the start and end of each implementation using triple backticks, like this:
+\`\`\`
+<Code implementation here>
+\`\`\`
+Each implementation should be fully contained within its own set of backticks, without any additional markers.
+"""

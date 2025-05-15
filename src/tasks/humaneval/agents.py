@@ -1,5 +1,7 @@
 from typing import List
 import re
+import itertools
+
 
 from . import prompts as prompts
 from .state import StateHumanEval
@@ -93,22 +95,25 @@ class AgentBfsHumanEval(Agent):
         """
         # Format the prompt
         language = "py" if "def" in state.puzzle else "rs"
-        instruct = prompts.SIMPLE_CHAT_INSTRUCTION_V2.format(lang=language)
-
-        # Generate the response
+        ### change n, depending on how many to generate
+        instruct = prompts.SIMPLE_CHAT_INSTRUCTION_BFS.format(lang=language, n=5)
         responses = await model.request(
             prompt=[
                 {"role": "system", "content": instruct},
                 {"role": "user", "content": state.current_state},
             ],
-            n=n,
+            n=1,
             request_id=request_id,
             namespace=namespace,
             params=params,
         )
+        response_text = responses[0]
 
-        # Parse the responses
-        actions = [r.strip() for r in responses]
+        code_blocks = re.findall(r'(```.*?```)', response_text, flags=re.DOTALL)
+
+        # Strip each code block
+        actions = [block.strip() for block in code_blocks]
+
         return actions
 
 
@@ -145,20 +150,21 @@ class AgentEvaluateHumanEval(Agent):
             namespace=namespace,
             params=params,
         )
-
-        return sum_overall_scores(responses)
+        value = sum_overall_scores(responses)
+        return responses, value
 
 # Helper function
-def sum_overall_scores(text):
-    if isinstance(text, list):
-        # Flatten and join all items that are strings
-        text = " ".join(
-            [str(item) for sublist in text for item in (sublist if isinstance(sublist, list) else [sublist])]
-        )
+def sum_overall_scores(evaluations):
+    values = []
+    pattern = r"\b(?:overall[\s_]?score|score)\b(?:\s*(?:is|=|:|was|stands at|of))?\s*(-?\d+(?:\.\d+)?)"
+    
+    for evaluation in evaluations:
+        match = re.search(pattern, evaluation, re.IGNORECASE)
+        if match:
+            value = float(match.group(1))
+        else:
+            value = 1
+        values.append(value)
+    value = sum(values)
 
-    scores = re.findall(r'Overall Score:\s*(\d+)', text)
-
-    if not scores:
-        return None  # or return 0 if preferred
-
-    return sum(int(score) for score in scores)
+    return value
