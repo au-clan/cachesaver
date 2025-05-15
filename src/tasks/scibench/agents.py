@@ -118,8 +118,21 @@ class AgentAggregateSciBench(Agent):
         # Parse the response
         pattern = r'\d+'
         matchs = re.findall(pattern, responses[0])
-        return [actions[int(i.strip()) - 1] for i in matchs]
-    
+
+        def is_safe_index(idx):
+            max_idx = len(actions) -1
+            if idx >=0 and idx < max_idx:
+                return True
+            else:
+                return False
+
+        ret = []
+        for i in matchs:
+            idx = int(i.strip())
+            if is_safe_index(idx):
+                ret.append(actions[idx])
+        return ret
+
 class AgentEvaluateSciBench(Agent):
 
     @staticmethod
