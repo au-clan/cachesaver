@@ -8,8 +8,8 @@ benchmark="game24"
 method="foa" # =("foa" "tot_bfs" "tot_dfs" "got" "rap" "react" "reflexion" "rafa" "rest_mcts")
 
 # Define models
-provider="openai"
-model="gpt-4.1-nano"
+provider="anthropic"
+model="claude-3-5-haiku-20241022"
 
 # Define number of retrials
 split="test"

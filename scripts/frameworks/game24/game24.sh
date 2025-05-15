@@ -2,7 +2,7 @@
 
 
 # Define benchmarks
-methods=("foa" "tot_bfs" "got")
+methods=("foa" "tot_bfs")
 
 # Define methods
 benchmark="game24"

@@ -17,7 +17,7 @@ sys.path.append(os.getcwd())
 
 from src.utils import tokens2cost, clean_log
 from src.algorithms import *
-from src.models import OnlineLLM, API
+from src.models import OnlineLLM, AnthropicLLM, API
 from src.typedefs import DecodingParameters
 from src.tasks.scibench import *
 
@@ -34,6 +34,8 @@ async def run(args, trial, cache_path):
             client = AsyncOpenAI(base_url=args.base_url, api_key="dummy-key")
         else:
             client = AsyncOpenAI(base_url=args.base_url) if args.base_url else AsyncOpenAI()
+    elif args.provider == "anthropic":
+        client = AsyncAnthropic()
     elif args.provider == "together":
         client = AsyncTogether()
     elif args.provider == "local":
@@ -44,6 +46,8 @@ async def run(args, trial, cache_path):
     # CacheSaver model layer
     if args.provider in ["openai", "together"]:
         model = OnlineLLM(client=client)
+    elif args.provider == "anthropic":
+        model = AnthropicLLM(client=client)
     else:
         raise NotImplementedError("Local model is not implemented yet.")
     
@@ -171,7 +175,10 @@ if __name__ == "__main__":
     parser.add_argument("--selection", type=int, help="Number of evaluations")
     args = parser.parse_args()
 
-    filename = f"logs/ablations/{args.model.split('/')[-1]}/{args.method}/scibench{args.batch_size}.log"
+    if args.provider == "anthropic":
+        filename = f"logs/anthropic/ablations/{args.model.split('/')[-1]}/{args.method}/scibench{args.batch_size}.log"
+    else:
+        filename = f"logs/ablations/{args.model.split('/')[-1]}/{args.method}/scibench{args.batch_size}.log"
     os.makedirs(os.path.dirname(filename), exist_ok=True)
     logging.basicConfig(level=logging.INFO, filename=filename, filemode="a")
     logger.info("#"*50)
