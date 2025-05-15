@@ -74,7 +74,6 @@ async def run(args, trial, cache_path):
 
     # Config for framework hyperpaarameters
     config = OmegaConf.load(args.conf_path)
-
     # Build the method
     agents = AgentDictGOT(
         step=AgentActGame24,
@@ -84,6 +83,7 @@ async def run(args, trial, cache_path):
         aggregate_params=params,
         eval_params=params,
     )
+
     method = AlgorithmGOT(
         model=api,
         agents=agents,
