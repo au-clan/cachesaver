@@ -116,3 +116,96 @@ Answer: a
 ---
 incorrect'''
 ]
+
+# React prompt for LogiQA
+react = '''You are participating in a multiple-choice quiz. You will be given a paragraph, which contains the information needed to answer the question.
+After the paragraph you will be given your question together with the four choices.
+
+You should think step by step about the logical reasoning needed to answer the question:
+
+1. First, analyze what information is given in the paragraph
+2. Then, understand how this information relates to the question
+3. Next, evaluate each choice against the given information
+4. Finally, make a logical conclusion about which choice is correct
+
+(Example)
+
+In the planning of a new district in a township, it was decided to build a special community in the southeast, northwest, centered on the citizen park. These four communities are designated as cultural area, leisure area, commercial area and administrative service area. It is known that the administrative service area is southwest of the cultural area, and the cultural area is southeast of the leisure area.
+
+Based on the above statement, which of the following can be derived?
+A. Civic Park is north of the administrative service area
+B. The leisure area is southwest of the cultural area
+C. The cultural district is in the northeast of the business district
+D. The business district is southeast of the leisure area
+
+Thought: Let me analyze the given information step by step:
+1. The paragraph describes relative positions of areas
+2. We know: administrative service area is southwest of cultural area
+3. We know: cultural area is southeast of leisure area
+4. These areas are centered on the citizen park
+
+Thought: Let me evaluate each choice:
+A. Cannot be determined - Civic Park's position relative to administrative service area is not stated
+B. Incorrect - This contradicts given info (cultural area is southeast of leisure area)
+C. Cannot be determined - Business district's position relative to cultural district is not stated
+D. Cannot be determined - Business district's position relative to leisure area is not stated
+
+Thought: Based on the given information, none of the choices can be definitively derived. The paragraph only gives relative positions between administrative service area, cultural area, and leisure area.
+
+---
+Answer: a
+
+(End of example)
+
+Remember, your task is to think step by step and select only one choice that you think answers the question with respect to the paragraph given. Do not add any explanation, comments, introduction or conclusion, you shall only return your answer in the format "Answer: X" where X is one of a, b, c, or d.
+
+{paragraph}
+
+{question}
+{choices}
+
+Current reasoning:
+{current_state}
+
+---
+Answer: '''
+
+# Self-evaluation prompts for LogiQA
+self_evaluate_step = '''You are evaluating a reasoning step in a logical reasoning task. Given the paragraph, question, choices, and the proposed reasoning step, determine if this step is correct and logical. Consider:
+1. Does the reasoning follow from the given information?
+2. Is the analysis of the choices accurate?
+3. Are the logical connections valid?
+4. Does it avoid making unsupported assumptions?
+
+Paragraph: {paragraph}
+
+Question: {question}
+Choices: {choices}
+
+Previous steps:
+{previous_steps}
+
+Current step: {step}
+
+Is this reasoning step correct? Answer with a single word: Yes or No.
+'''
+
+self_evaluate_answer = '''You are evaluating a complete solution to a logical reasoning task. Given the paragraph, question, choices, and the reasoning process, determine if the solution is correct. Consider:
+1. Does the reasoning process follow logically from the given information?
+2. Is the analysis of each choice thorough and accurate?
+3. Are all logical connections valid and well-supported?
+4. Does the final answer follow from the reasoning?
+5. Are there any unsupported assumptions?
+
+Paragraph: {paragraph}
+
+Question: {question}
+Choices: {choices}
+
+Reasoning steps:
+{steps}
+
+Final answer: {answer}
+
+Is this solution correct? Answer with a single word: Yes or No.
+'''
