@@ -1,14 +1,14 @@
 # Shared NS
 python scripts/matharena.py\
     --provider openai\
-    --model gpt-4o-mini\
-    --batch_size 400\
-    --timeout 0.2\
-    --temperature 0.8\
-    --max_completion_tokens 500\
-    --top_p 1.0\
+    --model gpt-4.1\
+    --batch_size 100\
+    --timeout 10.0\
+    --temperature 0.5\
+    --max_completion_tokens 750\
+    --top_p 0.9\
     --dataset_path datasets/dataset_mathArena_aime2023.jsonl.gz\
-    --split train\
+    --split mini\
     --share_ns \
     --method tot\
     --conf_path scripts/matharena.yaml\
@@ -18,7 +18,7 @@ python scripts/matharena.py\
     --provider openai\
     --model gpt-4o-mini\
     --batch_size 400\
-    --timeout 0.2\
+    --timeout 2.0\
     --temperature 0.8\
     --max_completion_tokens 500\
     --top_p 1.0\
@@ -34,7 +34,7 @@ python scripts/matharena.py\
     --provider openai\
     --model gpt-4o-mini\
     --batch_size 400\
-    --timeout 0.2\
+    --timeout 2.0\
     --temperature 0.8\
     --max_completion_tokens 500\
     --top_p 1.0\
@@ -48,7 +48,7 @@ python scripts/matharena.py\
     --provider openai\
     --model gpt-4o-mini\
     --batch_size 400\
-    --timeout 0.2\
+    --timeout 2.0\
     --temperature 0.8\
     --max_completion_tokens 500\
     --top_p 1.0\
@@ -63,7 +63,7 @@ python scripts/matharena.py\
     --provider openai\
     --model gpt-4o-mini\
     --batch_size 1\
-    --timeout 0.2\
+    --timeout 2.0\
     --temperature 0.8\
     --max_completion_tokens 500\
     --top_p 1.0\
@@ -78,7 +78,7 @@ python scripts/matharena.py\
     --provider openai\
     --model gpt-4o-mini\
     --batch_size 1\
-    --timeout 0.2\
+    --timeout 2.0\
     --temperature 0.8\
     --max_completion_tokens 500\
     --top_p 1.0\
