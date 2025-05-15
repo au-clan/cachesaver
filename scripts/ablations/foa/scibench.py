@@ -17,7 +17,7 @@ sys.path.append(os.getcwd())
 
 from src.utils import tokens2cost, clean_log
 from src.algorithms import *
-from src.models import OnlineLLM, AnthropicLLM, API
+from src.models import OnlineLLM, API
 from src.typedefs import DecodingParameters
 from src.tasks.scibench import *
 
@@ -29,7 +29,7 @@ async def run(args, trial, cache_path):
 
     # LLM Provider
     if args.provider == "openai":
-        if args.base_url and "localhost" in args.base_url:
+        if args.base_url and "v1" in args.base_url:
             # For local vLLM servers, use a dummy API key
             client = AsyncOpenAI(base_url=args.base_url, api_key="dummy-key")
         else:
