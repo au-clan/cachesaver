@@ -1,5 +1,5 @@
 import time
-import hashlib
+from deepdiff import DeepHash
 from abc import ABC
 from ..typedefs import Model, SingleRequestModel, DecodingParameters, Request
 from typing import List, Union
@@ -50,7 +50,7 @@ class API(ABC):
         self.latencies.append(end - start)
 
         # Measuring reuse
-        hashed_prompt = hashlib.sha256(prompt.encode('utf-8')).hexdigest()
+        hashed_prompt = DeepHash(prompt)[prompt]
         if hashed_prompt in self.reuse:
             self.reuse[hashed_prompt] += n
         else:

@@ -23,7 +23,7 @@ import re
 def clean_log(file_path: str):
     # Define all patterns you want to remove
     patterns = [
-        re.compile(r'.*HTTP/1\.1 200 OK$'),
+        re.compile(r'^INFO:httpx:HTTP Request: POST https://api\.openai\.com/v1/chat/completions "HTTP/1\.1 200 OK"$'),
         re.compile(r'^INFO:openai\._base_client:Retrying request to /chat/completions in \d+(\.\d+)? seconds$')
     ]
 
