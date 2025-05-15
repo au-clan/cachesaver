@@ -98,7 +98,7 @@ class AlgorithmFOA(Algorithm):
             states = [replacements.pop(0) if i in failed else state for i, state in enumerate(states)]
 
             # Evaluation phase
-            if step < self.num_steps-1 and step % self.k == 0:
+            if step < self.num_steps-1 and self.k and step % self.k == 0:
                 
                 # Evaluate the states
                 value_coroutines = [
