@@ -88,7 +88,7 @@ async def run(args, trial, cache_path):
 
     # LLM Provider
     if args.provider == "openai":
-        if args.base_url and "localhost" in args.base_url:
+        if args.base_url and "v1" in args.base_url:
             # For local vLLM servers, use a dummy API key
             client = AsyncOpenAI(base_url=args.base_url, api_key="dummy-key")
         else:
@@ -211,7 +211,7 @@ if __name__ == "__main__":
     parser.add_argument("--correctness", type=int, help="Use original ('correct') implementation")
     args = parser.parse_args()
 
-    filename = f"logs/frameworks/{args.model.split('/')[-1]}/game24/{args.method}.log"
+    filename = f"logs/frameworks/{args.model.split('/')[-1]}/game24/{args.method}_{args.batch_size}.log"
     os.makedirs(os.path.dirname(filename), exist_ok=True)
     logging.basicConfig(level=logging.INFO, filename=filename, filemode="a")
     logger.info("#"*50)
