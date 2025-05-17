@@ -118,37 +118,34 @@ async def run(args):
     )
     # logger.info(f"Benchmark returned {len(results)} results")
     
+    print("RESULTS:", results)
     for i, result in enumerate(results):
-        # logger.debug(f"Processing result {i}/{len(results)}:")
-        # logger.debug(f"- States in result: {len(result)}")
-        # for j, r in enumerate(result):
-        #     logger.debug(f"  - State {j}: {r}")
         
+        print("SORTED EVALUATIONS:", sorted([EnvironmentMathArena.evaluate(state) for state in result], key=lambda x: x[1]))
+
         evaluations = sorted([EnvironmentMathArena.evaluate(state) for state in result], key=lambda x: x[1])
         logger.debug(f"- Evaluations: {evaluations}")
         finished.append(evaluations[-1][0])
         correct.append(evaluations[-1][1])
-        # logger.debug(f"- Finished: {evaluations[-1][0]}")
-        # logger.debug(f"- Correct: {evaluations[-1][1]}")
-
         
     
-    # finished = []
-    # correct = []
-    # for i, result in enumerate(results):
-    #     logger.debug(f"Result {i}:")
-    #     for r in result:
-    #         logger.debug(f"\t{r}")
-    for result in results:
-        # for r in result:
-        #     print(f"\t{r}")
-        evaluations = sorted([EnvironmentMathArena.evaluate(state) for state in result], key=lambda x: x[1])
-        finished.append(evaluations[-1][0])
-        correct.append(evaluations[-1][1])
-    # logging.info(f"Finished list: {finished}")
-    # if len(finished) == 0:
-    #     logging.error("No tasks were finished. Exiting.")
-    #     return
+    # # finished = []
+    # # correct = []
+    # # for i, result in enumerate(results):
+    # #     logger.debug(f"Result {i}:")
+    # #     for r in result:
+    # #         logger.debug(f"\t{r}")
+    # for result in results:
+    #     # for r in result:
+    #     #     print(f"\t{r}")
+    #     print("SORTED EVALUATIONS:", sorted([EnvironmentMathArena.evaluate(state) for state in result], key=lambda x: x[1]))
+    #     evaluations = sorted([EnvironmentMathArena.evaluate(state) for state in result], key=lambda x: x[1])
+    #     finished.append(evaluations[-1][0])
+    #     correct.append(evaluations[-1][1])
+    # # logging.info(f"Finished list: {finished}")
+    # # if len(finished) == 0:
+    # #     logging.error("No tasks were finished. Exiting.")
+    # #     return
     
     pdb.set_trace()
     acc_finished = sum(finished) / len(finished)
@@ -183,7 +180,7 @@ if __name__ == "__main__":
     parser.add_argument("--split", type=str, help="Split of the dataset", choices=["mini", "train", "validation", "test"], default="mini")
     parser.add_argument("--share_ns", action="store_true", help="Share namespace between puzzles")
     parser.add_argument("--method", type=str, help="Method to use", choices=["foa", "tot"], default="foa")
-    parser.add_argument("--conf_path", type=str, help="Path to corresponding config", default="scripts/matharena.yaml")
+    parser.add_argument("--conf_path", type=str, help="Path to corresponding config", default="scripts/old/matharena.yaml")
     parser.add_argument("--value_cache", action="store_true", help="Use value cache")
     args = parser.parse_args()
 
@@ -206,4 +203,3 @@ if __name__ == "__main__":
     )
     logger.debug("Starting script execution")
     asyncio.run(run(args))
-

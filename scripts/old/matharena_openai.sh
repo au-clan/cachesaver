@@ -1,5 +1,5 @@
 # Shared NS
-python scripts/matharena.py\
+python scripts/old/matharena.py\
     --provider openai\
     --model gpt-4.1\
     --batch_size 100\
@@ -10,11 +10,11 @@ python scripts/matharena.py\
     --dataset_path datasets/dataset_mathArena_aime2023.jsonl.gz\
     --split mini\
     --share_ns \
-    --method tot\
-    --conf_path scripts/matharena.yaml\
+    --method foa\
+    --conf_path scripts/old/matharena.yaml\
     --value_cache
 
-python scripts/matharena.py\
+python scripts/old/matharena.py\
     --provider openai\
     --model gpt-4o-mini\
     --batch_size 400\
@@ -26,11 +26,11 @@ python scripts/matharena.py\
     --split train\
     --share_ns \
     --method foa\
-    --conf_path scripts/matharena.yaml\
+    --conf_path scripts/old/matharena.yaml\
     --value_cache
 
 # No Shared NS
-python scripts/matharena.py\
+python scripts/old/matharena.py\
     --provider openai\
     --model gpt-4o-mini\
     --batch_size 400\
@@ -41,10 +41,10 @@ python scripts/matharena.py\
     --dataset_path datasets/dataset_mathArena_aime2023.jsonl.gz\
     --split train\
     --method tot\
-    --conf_path scripts/matharena.yaml\
+    --conf_path scripts/old/matharena.yaml\
     --value_cache
 
-python scripts/matharena.py\
+python scripts/old/matharena.py\
     --provider openai\
     --model gpt-4o-mini\
     --batch_size 400\
@@ -55,11 +55,11 @@ python scripts/matharena.py\
     --dataset_path datasets/dataset_mathArena_aime2023.jsonl.gz\
     --split train\
     --method foa\
-    --conf_path scripts/matharena.yaml\
+    --conf_path scripts/old/matharena.yaml\
     --value_cache
 
 # Shared NS + Batch Size = 1
-python scripts/matharena.py\
+python scripts/old/matharena.py\
     --provider openai\
     --model gpt-4o-mini\
     --batch_size 1\
@@ -71,10 +71,10 @@ python scripts/matharena.py\
     --split train\
     --share_ns \
     --method tot\
-    --conf_path scripts/matharena.yaml\
+    --conf_path scripts/old/matharena.yaml\
     --value_cache
 
-python scripts/matharena.py\
+python scripts/old/matharena.py\
     --provider openai\
     --model gpt-4o-mini\
     --batch_size 1\
@@ -86,5 +86,5 @@ python scripts/matharena.py\
     --split train\
     --share_ns \
     --method foa\
-    --conf_path scripts/matharena.yaml\
+    --conf_path scripts/old/matharena.yaml\
     --value_cache
