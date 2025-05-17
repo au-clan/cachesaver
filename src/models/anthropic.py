@@ -6,8 +6,8 @@ from cachesaver.typedefs import Request, Batch, Response
 
 from ..typedefs import Model
 
-class OnlineLLM(Model):
-    def __init__(self, client: Any, max_n: int = 128):
+class AnthropicLLM(Model):
+    def __init__(self, client: Any, max_n: int = 1):
         self.client = client
         self.max_n = max_n
 
@@ -30,17 +30,13 @@ class OnlineLLM(Model):
 
             while True:
                 try:
-                    completion = await self.client.chat.completions.create(
+                    completion = await self.client.messages.create(
                         messages=prompts,
                         model=request.model,
-                        n=current_n,
                         max_tokens=request.max_completion_tokens or None,
                         temperature=request.temperature or 1,
-                        stop=request.stop or None,
+                        stop_sequences=request.stop or None,
                         top_p=request.top_p or 1,
-                        seed=request.seed or None,
-                        logprobs=request.logprobs or False,
-                        top_logprobs=request.top_logprobs or None,
                     )
                     break
                 except Exception as e:
@@ -48,13 +44,10 @@ class OnlineLLM(Model):
                     await asyncio.sleep(max(sleep, 90))
                     sleep *= 2
 
-            input_tokens = completion.usage.prompt_tokens
-            completion_tokens = completion.usage.completion_tokens
+            input_tokens = completion.usage.input_tokens
+            completion_tokens = completion.usage.output_tokens
 
-            results.extend(
-                (choice.message.content, input_tokens, completion_tokens / current_n)
-                for choice in completion.choices
-            )
+            results.append((completion.content[0].text, input_tokens, completion_tokens / current_n))
 
         return Response(data=results)
 
