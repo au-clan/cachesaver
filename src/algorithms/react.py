@@ -5,7 +5,7 @@ from typing import TypedDict
 from ..typedefs import Algorithm, Model, Agent, Environment, DecodingParameters, State, Benchmark, MAX_SEED
 logger = logging.getLogger(__name__)
 
-class AgentDictReact(TypeDict):
+class AgentDictReact(TypedDict):
     step: Agent # React Agent
     step_params: DecodingParameters
 
