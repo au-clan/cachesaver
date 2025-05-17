@@ -55,7 +55,7 @@ class EnvironmentHumanEval(Environment):
         """
         Checks if the current state is a final state.
         """
-        raise NotImplementedError("Final state logic is not implemented.")
+        return True
     
     @staticmethod
     def evaluate(state: StateHumanEval) -> Tuple[bool, float]:

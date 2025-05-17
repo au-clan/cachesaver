@@ -35,8 +35,14 @@ def clean_log(file_path: str):
     with open(file_path, 'w') as file:
         for line in lines:
             line_stripped = line.strip()
-            if not any(pattern.match(line_stripped) for pattern in patterns):
+            if any(pattern.match(line_stripped) for pattern in patterns):
+                continue
+            if line_stripped.startswith(("INFO:src.", "MCTS")):
+                continue
+            elif line_stripped.startswith("INFO:__main__:") or line_stripped=="":
                 file.write(line)
+            else:
+                continue
 
 def tokens2cost(tokens: dict, model_name: str) -> dict:
     catalog = {

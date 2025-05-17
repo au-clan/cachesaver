@@ -8,3 +8,4 @@ local
 .env
 secret.py
 __pycache__
+.nfs*
