@@ -229,7 +229,7 @@ if __name__ == "__main__":
         previous_trials = [int(num) for num in re.findall(r"Shared Namespace and Batch \(trial (\d+)\)", contents)]
         trial = max(previous_trials) + 1 if previous_trials else 1
         logger.info(f"Shared Namespace and Batch (trial {trial})")
-        cache_path = f"caches/frameworks/{args.method}/snsb"
+        cache_path = f"caches/frameworks/game24"
 
     asyncio.run(run(args, trial=trial, cache_path=cache_path))
     logger.info("\n"*3)

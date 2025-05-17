@@ -58,9 +58,9 @@ def build_method(method_name: str, params: DecodingParameters, api: API, config:
             num_steps=config.tot_bfs.num_steps,
             num_evaluations=config.tot_bfs.num_evaluations,
         )
-    elif method_name == "got":
+    if args.method == "got":
         agents = AgentDictGOT(
-            step=AgentBfsSciBench,
+            step=AgentActSciBench,
             aggregate=AgentAggregateSciBench,
             evaluate=AgentEvaluateSciBench,
             step_params=params,
@@ -73,8 +73,20 @@ def build_method(method_name: str, params: DecodingParameters, api: API, config:
             env=EnvironmentSciBench,
             num_selections=config.got.num_selections,
             num_steps=config.got.num_steps,
+            num_generate=config.got.num_generate,
             num_best=config.got.num_best,
             num_evaluations=config.got.num_evaluations,
+        )
+    elif args.method == "react":
+        agents = AgentDictReact(
+            step=AgentReactSciBench,
+            step_params=params,
+        )
+        method = AlgorithmReact(
+            model=api,
+            agents=agents,
+            env=EnvironmentSciBench,
+            num_steps=config.react.num_steps,
         )
     else:
         raise NotImplementedError(f"Method {method_name} is not implemented yet.")
@@ -166,6 +178,8 @@ async def run(args, trial, cache_path):
         "max": np.max(list(api.reuse.values())),
         "min": np.min(list(api.reuse.values())),
         "median": np.median(list(api.reuse.values())),
+        "total" : np.sum(list(api.reuse.values())),
+        "num_unique": len(api.reuse),
     }
     run_time = end - start
     throughput = len(benchmark) / run_time

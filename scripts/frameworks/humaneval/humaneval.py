@@ -19,21 +19,21 @@ from src.utils import tokens2cost, clean_log
 from src.algorithms import *
 from src.models import OnlineLLM, API
 from src.typedefs import DecodingParameters
-from src.tasks.scibench import *
+from src.tasks.humaneval import *
 
 def build_method(method_name: str, params: DecodingParameters, api: API, config: OmegaConf):
 # Setup the method
     if method_name == "foa":
         agents = AgentDictFOA(
-            step=AgentActSciBench,
-            evaluate=AgentEvaluateSciBench,
+            step=AgentActHumanEval,
+            evaluate=AgentEvaluateHumanEval,
             step_params=params,
             eval_params=params,
         )
         method = AlgorithmFOA(
             model=api,
             agents=agents,
-            env=EnvironmentSciBench,
+            env=EnvironmentHumanEval,
             num_agents=config.foa.num_agents,
             num_steps=config.foa.num_steps,
             k=config.foa.k,
@@ -45,24 +45,24 @@ def build_method(method_name: str, params: DecodingParameters, api: API, config:
         )
     elif method_name == "tot_bfs":
         agents = AgentDictTOT(
-            step=AgentBfsSciBench,
-            evaluate=AgentEvaluateSciBench,
+            step=AgentBfsHumanEval,
+            evaluate=AgentEvaluateHumanEval,
             step_params=params,
             eval_params=params,
         )
         method = AlgorithmTOT(
             model=api,
             agents=agents,
-            env=EnvironmentSciBench,
+            env=EnvironmentHumanEval,
             num_selections=config.tot_bfs.num_selections,
             num_steps=config.tot_bfs.num_steps,
             num_evaluations=config.tot_bfs.num_evaluations,
         )
     elif method_name == "got":
         agents = AgentDictGOT(
-            step=AgentBfsSciBench,
-            aggregate=AgentAggregateSciBench,
-            evaluate=AgentEvaluateSciBench,
+            step=AgentActHumanEval,
+            aggregate=AgentAggregateHumanEval,
+            evaluate=AgentEvaluateHumanEval,
             step_params=params,
             aggregate_params=params,
             eval_params=params,
@@ -70,9 +70,10 @@ def build_method(method_name: str, params: DecodingParameters, api: API, config:
         method = AlgorithmGOT(
             model=api,
             agents=agents,
-            env=EnvironmentSciBench,
+            env=EnvironmentHumanEval,
             num_selections=config.got.num_selections,
             num_steps=config.got.num_steps,
+            num_generate=config.got.num_generate,
             num_best=config.got.num_best,
             num_evaluations=config.got.num_evaluations,
         )
@@ -137,7 +138,7 @@ async def run(args, trial, cache_path):
     method = build_method(args.method, params, api, config)
 
     # Load the dataset
-    benchmark = BenchmarkSciBench(path=args.dataset_path, split=args.split)
+    benchmark = BenchmarkHumanEval(path=args.dataset_path, split=args.split)
 
     # Run the method
     start = time.time()
@@ -151,7 +152,7 @@ async def run(args, trial, cache_path):
     finished = []
     correct = []
     for result in results:
-        evaluations = sorted([EnvironmentSciBench.evaluate(state) for state in result], key=lambda x: x[1])
+        evaluations = sorted([EnvironmentHumanEval.evaluate(state) for state in result], key=lambda x: x[1])
         finished.append(False if len(evaluations) == 0 else evaluations[-1][0])
         correct.append(1.0 if len(evaluations) == 0 else evaluations[-1][1])
     perc_finished = sum(finished) / len(finished)
@@ -208,10 +209,9 @@ if __name__ == "__main__":
     parser.add_argument("--conf_path", type=str, help="Path to corresponding config")
     parser.add_argument("--value_cache", action="store_true", help="Use value cache")
     parser.add_argument("--correctness", type=int, help="Use original ('correct') implementation")
-    parser.add_argument("--task", type=str, help="Task to run", default="chemmc")
     args = parser.parse_args()
 
-    filename = f"logs/frameworks/{args.model.split('/')[-1]}/scibench/{args.method}.log"
+    filename = f"logs/frameworks/{args.model.split('/')[-1]}/humaneval/{args.method}.log"
     os.makedirs(os.path.dirname(filename), exist_ok=True)
     logging.basicConfig(level=logging.INFO, filename=filename, filemode="a")
     logger.info("#"*50)
@@ -229,7 +229,7 @@ if __name__ == "__main__":
         previous_trials = [int(num) for num in re.findall(r"Shared Namespace and Batch \(trial (\d+)\)", contents)]
         trial = max(previous_trials) + 1 if previous_trials else 1
         logger.info(f"Shared Namespace and Batch (trial {trial})")
-        cache_path = f"caches/frameworks/scibench"
+        cache_path = f"caches/frameworks/humaneval"
 
     asyncio.run(run(args, trial=trial, cache_path=cache_path))
     logger.info("\n"*3)

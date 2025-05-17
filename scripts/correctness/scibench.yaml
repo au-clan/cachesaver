@@ -14,7 +14,11 @@ tot_bfs:
   num_evaluations: 3
 
 got:
-  num_selections: 3
+  num_selections: 5
   num_steps: 4
+  num_generate: 10
   num_evaluations: 3
   num_best: 2
+
+react:
+  num_steps: 10

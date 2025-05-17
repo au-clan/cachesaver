@@ -58,9 +58,9 @@ def build_method(method_name: str, params: DecodingParameters, api: API, config:
             num_steps=config.tot_bfs.num_steps,
             num_evaluations=config.tot_bfs.num_evaluations,
         )
-    elif method_name == "got":
+    elif args.method == "got":
         agents = AgentDictGOT(
-            step=AgentBfsGame24,
+            step=AgentActGame24,
             aggregate=AgentAggregateGame24,
             evaluate=AgentEvaluateGame24,
             step_params=params,
@@ -73,9 +73,38 @@ def build_method(method_name: str, params: DecodingParameters, api: API, config:
             env=EnvironmentGame24,
             num_selections=config.got.num_selections,
             num_steps=config.got.num_steps,
+            num_generate=config.got.num_generate,
             num_best=config.got.num_best,
             num_evaluations=config.got.num_evaluations,
         )
+    elif args.method == "rap":
+        agents = AgentDictRAP(
+            step=AgentReactGame24,
+            evaluate=AgentSelfEvaluateGame24,
+            step_params=params,
+            eval_params=params,
+        )
+        method = AlgorithmRAP(
+            model=api,
+            agents=agents,
+            env=EnvironmentGame24,
+            num_iterations=config.rap.num_iterations,
+            num_samples=config.rap.num_samples,
+            num_evaluations=config.rap.num_evaluations,
+            exploration_constant=config.rap.exploration_constant,
+        )
+    elif args.method == "react":
+        agents = AgentDictReact(
+            step=AgentReactGame24,
+            step_params=params,
+        )
+        method = AlgorithmReact(
+            model=api,
+            agents=agents,
+            env=EnvironmentGame24,
+            num_steps=config.react.num_steps,
+        )
+
     else:
         raise NotImplementedError(f"Method {method_name} is not implemented yet.")
     return method
@@ -87,7 +116,7 @@ async def run(args, trial, cache_path):
 
     # LLM Provider
     if args.provider == "openai":
-        if args.base_rul and "localhost" in args.base_url:
+        if args.base_url and "localhost" in args.base_url:
             # For local vLLM servers, use a dummy API key
             client = AsyncOpenAI(base_url=args.base_url, api_key="dummy-key")
         else:
@@ -170,6 +199,8 @@ async def run(args, trial, cache_path):
         "max": np.max(list(api.reuse.values())),
         "min": np.min(list(api.reuse.values())),
         "median": np.median(list(api.reuse.values())),
+        "total" : np.sum(list(api.reuse.values())),
+        "num_unique": len(api.reuse),
     }
     run_time = end - start
     throughput = len(benchmark) / run_time
