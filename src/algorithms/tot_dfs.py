@@ -102,8 +102,9 @@ class AlgorithmTOT_DFS(Algorithm):
                 output.append((best_state, best_value))
 
                 # Early stopping if confidence is high
-                if self.confidence_threshold is not None and best_value >= self.confidence_threshold:
-                    print(f"Early stopping: Confidence threshold met. Value = {best_value}")
+                #if self.confidence_threshold is not None and best_value >= self.confidence_threshold:
+                if self.env.evaluate(best_state) == 1:
+                    #print(f"Early stopping: Confidence threshold met. Value = {best_value}")
                     return True
 
                 # Check for convergence (if the value has not improved significantly)
@@ -119,7 +120,7 @@ class AlgorithmTOT_DFS(Algorithm):
                 # Stop if we've reached the max number of iterations or if convergence criteria are met
                 if (self.max_iterations is not None and iteration_count >= self.max_iterations) or \
                         (self.convergence_count is not None and consecutive_convergence_count >= self.convergence_count):
-                    print(f"Early stopping: Max iterations or convergence criteria met.")
+                    #print(f"Early stopping: Max iterations or convergence criteria met.")
                     return True  # Stop if we've reached the max iteration count or convergence
 
                 return False
@@ -130,10 +131,10 @@ class AlgorithmTOT_DFS(Algorithm):
                     model=self.model,
                     state=state,
                     namespace=namespace,
-                    request_id=f"idx{idx}-step{t}-{hash(state)}",
+                    request_id=f"idx{idx}-step{t}-{hash(state)}-agent{i}",
                     params=self.step_params,
                 )
-                for state in s
+                for i, state in enumerate(s)
             ]
             actions = await asyncio.gather(*action_coroutines)
             state_proposals = []
@@ -150,11 +151,11 @@ class AlgorithmTOT_DFS(Algorithm):
                     state=state,
                     n=self.num_evaluations,
                     namespace=namespace,
-                    request_id=f"idx{idx}-evaluation{t}-{hash(state)}",
+                    request_id=f"idx{idx}-evaluation{t}-{hash(state)}-agent{i}",
                     params=self.eval_params,
                     cache=value_cache
                 )
-                for state in state_proposals
+                for i, state in enumerate(state_proposals)
             ]
             values = await asyncio.gather(*value_coroutines)
             # Print the results
@@ -179,7 +180,8 @@ class AlgorithmTOT_DFS(Algorithm):
         await dfs(states, 1)
 
         # Return the best result found, or None if no result was found
-        return sorted(output, key=lambda x: x[1], reverse=True)[:self.num_selections] if output else None
+        output = sorted(output, key=lambda x: x[1], reverse=True)[:self.num_selections] if output else []
+        return [x[0] for x in output]  # Return only the states, not the values
 
 
     async def benchmark(self, benchmark: Benchmark, share_ns: bool=False, cache: bool=True):
