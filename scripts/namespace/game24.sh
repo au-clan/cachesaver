@@ -5,7 +5,7 @@ namespace_fraction=(0.0 0.2 0.4 0.6 0.8)
 benchmark="game24"
 
 # Define methods
-methods=("foa" "tot_bfs") # =("foa" "tot_bfs" "tot_dfs" "got" "rap" "react" "reflexion" "rafa" "rest_mcts")
+methods=("foa" "tot_bfs" "got") # =("foa" "tot_bfs" "tot_dfs" "got" "rap" "react" "reflexion" "rafa" "rest_mcts")
 
 # Define models
 provider="openai"
