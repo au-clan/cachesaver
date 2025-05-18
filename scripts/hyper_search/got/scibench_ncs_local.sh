@@ -9,7 +9,7 @@ method="got" # =("foa" "tot_bfs" "tot_dfs" "got" "rap" "react" "reflexion" "rafa
 
 # Define models
 provider="openai"
-base_url="http://139.19.179.52:19999/v1"
+base_url="http://139.19.179.48:19999/v1"
 # llama-4-meverick
 # model="/DS/dsg-ml2/nobackup/cxu/weights/unsloth/Llama-4-Maverick-17B-128E-Instruct-FP8"
 
