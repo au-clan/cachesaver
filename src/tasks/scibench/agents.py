@@ -118,7 +118,11 @@ class AgentAggregateSciBench(Agent):
         # Parse the response
         pattern = r'\d+'
         matchs = re.findall(pattern, responses[0])
-        return [actions[int(i.strip()) - 1] for i in matchs]
+        try:
+            out = [actions[int(i.strip()) - 1] for i in matchs]
+        except Exception as e:
+            out = []
+        return out
     
 class AgentEvaluateSciBench(Agent):
 

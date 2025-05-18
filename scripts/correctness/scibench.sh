@@ -4,7 +4,7 @@
 benchmarks=("scibench") 
 
 # Define methods
-methods=("foa" "tot" "got") # =("foa" "tot_bfs" "tot_dfs" "got" "rap" "react" "reflexion" "rafa" "rest_mcts")
+methods=("got") # =("foa" "tot_bfs" "tot_dfs" "got" "rap" "react" "reflexion" "rafa" "rest_mcts")
 
 # Define tasks
 tasks=("100")

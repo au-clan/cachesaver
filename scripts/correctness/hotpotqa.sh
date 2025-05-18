@@ -4,14 +4,14 @@
 benchmarks=("hotpotqa")
 
 # Define methods
-methods=("foa" "tot_bfs") # =("foa" "tot_bfs" "tot_dfs" "got" "rap" "react" "reflexion" "rafa" "rest_mcts")
+methods=("tot_bfs" "got" "react" "rap")
 
 # Define models
 provider="openai"
 model="gpt-4.1-nano"
 
 # Define number of retrials
-retrials=10
+retrials=5
 split="test"
 
 # Delete caches if they exist

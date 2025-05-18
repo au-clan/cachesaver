@@ -90,6 +90,9 @@ class AlgorithmGOT(Algorithm):
                 for action in actions:
                     proposed_states.append(self.env.step(state, action))
             
+            if proposed_states == []:
+                return states
+            
             logger.debug(f"Env step for task {idx}: \n{proposed_states}")
             # Evaluate all proposals
             value_coroutines = [
