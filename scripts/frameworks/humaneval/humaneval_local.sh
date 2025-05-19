@@ -9,7 +9,7 @@ benchmark="humaneval"
 
 # Define models
 provider="openai"
-base_url="http://139.19.179.53:19999/v1"
+base_url="http://139.19.179.48:19999/v1"
 # llama-4-meverick
 # model="/DS/dsg-ml2/nobackup/cxu/weights/unsloth/Llama-4-Maverick-17B-128E-Instruct-FP8"
 
@@ -29,6 +29,7 @@ for method in "${methods[@]}"; do
     python "scripts/frameworks/${benchmark}/${benchmark}.py" \
         --provider "$provider" \
         --model "$model" \
+        --base_url "$base_url" \
         --batch_size 300 \
         --timeout 2.0 \
         --temperature 0.7 \
