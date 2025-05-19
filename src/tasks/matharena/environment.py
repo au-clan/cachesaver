@@ -1,107 +1,126 @@
-from typing import Tuple, List
-from dataclasses import dataclass
-from ...typedefs import Environment
+import re
+import math
+import random
+from typing import Tuple
+
 from .state import StateMathArena
+from ...typedefs import Environment, MAX_SEED
+import logging
+logger = logging.getLogger(__name__)
 
-@dataclass
 class EnvironmentMathArena(Environment):
-    """Environment for MathArena task."""
+    
+    @staticmethod
+    def step(state: StateMathArena, action: str) -> StateMathArena:
+        
+        # Randomness handling
+        random.seed(state.randomness)
+        randomness = random.randint(0, MAX_SEED)
 
+        new_state = StateMathArena(
+            problem=state.problem,
+            current_state=state.current_state + f"\n{action}",
+            steps=state.steps + [action],
+            answer=state.answer,
+            step_n=state.step_n + 1,
+            values=state.values,
+            randomness=randomness
+        )
+        logger.debug(f"Steps before update: {state.steps}")
+        logger.debug(f"Action added: {action}")
+        logger.debug(f"New steps: {new_state.steps}")
+        return new_state
+
+    @staticmethod
+    def is_valid(state: StateMathArena, action: str) -> bool:
+        """
+        Checks if the action taken is valid.
+        """
+        raise NotImplementedError("Action validation logic is not implemented.")
+    
+    @staticmethod
+    def is_final(state: StateMathArena) -> bool:
+
+        """
+    Checks if the current state is a final state.
+    """
+        try:
+            # Check if the last step contains "The final answer is"
+            if len(state.steps) > 0 and "the final answer is" in state.steps[-1].lower():
+                return True
+            
+            # Check if the highest value in `state.values` is >= 0.9
+            if len(state.values) > 0 and state.values[max(state.values)] >= 0.1:
+                return True
+            
+            # Optional: Check if the maximum number of steps has been reached
+            MAX_STEPS = 10  # Define a reasonable limit for steps
+            if state.step_n >= MAX_STEPS:
+                return True
+
+            return False
+        except Exception as e:
+            logger.error(f"Error in is_final: {e}")
+            return False
+    
     @staticmethod
     def evaluate(state: StateMathArena) -> Tuple[bool, float]:
         """
         Evaluates the current state.
-
-        Args:
-            state (StateMathArena): Current state to evaluate
-
-        Returns:
-            Tuple[bool, float]: (is_finished, score)
         """
-        # Check if we have any steps
+        logger.debug(f"Evaluating state with steps: {state.steps}")
+        logger.debug(f"Last step: {state.steps[-1] if state.steps else 'No steps'}")
         if not state.steps:
+            logger.debug("No steps found - returning (False, 0.0)")
+        final = EnvironmentMathArena.is_final(state)
+        if final:
+            score = verify_answer(state.answer, state.steps[-1])
+            logger.debug(f"Final state detected. Score: {score}")
+            return True, score
+        else:
+            logger.debug("State is not final.")
+
             return False, 0.0
+    
 
-        last_step = state.steps[-1]
+def verify_answer(answer: float, output: str):
+    if not output:
+        #print(f'The output is empty and cannot match the answer!\n')
+        return 0.0
 
-        # Not finished if last step isn't a Finish action
-        if not last_step.startswith("Finish["):
-            return False, 0.0
+    if 'In summary, ' in output:
+        spl_ans = output.split('In summary, ')[-1]
+        spl_ans = spl_ans.strip()
+    else:
+        spl_ans = output.strip()
 
-        # Extract and compare answer
-        predicted_answer = last_step[7:-1].strip()  # Remove "Finish[" and "]"
-        is_correct = predicted_answer == state.answer.strip()
-        
-        # Scoring logic: 
-        # - 1.0 for correct answer
-        # - 0.0 for incorrect answer
-        return True, float(is_correct)
+    try:
+        match = re.findall(r'[^^{.\-0123456789]-?[0-9]+\.?[0-9]*[^^}.0123456789]', spl_ans)[-1][1:][:-1]
+        model_ans = float(match)
 
-    @staticmethod
-    def is_valid(state: StateMathArena) -> bool:
-        """
-        Checks if the current state is valid.
+        # standard (adjustable)
+        if abs(answer) >= 1:
+            result = math.isclose(model_ans, answer, abs_tol=0.1)
+        else:
+            result = math.isclose(model_ans, answer, rel_tol=0.1)
 
-        Args:
-            state (StateMathArena): State to check
+        #print(f'The ans of model is:{model_ans}, while the ground truth is {answer}.\n')
+        return result * 1.0
 
-        Returns:
-            bool: True if state is valid
-        """
-        if not state.problem or not state.parsed_problem or not state.answer:
-            return False
+    except Exception as e:
+        try:
+            match = re.findall(r'-?[0-9]+\.?[0-9]*', spl_ans)[-1]
+            model_ans = float(match)
 
-        if not isinstance(state.steps, list):
-            return False
+            # standard (adjustable)
+            if abs(answer) >= 1:
+                result = math.isclose(model_ans, answer, abs_tol=0.1)
+            else:
+                result = math.isclose(model_ans, answer, rel_tol=0.1)
 
-        valid_prefixes = ("Analyze[", "Explain[", "Finish[")
-        
-        for step in state.steps:
-            if not isinstance(step, str):
-                return False
-            if not any(step.startswith(prefix) for prefix in valid_prefixes):
-                return False
-            if not step.endswith("]"):
-                return False
-
-        return True
-
-    @staticmethod
-    def get_valid_actions(state: StateMathArena) -> List[str]:
-        """
-        Returns list of valid actions for current state.
-
-        Args:
-            state (StateMathArena): Current state
-
-        Returns:
-            List[str]: List of valid actions
-        """
-        actions = [
-            "Analyze[problem]",
-            "Analyze[solution approach]",
-            "Explain[math concepts]",
-            "Explain[solution steps]"
-        ]
-
-        # Allow finishing only after at least 2 analysis/explanation steps
-        if len(state.steps) >= 2:
-            actions.append("Finish[answer]")
-
-        return actions
-
-    @staticmethod
-    def apply_action(state: StateMathArena, action: str) -> StateMathArena:
-        """
-        Applies an action to the current state.
-
-        Args:
-            state (StateMathArena): Current state
-            action (str): Action to apply
-
-        Returns:
-            StateMathArena: New state after applying action
-        """
-        new_state = state.copy()
-        new_state.steps.append(action)
-        return new_state
+            #print(f'The ans of model is:{model_ans}, while the ground truth is {answer}.\n')
+            return result * 1.0
+        except Exception as e:
+            #print(f'Result not matched, error type:{e}\n')
+            #print(f'The ans of model is:{spl_ans}, while the ground truth is {answer}.\n')
+            return 0.0
