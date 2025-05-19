@@ -4,7 +4,7 @@
 benchmarks=("game24") 
 
 # Define methods
-methods=("foa" "tot_bfs") # =("foa" "tot_bfs" "tot_dfs" "got" "rap" "react" "reflexion" "rafa" "rest_mcts")
+methods=("react" "got" "rap") # =("foa" "tot_bfs" "tot_dfs" "got" "rap" "react" "reflexion" "rafa" "rest_mcts")
 
 # Define models
 provider="openai"
@@ -25,7 +25,7 @@ for method in "${methods[@]}"; do
     if [ -d "$FOLDER" ]; then
         rm -rf "$FOLDER"
     fi
-    
+
 done
 
 

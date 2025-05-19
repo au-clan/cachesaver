@@ -238,7 +238,7 @@ if __name__ == "__main__":
     parser.add_argument("--correctness", type=int, help="Use original ('correct') implementation")
     args = parser.parse_args()
 
-    filename = f"logs/correctness/{args.model.split('/')[-1]}/hotpotqa/{args.method}.log"
+    filename = f"logs/correctness/hotpotqa/{args.method}.log"
     os.makedirs(os.path.dirname(filename), exist_ok=True)
     logging.basicConfig(level=logging.INFO, filename=filename, filemode="a")
     logger.info("#"*50)

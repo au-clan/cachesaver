@@ -219,7 +219,7 @@ if __name__ == "__main__":
     parser.add_argument("--namespace_fraction", type=float, help="Fraction of puzzles to share namespaces")
     args = parser.parse_args()
 
-    filename = f"logs/namespace/{args.model.split('/')[-1]}/game24/{args.method}/{args.namespace_fraction}.log"
+    filename = f"logs/namespace/game24/{args.method}/{args.namespace_fraction}.log"
     os.makedirs(os.path.dirname(filename), exist_ok=True)
     print(f"Logging to {filename}")
     logging.basicConfig(level=logging.INFO, filename=filename, filemode="a")

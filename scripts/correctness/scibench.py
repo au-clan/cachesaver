@@ -225,7 +225,7 @@ if __name__ == "__main__":
     parser.add_argument("--task", type=str, help="Task to run", default="chemmc")
     args = parser.parse_args()
 
-    filename = f"logs/correctness/{args.model.split('/')[-1]}/scibench_{args.task}/{args.method}.log"
+    filename = f"logs/correctness/scibench_{args.task}/{args.method}.log"
     os.makedirs(os.path.dirname(filename), exist_ok=True)
     logging.basicConfig(level=logging.INFO, filename=filename, filemode="a")
     logger.info("#"*50)
