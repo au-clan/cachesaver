@@ -76,6 +76,34 @@ def build_method(method_name: str, params: DecodingParameters, api: API, config:
             num_best=config.got.num_best,
             num_evaluations=config.got.num_evaluations,
         )
+    elif args.method == "rap":
+        agents = AgentDictRAP(
+            step=AgentReactHotpotQA,
+            evaluate=AgentSelfEvaluateHotpotQA,
+            step_params=params,
+            eval_params=params,
+        )
+        method = AlgorithmRAP(
+            model=api,
+            agents=agents,
+            env=EnvironmentHotpotQA,
+            num_iterations=config.rap.num_iterations,
+            num_samples=config.rap.num_samples,
+            num_evaluations=config.rap.num_evaluations,
+            exploration_constant=config.rap.exploration_constant,
+        )
+    elif args.method == "react":
+        agents = AgentDictReact(
+            step=AgentReactHotpotQA,
+            step_params=params,
+        )
+        method = AlgorithmReact(
+            model=api,
+            agents=agents,
+            env=EnvironmentHotpotQA,
+            num_steps=config.react.num_steps,
+        )
+
     else:
         raise NotImplementedError(f"Method {method_name} is not implemented yet.")
     return method
