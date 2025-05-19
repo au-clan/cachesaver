@@ -115,7 +115,11 @@ async def run(args, trial, cache_path):
 
     # LLM Provider
     if args.provider == "openai":
-        client = AsyncOpenAI()
+        if args.base_url and "v1" in args.base_url:
+            # For local vLLM servers, use a dummy API key
+            client = AsyncOpenAI(base_url=args.base_url, api_key="dummy-key")
+        else:
+            client = AsyncOpenAI(base_url=args.base_url) if args.base_url else AsyncOpenAI()
     elif args.provider == "together":
         client = AsyncTogether()
     elif args.provider == "local":
@@ -217,6 +221,7 @@ async def run(args, trial, cache_path):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Solve HotpotQA using LLMs.")
     parser.add_argument("--provider", type=str, help="LLM provider")
+    parser.add_argument("--base_url", type=str, help="Base URL for the API")
     parser.add_argument("--model", type=str, help="LLM model")
     parser.add_argument("--batch_size", type=int, help="CacheSaver's batch size")
     parser.add_argument("--timeout", type=float, help="CacheSaver's timeout")

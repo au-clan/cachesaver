@@ -58,7 +58,7 @@ def build_method(method_name: str, params: DecodingParameters, api: API, config:
             num_steps=config.tot_bfs.num_steps,
             num_evaluations=config.tot_bfs.num_evaluations,
         )
-    if args.method == "got":
+    elif args.method == "got":
         agents = AgentDictGOT(
             step=AgentActSciBench,
             aggregate=AgentAggregateSciBench,

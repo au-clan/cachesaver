@@ -4,7 +4,7 @@
 benchmarks=("scibench") 
 
 # Define methods
-methods=("foa" "tot_bfs") # =("foa" "tot_bfs" "tot_dfs" "got" "rap" "react" "reflexion" "rafa" "rest_mcts")
+methods=("foa" "tot_bfs" "got") # =("foa" "tot_bfs" "tot_dfs" "got" "rap" "react" "reflexion" "rafa" "rest_mcts")
 
 # Define tasks
 tasks=("100")
@@ -36,7 +36,12 @@ for benchmark in "${benchmarks[@]}"; do
         for task in "${tasks[@]}"; do
             for ((i=1; i<=retrials; i++)); do
                 echo "Running $benchmark with $method (trial $i/$retrials)"
-                carbontracker --log_dir='./scripts/correctness/logs/scibench_bs1/' python "scripts/correctness/${benchmark}.py" \
+
+                FLAG_NAME="correctness_scibench_${benchmark}_${method}_${task}_${i}_s1"
+                echo $base_url > $FLAG_NAME.time.log
+                echo "START $(date +'%Y%m%d_%H%M%S')" >> $FLAG_NAME.time.log
+
+                python "scripts/correctness/${benchmark}.py" \
                     --provider "$provider" \
                     --model "$model" \
                     --base_url "$base_url" \
@@ -53,7 +58,13 @@ for benchmark in "${benchmarks[@]}"; do
                     --correctness 1 \
                     --value_cache
 
-                carbontracker --log_dir='./scripts/correctness/logs/scibench_bs300' python "scripts/correctness/${benchmark}.py" \
+                echo "END__ $(date +'%Y%m%d_%H%M%S')" >> $FLAG_NAME.time.log
+
+                FLAG_NAME="correctness_scibench_${benchmark}_${method}_${task}_${i}_s2"
+                echo $base_url > $FLAG_NAME.time.log
+                echo "START $(date +'%Y%m%d_%H%M%S')" >> $FLAG_NAME.time.log
+
+                python "scripts/correctness/${benchmark}.py" \
                     --provider "$provider" \
                     --model "$model" \
                     --base_url "$base_url" \
@@ -69,6 +80,9 @@ for benchmark in "${benchmarks[@]}"; do
                     --task "$task" \
                     --correctness 0 \
                     --value_cache
+
+                echo "END__ $(date +'%Y%m%d_%H%M%S')" >> $FLAG_NAME.time.log
+
             done
         done
     done
