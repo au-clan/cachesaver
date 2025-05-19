@@ -60,7 +60,7 @@ def build_method(method_name: str, params: DecodingParameters, api: API, config:
         )
     elif method_name == "got":
         agents = AgentDictGOT(
-            step=AgentBfsSciBench,
+            step=AgentActSciBench,
             aggregate=AgentAggregateSciBench,
             evaluate=AgentEvaluateSciBench,
             step_params=params,
