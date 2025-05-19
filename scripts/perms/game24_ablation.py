@@ -253,14 +253,14 @@ if __name__ == "__main__":
     
 
     trial = 0
-    ablations = ["resampling", "backtracking", "selection"]
+    ablations = ["resampling", "backtracking"]
     for ablation in ablations:
         
-        ablations_to_run = [a for a in ablations if a != ablation]
+        #ablations_to_run = [a for a in ablations if a != ablation]
 
-        cache_path = f"cache/l1o/{'_'.join(ablations_to_run)}"
+        cache_path = f"cache/l1o/{'_'.join(ablations)}"
 
-        for a in ablations_to_run:
+        for a in ablations:
             trial += 1
             logger.info("#"*50)
             logger.info(f"Trial {trial}, ablation {a}, perm {cache_path.split('/')[-1]}")

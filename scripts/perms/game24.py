@@ -247,14 +247,14 @@ if __name__ == "__main__":
     
 
     trial = 0
-    methods = ["foa", "tot_bfs", "got", "rap", "react"]
+    methods = ["foa", "tot_bfs", "got", "rap"]
     for method in methods:
         
-        methods_to_run = [m for m in methods if m != method]
+        #methods_to_run = [m for m in methods if m != method]
 
-        cache_path = f"cache/l1o/{'_'.join(methods_to_run)}"
+        cache_path = f"cache/l1o/{'_'.join(methods)}"
 
-        for m in methods_to_run:
+        for m in methods:
             trial += 1
             logger.info("#"*50)
             logger.info(f"Trial {trial}, method {method}, perm {cache_path.split('/')[-1]}")

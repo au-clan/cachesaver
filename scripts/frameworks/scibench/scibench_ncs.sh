@@ -2,7 +2,7 @@
 
 
 # Define benchmarks
-methods=("foa" "tot_bfs")
+methods=("foa" "tot_bfs" "got")
 
 # Define methods
 benchmark="scibench"

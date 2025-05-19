@@ -62,6 +62,9 @@ class AlgorithmTOT(Algorithm):
                 for action in actions:
                     state_proposals.append(self.env.step(state, action))
 
+            if state_proposals == []:
+                return states
+
             # Evaluate all proposals
             value_coroutines = [
                 self.eval_agent.act(

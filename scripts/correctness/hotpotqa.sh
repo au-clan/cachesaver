@@ -4,7 +4,7 @@
 benchmarks=("hotpotqa")
 
 # Define methods
-methods=("tot_bfs" "got" "react" "rap")
+methods=("react" "rap")
 
 # Define models
 provider="openai"
