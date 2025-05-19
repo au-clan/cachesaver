@@ -258,7 +258,7 @@ if __name__ == "__main__":
         
         ablations_to_run = [a for a in ablations if a != ablation]
 
-        cache_path = f"cache/l1o/{'_'.join(ablations_to_run[:-1])}"
+        cache_path = f"cache/l1o/{'_'.join(ablations_to_run)}"
 
         for a in ablations_to_run:
             trial += 1

@@ -252,7 +252,7 @@ if __name__ == "__main__":
         
         methods_to_run = [m for m in methods if m != method]
 
-        cache_path = f"cache/l1o/{'_'.join(methods_to_run[:-1])}"
+        cache_path = f"cache/l1o/{'_'.join(methods_to_run)}"
 
         for m in methods_to_run:
             trial += 1
