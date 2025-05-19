@@ -173,23 +173,21 @@ class AgentEvaluateGame24(Agent):
 
     @staticmethod
     async def logprobs_reward(logprobs_model: Model, state: StateGame24, action: str, next_state: StateGame24, namespace: str, request_id: str, eval_params: DecodingParameters) -> float:
-        if logprobs_model is None:
+        if logprobs_model is None or not eval_params.logprobs:
             return 0
-        logprobs_eval_params = eval_params
-        logprobs_eval_params.logprobs = True
         responses = await logprobs_model.request(
-            prompt=prompts.self_evaluate_rap.format(state_bedore=state.current_state, action=action, state_after=next_state.current_state),
+            prompt=prompts.self_evaluate_rap.format(state_before=state.current_state, action=action, state_after=next_state.current_state),
             namespace=namespace,
             n=1,
             request_id=request_id,
-            params=logprobs_eval_params,
+            params=eval_params,
             return_logprobs=True
         )
-        _, token_logprobs = responses[0]
-        label, logprob = token_logprobs[0]
-        if label == 'yes':
+        _, token_logprobs = responses
+        label, logprob = token_logprobs[0][0]
+        if label.strip().lower() == 'yes':
             return _scale_logprob_reward(logprob, 20)
-        elif label == 'no':
+        elif label.strip().lower() == 'no':
             return _scale_logprob_reward(logprob, 20, inverse=True)
         return 0
 

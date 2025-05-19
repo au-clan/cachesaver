@@ -36,6 +36,9 @@ class AlgorithmRAP(Algorithm):
             agents: AgentDictRAP,
             env: Environment,
             num_evaluations: int,
+            w_exp: float = 1.,
+            depth_limit: int = 5,
+            n_iters: int = 5,
             logprobs_model: Optional[API] = None,
     ):
         super().__init__(model, agents, env)
@@ -68,6 +71,9 @@ class AlgorithmRAP(Algorithm):
         self.search_algo = MCTS(
             output_trace_in_each_iter=True,
             cum_reward=np.mean,
+            w_exp=w_exp,
+            depth_limit=depth_limit,
+            n_iters=n_iters,
         )
 
     async def solve(
@@ -181,7 +187,17 @@ class RAPSearchConfig(SearchConfig):
         self.step_agent = step_agent
         self.eval_agent = eval_agent
         self.step_params = step_params
-        self.eval_params = eval_params
+        self.logprob_eval_params = eval_params
+
+        self.no_logprob_eval_params = DecodingParameters(
+            temperature=eval_params.temperature,
+            max_completion_tokens=eval_params.max_completion_tokens,
+            top_p=eval_params.top_p,
+            stop=eval_params.stop,
+            logprobs=False,
+            self_eval=eval_params.self_eval
+        )
+
         self.env = env
         self.namespace = None
         self.num_evaluations = num_evaluations
@@ -212,8 +228,9 @@ class RAPSearchConfig(SearchConfig):
             namespace=self.namespace,
             n=self.num_evaluations,
             request_id=f"task_specific_eval{self.eval_counter}-{hash(next_state)}",
-            params=self.eval_params
+            params=self.no_logprob_eval_params
         )
+        task_specific_reward = task_specific_reward/self.num_evaluations
 
         # logprobs reward
         logprobs_reward = await self.eval_agent.logprobs_reward(
@@ -222,26 +239,8 @@ class RAPSearchConfig(SearchConfig):
             action=action,
             next_state=next_state,
             namespace=self.namespace,
-            request_id=f"logprobs_eval{self.eval_counter}-{hash(next_state)}",
-            eval_params=self.eval_params)
-        # if self.logprobs_model is not None:
-        #     logprobs_eval_params = self.eval_params
-        #     logprobs_eval_params.logprobs = True
-        #     logprobs_reward_responses = await self.logprobs_model.request(
-        #         prompt="INPUT LOGPROB PROMPT HERE",#FIXME
-        #         namespace=self.namespace,
-        #         n=1,
-        #         request_id=f"logprobs_eval{self.eval_counter}-{hash(next_state)}",
-        #         params=logprobs_eval_params,
-        #         return_logprobs=True
-        #     )
-        #     _, token_logprobs = logprobs_reward_responses[0]
-        #     if token_logprobs[0][0] == 'yes':
-        #         logprobs_reward = _scale_logprob_reward(token_logprobs[0][1], 20)
-        #     elif token_logprobs[0][0] == 'no':
-        #         logprobs_reward = _scale_logprob_reward(token_logprobs[0][1], 20, inverse=True)
-        #     else:
-        #         logprobs_reward = 0
+            request_id=f"self_eval{self.eval_counter}-{hash(next_state)}",
+            eval_params=self.logprob_eval_params)
 
         # self eval reward
         self_eval_reward = await self.eval_agent.self_eval_reward(
@@ -251,24 +250,8 @@ class RAPSearchConfig(SearchConfig):
             next_state=next_state,
             namespace=self.namespace,
             num_evaluations=self.num_evaluations,
-            request_id=f"task_specific_eval{self.eval_counter}-{hash(next_state)}",
-            eval_params=self.eval_params)
-        # self_eval_responses = await self.model.request(
-        #     prompt="INPUT SELF EVAL PROMPT HERE",
-        #     namespace=self.namespace,
-        #     n=self.num_evaluations,
-        #     request_id=f"self_eval{self.eval_counter}-{hash(next_state)}",
-        #     params=self.eval_params,
-        # )
-        #
-        # yes_count = 0
-        # for response in self_eval_responses:
-        #     answer_text = response.strip().lower()
-        #     if answer_text.startswith("yes"):
-        #         yes_count += 1
-        #
-        # self_eval_score = yes_count / self.num_evaluations
-        # self_eval_reward = _scale_prob_reward(self_eval_score, 20)
+            request_id=f"logprobs_eval{self.eval_counter}-{hash(next_state)}",
+            eval_params=self.no_logprob_eval_params)
 
         return task_specific_reward + logprobs_reward + self_eval_reward, {"task_specific_reward": task_specific_reward, "logprobs_reward": logprobs_reward, "self_eval_reward": self_eval_reward}
 

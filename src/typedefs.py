@@ -22,6 +22,7 @@ class DecodingParameters(NamedTuple):
     top_p: float
     stop: str
     logprobs: bool
+    self_eval: bool
 
 class Model(SingleRequestModel, BatchRequestModel):
     def __init__(self):

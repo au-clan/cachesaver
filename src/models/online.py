@@ -58,8 +58,8 @@ class OnlineLLM(Model):
             else:
                 results.extend(
                     (choice.message.content, input_tokens, completion_tokens / request.n,
-                           list(zip(choice.logprobs.tokens, choice.logprobs.token_logprobs))
-                           ) for choice in completion.choices
+                     list(zip(choice.logprobs.tokens, choice.logprobs.token_logprobs))
+                     ) for choice in completion.choices
                 )
 
         return Response(data=results)

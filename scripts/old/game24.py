@@ -64,7 +64,8 @@ async def run(args):
         max_completion_tokens=args.max_completion_tokens,
         top_p=args.top_p,
         stop=args.stop,
-        logprobs=args.logprobs
+        logprobs=args.logprobs,
+        self_eval = args.self_eval
     )
 
     # Config
@@ -142,17 +143,35 @@ async def run(args):
             exploration_constant=config.rap.exploration_constant,
         )
     elif args.method == "rap_er":
+        step_params = DecodingParameters(
+            temperature=args.temperature,
+            max_completion_tokens=args.max_completion_tokens,
+            top_p=args.top_p,
+            stop=args.stop,
+            logprobs=False,
+            self_eval=args.self_eval
+        )
+
+        eval_params = DecodingParameters(
+            temperature=args.temperature,
+            max_completion_tokens=args.max_completion_tokens,
+            top_p=args.top_p,
+            stop=args.stop,
+            logprobs=args.logprobs,
+            self_eval=args.self_eval
+        )
         agents = AgentDictRAP(
             step=AgentBfsGame24,
             evaluate=AgentEvaluateGame24,
-            step_params=params,
-            eval_params=params,
+            step_params=step_params,
+            eval_params=eval_params,
         )
         method = AlgorithmRAP(
             model=api,
             agents=agents,
             env=EnvironmentGame24,
             num_evaluations=config.rap.num_evaluations,
+            logprobs_model=api if (args.provider=="together" and args.logprobs) else None
         )
     else:
         raise NotImplementedError(f"Method {args.method} is not implemented yet.")
@@ -200,6 +219,7 @@ if __name__ == "__main__":
     parser.add_argument("--top_p", type=float, help="Top P for the model", default=1.0)
     parser.add_argument("--stop", type=str, nargs="+", help="Stop sequence for the model", default=None)
     parser.add_argument("--logprobs", action="store_true", help="Logprobs for the model")
+    parser.add_argument("--self_eval", action="store_true", help="Self evaluation for the model", default=True)
     parser.add_argument("--dataset_path", type=str, help="Path to the dataset")
     parser.add_argument("--split", type=str, help="Split of the dataset", choices=["mini", "train", "validation", "test"], default="mini")
     parser.add_argument("--share_ns", action="store_true", help="Share namespace between puzzles")

@@ -56,6 +56,20 @@ class GroqAPILLM(Model):
             )
             self.generation_function = self.client.chat.completions.create
 
+    def _extract_choice_and_usage(self, completion):
+        if isinstance(completion, dict):
+            choice = completion["choices"][0]
+            usage = completion.get("usage", {})
+            input_tokens = usage.get("prompt_tokens", 0)
+            completion_tokens = usage.get("completion_tokens", 0)
+        else:
+            choice = completion.choices[0]
+            usage = getattr(completion, "usage", None)
+            input_tokens = getattr(usage, "prompt_tokens", 0) if usage else 0
+            completion_tokens = getattr(usage, "completion_tokens", 0) if usage else 0
+
+        return choice, input_tokens, completion_tokens
+
     async def request(self, request: Request) -> Response:
         # TODO GroqAPI doesnt support n>1 so this needs to be done in a simple for loop for now
         # sleep = 1

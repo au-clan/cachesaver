@@ -60,13 +60,13 @@ class API(ABC):
         # Measuring number of caslls
         self.calls = {
             "total": self.calls["total"] + len(response.data),
-            "cached": self.calls["cached"] + sum(response.cached),
-            "duplicated": self.calls["duplicated"] + sum(response.duplicated)
+            "cacher": self.calls["cacher"] + sum(response.cached),
+            "deduplicator": self.calls["deduplicator"] + sum(response.duplicated)
         }
-        if len(response) == 3:
+        if len(response.data[0]) == 3:
             messages, tokin, tokout = zip(*response.data)
             token_logprobs = []
-        elif len(response) == 4:
+        elif len(response.data[0]) == 4:
             messages, tokin, tokout, token_logprobs = zip(*response.data)
         else:
             raise Exception("Response from model is malformed")
