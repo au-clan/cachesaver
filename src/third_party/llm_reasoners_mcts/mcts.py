@@ -245,7 +245,6 @@ class MCTS(SearchAlgorithm, Generic[State, Action, Example]):
             fast_reward, fast_reward_details = await self.search_config.fast_reward(node.state, action)
             child = MCTSNode(state=None, action=action, parent=node,
                              fast_reward=fast_reward, fast_reward_details=fast_reward_details, calc_q=self.calc_q)
-            child.is_terminal = await self.world_model.is_solved(child.state)
             children.append(child)
 
 

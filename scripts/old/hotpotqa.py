@@ -152,7 +152,7 @@ async def run(args):
             model=api,
             agents=agents,
             env=EnvironmentHotpotQA,
-            num_evaluations=config.rap.num_evaluations,
+            num_evaluations=config.rap_er.num_evaluations,
             logprobs_model=api if (args.provider=="together" and args.logprobs) else None
         )
     else:
