@@ -73,6 +73,7 @@ def build_method(method_name: str, params: DecodingParameters, api: API, config:
             env=EnvironmentSciBench,
             num_selections=config.got.num_selections,
             num_steps=config.got.num_steps,
+            num_generate=config.got.num_generate,
             num_best=config.got.num_best,
             num_evaluations=config.got.num_evaluations,
         )
