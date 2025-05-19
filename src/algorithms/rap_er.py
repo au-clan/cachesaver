@@ -239,6 +239,7 @@ class RAPSearchConfig(SearchConfig):
             action=action,
             next_state=next_state,
             namespace=self.namespace,
+            num_evaluations=self.num_evaluations,
             request_id=f"self_eval{self.eval_counter}-{hash(next_state)}",
             eval_params=self.logprob_eval_params)
 

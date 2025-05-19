@@ -1,5 +1,3 @@
-import math
-from typing import List
 import re
 import random
 from typing import List
@@ -7,7 +5,8 @@ import numpy as np
 
 from . import prompts as prompts
 from .state import StateGame24
-from ...typedefs import Request, Agent, Model, DecodingParameters
+from ..utils import scale_prob_reward_log, scale_logprob_reward_log
+from ...typedefs import Agent, Model, DecodingParameters
 
 act_cache = {}
 
@@ -159,7 +158,7 @@ class AgentEvaluateGame24(Agent):
         return value
 
     @staticmethod
-    async def self_eval_reward(model: Model, state: StateGame24, action: str, next_state: StateGame24, num_evaluations: int,namespace: str, request_id: str, eval_params: DecodingParameters) -> float:
+    async def self_eval_reward(model: Model, state: StateGame24, action: str, next_state: StateGame24, num_evaluations: int, namespace: str, request_id: str, eval_params: DecodingParameters) -> float:
         responses = await model.request(
             prompt=prompts.self_evaluate_rap.format(state_before=state.current_state, action=action, state_after=next_state.current_state),
             namespace=namespace,
@@ -169,10 +168,10 @@ class AgentEvaluateGame24(Agent):
         )
         yes_count = sum(1 for r in responses if r.strip().lower().startswith("yes"))
         score = yes_count / num_evaluations
-        return _scale_prob_reward(score, 20)
+        return scale_prob_reward_log(score, 20)
 
     @staticmethod
-    async def logprobs_reward(logprobs_model: Model, state: StateGame24, action: str, next_state: StateGame24, namespace: str, request_id: str, eval_params: DecodingParameters) -> float:
+    async def logprobs_reward(logprobs_model: Model, state: StateGame24, action: str, next_state: StateGame24, num_evaluations: int, namespace: str, request_id: str, eval_params: DecodingParameters) -> float:
         if logprobs_model is None or not eval_params.logprobs:
             return 0
         responses = await logprobs_model.request(
@@ -186,9 +185,9 @@ class AgentEvaluateGame24(Agent):
         _, token_logprobs = responses
         label, logprob = token_logprobs[0][0]
         if label.strip().lower() == 'yes':
-            return _scale_logprob_reward(logprob, 20)
+            return scale_logprob_reward_log(logprob, 20)
         elif label.strip().lower() == 'no':
-            return _scale_logprob_reward(logprob, 20, inverse=True)
+            return scale_logprob_reward_log(logprob, 20, inverse=True)
         return 0
 
 
@@ -326,28 +325,3 @@ def get_formula(state: StateGame24) -> str:
     else:
         # Should do some error handling here but for the moment we'll take it as it is
         return ""
-
-def _scale_prob_reward(p, max_value, inverse=False):
-    if inverse:
-        p = 1 - p
-
-    p = min(max(p, 1e-10), 1.0)
-    if p <= 0:
-        return 0  # Impossible
-    if p >= 1:
-        return max_value  # Certain
-
-    logit = math.log(p / (1 - p))
-
-    # Clamp logit values to avoid extreme outputs
-    min_logit = -7
-    max_logit = 7
-    logit = max(-7, min(7, logit))
-
-    # Normalize and scale to [0, max_value]
-    scaled = (logit - min_logit) / (max_logit - min_logit) * max_value
-    return scaled
-
-def _scale_logprob_reward(logprob, max_value, inverse=False):
-    p = math.exp(logprob)
-    return _scale_prob_reward(p, max_value, inverse=inverse)

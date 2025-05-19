@@ -13,7 +13,7 @@ sys.path.append(os.getcwd())
 
 from src.utils import tokens2cost
 from src.algorithms import *
-from src.models import OnlineLLM, API
+from src.models import OnlineLLM, API, GroqAPILLM
 from src.typedefs import DecodingParameters
 from src.tasks.hotpotqa import EnvironmentHotpotQA, BenchmarkHotpotQA, AgentBfsHotpotQA, AgentEvaluateHotpotQA, AgentActHotpotQA, AgentAggregateHotpotQA
 
@@ -28,12 +28,16 @@ async def run(args):
         client = AsyncTogether()
     elif args.provider == "local":
         raise NotImplementedError("Local client is not implemented yet.")
+    elif args.provider == "groq":
+        pass  # skip this check as groq model initializes its own client
     else:
         raise ValueError("Invalid provider. Choose 'openai', 'together', or 'local'.")
     
     # CacheSaver model layer
     if args.provider in ["openai", "together"]:
         model = OnlineLLM(client=client)
+    elif args.provider == "groq":
+        model = GroqAPILLM(use_multiple_keys=True)
     else:
         raise NotImplementedError("Local model is not implemented yet.")
 
@@ -57,7 +61,8 @@ async def run(args):
         max_completion_tokens=args.max_completion_tokens,
         top_p=args.top_p,
         stop=args.stop,
-        logprobs=args.logprobs
+        logprobs=args.logprobs,
+        self_eval = args.self_eval
     )
 
     # Config
@@ -119,6 +124,37 @@ async def run(args):
             num_best=config.got.num_best,
             num_evaluations=config.got.num_evaluations,
         )
+    elif args.method == "rap_er":
+        step_params = DecodingParameters(
+            temperature=args.temperature,
+            max_completion_tokens=args.max_completion_tokens,
+            top_p=args.top_p,
+            stop=args.stop,
+            logprobs=False,
+            self_eval=args.self_eval
+        )
+
+        eval_params = DecodingParameters(
+            temperature=args.temperature,
+            max_completion_tokens=args.max_completion_tokens,
+            top_p=args.top_p,
+            stop=args.stop,
+            logprobs=args.logprobs,
+            self_eval=args.self_eval
+        )
+        agents = AgentDictRAP(
+            step=AgentBfsHotpotQA,
+            evaluate=AgentEvaluateHotpotQA,
+            step_params=step_params,
+            eval_params=eval_params,
+        )
+        method = AlgorithmRAP(
+            model=api,
+            agents=agents,
+            env=EnvironmentHotpotQA,
+            num_evaluations=config.rap.num_evaluations,
+            logprobs_model=api if (args.provider=="together" and args.logprobs) else None
+        )
     else:
         raise NotImplementedError("Method not implemented yet.")
     
@@ -142,7 +178,10 @@ async def run(args):
         correct.append(evaluations[-1][1])
     acc_finished = sum(finished) / len(finished)
     acc_correct = sum(correct) / len(correct)
-    costs = {key:tokens2cost(api.tokens[key], args.model) for key in api.tokens.keys()}
+    if args.provider == "groq":  # GroqAPI is free so no costs
+        costs = {key: {"in": 0, "out": 0, "total": 0} for key in api.tokens.keys()}
+    else:
+        costs = {key: tokens2cost(api.tokens[key], args.model) for key in api.tokens.keys()}
 
     print(f"Method: {args.method}")
     print(f"Finished: {acc_finished:.3f}%")
@@ -152,7 +191,7 @@ async def run(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Solve HotpotQA using LLMs.")
-    parser.add_argument("--provider", type=str, help="LLM Provider", choices=["openai", "together", "local"], default="openai")
+    parser.add_argument("--provider", type=str, help="LLM Provider", choices=["openai", "together", "local", "groq"], default="openai")
     parser.add_argument("--model", type=str, help="LLM Model",  default="gpt-4o-mini")
     parser.add_argument("--batch_size", type=int, help="CacheSaver's batch size", default=300)
     parser.add_argument("--timeout", type=float, help="CacheSaver's timeout", default=0.05)
@@ -161,10 +200,11 @@ if __name__ == "__main__":
     parser.add_argument("--top_p", type=float, help="Top P for the model", default=1.0)
     parser.add_argument("--stop", type=str, nargs="+", help="Stop sequence for the model", default=None)
     parser.add_argument("--logprobs", action="store_true", help="Logprobs for the model")
+    parser.add_argument("--self_eval", action="store_true", help="Self evaluation for the model", default=True)
     parser.add_argument("--dataset_path", type=str, help="Path to the dataset")
     parser.add_argument("--split", type=str, help="Split of the dataset", choices=["mini", "train", "validation", "test"], default="mini")
     parser.add_argument("--share_ns", action="store_true", help="Share namespace between puzzles")
-    parser.add_argument("--method", type=str, help="Method to use", choices=["foa", "tot", "got"], default="foa")
+    parser.add_argument("--method", type=str, help="Method to use", choices=["foa", "tot", "got", "rap_er"], default="foa")
     parser.add_argument("--conf_path", type=str, help="Path to corresponding config")
     parser.add_argument("--value_cache", action="store_true", help="Use value cache")
     args = parser.parse_args()

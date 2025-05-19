@@ -4,6 +4,8 @@ from typing import List, Tuple
 
 from . import prompts as prompts
 from .state import StateHotpotQA
+from ..utils import scale_prob_reward_linear, \
+    scale_logprob_reward_linear
 from ...typedefs import Agent, Model, DecodingParameters
 
 act_cache = {}
@@ -187,3 +189,47 @@ class AgentEvaluateHotpotQA(Agent):
         if cache is not None:
             cache[state.current_state] = value
         return value
+
+    @staticmethod
+    async def self_eval_reward(model: Model, state: StateHotpotQA, action: str, next_state: StateHotpotQA,
+                               num_evaluations: int, namespace: str, request_id: str,
+                               eval_params: DecodingParameters) -> float:
+        num_examples = 2
+        examples = "(Example)\n" + "\n\n(Example)\n".join(
+            [example for example in prompts.examples_evaluate_self_eval[:num_examples]])
+        responses = await model.request(
+            prompt=prompts.self_evaluate_rap.format(examples=examples, state_before=state.current_state, action=action,
+                                                    state_after=next_state.current_state),
+            namespace=namespace,
+            n=num_evaluations,
+            request_id=request_id,
+            params=eval_params,
+        )
+        yes_count = sum(1 for r in responses if r.strip().lower().startswith("yes"))
+        score = yes_count / num_evaluations
+        return scale_prob_reward_linear(score, num_evaluations)
+
+    @staticmethod
+    async def logprobs_reward(logprobs_model: Model, state: StateHotpotQA, action: str, next_state: StateHotpotQA,
+                              num_evaluations: int, namespace: str, request_id: str, eval_params: DecodingParameters) -> float:
+        if logprobs_model is None or not eval_params.logprobs:
+            return 0
+        num_examples = 2
+        examples = "(Example)\n" + "\n\n(Example)\n".join(
+            [example for example in prompts.examples_evaluate_self_eval[:num_examples]])
+        responses = await logprobs_model.request(
+            prompt=prompts.self_evaluate_rap.format(examples=examples, state_before=state.current_state, action=action,
+                                                    state_after=next_state.current_state),
+            namespace=namespace,
+            n=1,
+            request_id=request_id,
+            params=eval_params,
+            return_logprobs=True
+        )
+        _, token_logprobs = responses
+        label, logprob = token_logprobs[0][0]
+        if label.strip().lower() == 'yes':
+            return scale_logprob_reward_linear(logprob, num_evaluations)
+        elif label.strip().lower() == 'no':
+            return scale_logprob_reward_linear(logprob, num_evaluations, inverse=True)
+        return 0
