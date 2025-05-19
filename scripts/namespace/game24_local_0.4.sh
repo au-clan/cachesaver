@@ -1,5 +1,5 @@
 #!/bin/bash
-namespace_fraction=(0.0 0.2)
+namespace_fraction=(0.4)
 
 # Define benchmarks
 benchmark="game24"
@@ -9,7 +9,7 @@ methods=("foa" "tot_bfs" "got") # =("foa" "tot_bfs" "tot_dfs" "got" "rap" "react
 
 # Define models
 provider="openai"
-base_url="http://139.19.179.49:19999/v1"
+base_url="http://139.19.179.48:19999/v1"
 # llama-4-meverick
 # model="/DS/dsg-ml2/nobackup/cxu/weights/unsloth/Llama-4-Maverick-17B-128E-Instruct-FP8"
 
