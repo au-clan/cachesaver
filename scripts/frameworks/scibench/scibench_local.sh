@@ -2,14 +2,14 @@
 
 
 # Define benchmarks
-methods=("foa" "tot_bfs")
+methods=("foa" "tot_bfs" "got")
 
 # Define methods
 benchmark="scibench"
 
 # Define models
 provider="openai"
-base_url="http://139.19.179.51:19999/v1"
+base_url="http://139.19.179.53:19999/v1"
 # llama-4-meverick
 # model="/DS/dsg-ml2/nobackup/cxu/weights/unsloth/Llama-4-Maverick-17B-128E-Instruct-FP8"
 
