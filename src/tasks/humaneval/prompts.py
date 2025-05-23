@@ -8,7 +8,7 @@ aggregate_prompt = """You are a programming assistant, who is helping user to wr
 4. Style: The implementation should follow the style guide of the language.
 5. Testability: The implementation should be testable.
 
-Remember your task is to choose the {k} best implementation based on the above criterias. Make sure to keep each choise in their own code view, i.e., ```<implementation1>```, ```<implementation2>```, etc... Return only your choises and nothing else. Do not add any further thoughts or reasoning.
+Remember your task is to choose the {k} best implementation based on the above criterias. Make sure to return only the indexes of the selected implementations, separated by commas. Do not include any other explanations, introduction, conclusions or thoughts. Just return the indexes of the selected implementations.
 Function signature and docstring:
 {prompt}
 Implementations:

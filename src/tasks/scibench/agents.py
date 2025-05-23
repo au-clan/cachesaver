@@ -117,7 +117,7 @@ class AgentAggregateSciBench(Agent):
 
         # Parse the response
         pattern = r'\d+'
-        matchs = re.findall(pattern, responses[0])
+        matchs = re.findall(pattern, responses[0]) # TODO: Figure out why this does not work for Llama?
         try:
             out = [actions[int(i.strip()) - 1] for i in matchs]
         except Exception as e:

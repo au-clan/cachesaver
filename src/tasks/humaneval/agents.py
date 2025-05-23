@@ -76,9 +76,13 @@ class AgentAggregateHumanEval(Agent):
         
 
         # Parse the response
-        pattern = r"```[^`]+```"
+        pattern = r"\d+"
         matchs = re.findall(pattern, responses[0])
-        return matchs if matchs else responses[0]
+        try:
+            aggregate_actions = [actions[int(i) - 1] for i in matchs]
+        except:
+            aggregate_actions = []
+        return aggregate_actions
 
 
 class AgentBfsHumanEval(Agent):

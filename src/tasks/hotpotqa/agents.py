@@ -110,7 +110,10 @@ class AgentAggregateHotpotQA(Agent):
         )
 
         # Parse the responses
-        aggregate_actions = [r.strip() for response in responses for r in response.split("\n")]
+        try:
+            aggregate_actions = [r.strip() for r in reversed(responses[0].split("\n")) if any(action in r.lower() for action in ["lookup", "search", "finish"])]
+        except:
+            aggregate_actions = []
         return aggregate_actions
     
 class AgentReactHotpotQA(Agent):

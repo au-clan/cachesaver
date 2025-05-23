@@ -55,7 +55,7 @@ class AgentAggregateGame24(Agent):
         """
         Returns the aggregated actions for the Game of 24 task.
         """
-        if state.current_state.strip=="24" and any("left" not in action for action in actions):
+        if state.current_state.strip() == "24" or any("left" not in action for action in actions):
             return [action for action in actions if "left" not in action]
         
         # Format the prompt
@@ -74,12 +74,18 @@ class AgentAggregateGame24(Agent):
         )
 
         # Parse the response
-        actions = [
-            match.group(1)
-            for action in responses[0].split("\n")
-            if (match := re.match(r"\(\d+\)\s(.*)", action.strip()))
-        ]
-        return actions
+        try:
+            selected_actions = [
+                actions[int(i) - 1] for i in re.findall(r"\d+", responses[0])
+            ]
+        except:
+            selected_actions = []
+        # actions = [ # TODO: Make the LLM select the index of the action it think is best
+        #     match.group(1)
+        #     for action in responses[0].split("\n")
+        #     if (match := re.match(r"\(\d+\)\s(.*)", action.strip()))
+        # ]
+        return selected_actions
 
 
 class AgentBfsGame24(Agent):

@@ -1,5 +1,6 @@
 from typing import List
 import numpy as np
+import re
 
 from . import prompts as prompts
 from .state import StateSonnetWriting
@@ -48,8 +49,10 @@ class AgentAggregateSonnetWriting(Agent):
         )
 
         # Parse responses
-        selections = responses[0].split('\n')[-k:]
-        proposals = [actions[int(r.strip()) - 1] for r in selections]
+        try:
+            proposals = [actions[int(i) - 1] for i in re.findall(r'\d+', responses[0])]
+        except:
+            proposals = []
         return proposals
     
 class AgentEvaluateSonnetWriting(Agent):

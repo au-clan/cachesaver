@@ -57,11 +57,9 @@ Proposed next steps:
 (4) 8 - 8 = 0 (left: 0 4)
 (5) 8 / 4 = 2 (left: 2 8)
 Selected Next Step Set:
-(1) 4 * 8 = 32 (left: 8 32)
-(2) 8 * 8 = 64 (left: 4 64)
-(5) 8 / 4 = 2 (left: 2 8)
+1, 2, 5
 
-Remember, your task is to select {n_select_sample} steps from the proposed next steps. Do not change the steps, just select them.
+Remember, your task is to select {n_select_sample} steps from the proposed next steps. Do not change the steps, just select them. Return only the indexes of the selected steps. Do not include any other information, explanations, comments or conclusions.
 
 Input: {state}
 Number of steps to select: {n_select_sample}
@@ -69,6 +67,9 @@ Proposed next steps:
 {proposal}
 Selected Next Step Set:
 '''
+# (1) 4 * 8 = 32 (left: 8 32)
+# (2) 8 * 8 = 64 (left: 4 64)
+# (5) 8 / 4 = 2 (left: 2 8)
 
 cot = '''Use numbers and basic arithmetic operations (+ - * /) to obtain 24. Return only the complete answer. If the steps are already given, just return the final expression following the given steps. Do not make any simplifications.
 

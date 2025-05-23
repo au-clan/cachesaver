@@ -90,7 +90,7 @@ class AlgorithmGOT(Algorithm):
                 for action in actions:
                     proposed_states.append(self.env.step(state, action))
             
-            if proposed_states == []:
+            if proposed_states == []: # TODO: Safety. I do not think this need to be here if the Aggregate Agent is implemented more correct.
                 return states
             
             logger.debug(f"Env step for task {idx}: \n{proposed_states}")
@@ -115,7 +115,7 @@ class AlgorithmGOT(Algorithm):
             # Choose the best states based on their value
             state_value_pairs = list(zip(proposed_states, values))
             sorted_pairs = sorted(state_value_pairs, key=lambda x: x[1], reverse=True)
-            states, values = map(list, zip(*sorted_pairs[:self.num_best]))
+            states, values = map(list, zip(*sorted_pairs[:self.num_best])) # TODO: Can happen that we get no proposed states
         
         return states
 
