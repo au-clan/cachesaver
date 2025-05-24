@@ -46,9 +46,14 @@ class AlgorithmGOT(Algorithm):
         random.seed(randomness)
         states = [state.clone(randomness=random.randint(0, MAX_SEED))]
         logger.debug(f"Solving game: {idx}")
-        for step in range(self.num_steps):
-            logger.debug(f"Step: {step} ({idx})")
 
+        solved = False
+        for step in range(self.num_steps):
+            if solved:
+                logger.debug(f"Task {idx} solved at step {step - 1}.")
+                break
+
+            logger.debug(f"Step: {step} ({idx})")
             # Generate actions for each state
             action_coroutines = [
                 self.step_agent.act(
@@ -61,8 +66,8 @@ class AlgorithmGOT(Algorithm):
                 )
                 for i, state in enumerate(states)
             ]
-            actions = await asyncio.gather(*action_coroutines)
-            logger.debug(f"Actions generated for task {idx}; \n {actions}")
+            generated_actions = await asyncio.gather(*action_coroutines)
+            logger.debug(f"{len(generated_actions)} Actions generated for task {idx}; \n {generated_actions}")
 
             # Aggregate actions
             aggregate_coroutines = [
@@ -75,11 +80,11 @@ class AlgorithmGOT(Algorithm):
                     request_id=f"idx{idx}-aggregate{step}-{hash(state)}-agent{i}",
                     params=self.aggregate_params,
                 )
-                for i, (state, action) in enumerate(zip(states, actions))
+                for i, (state, action) in enumerate(zip(states, generated_actions))
             ]
 
             actions = await asyncio.gather(*aggregate_coroutines)
-            logger.debug(f"Actions selected for task {idx}: \n{actions}")
+            logger.debug(f"{len(actions)} Actions selected for task {idx}: \n{actions}")
 
             # Execute actions on environment
             proposed_states = []
@@ -87,13 +92,12 @@ class AlgorithmGOT(Algorithm):
                 for action in actions:
                     proposed_states.append(self.env.step(state, action))
             
-            if proposed_states == []: # TODO: Safety. I do not think this need to be here if the Aggregate Agent is implemented more correct.
+            if proposed_states == []:
                 return states
             
             # Early stop in case any state is solved
             if any(self.env.evaluate(state)[1] == 1 for state in states):
                 solved = True
-                break
             
             logger.debug(f"Env step for task {idx}: \n{proposed_states}")
             # Evaluate all proposals
@@ -115,7 +119,7 @@ class AlgorithmGOT(Algorithm):
             # Choose the best states based on their value
             state_value_pairs = list(zip(proposed_states, values))
             sorted_pairs = sorted(state_value_pairs, key=lambda x: x[1], reverse=True)
-            states, values = map(list, zip(*sorted_pairs[:self.num_best])) # TODO: Can happen that we get no proposed states?
+            states, values = map(list, zip(*sorted_pairs[:self.num_best]))
         
         return states
 

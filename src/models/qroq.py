@@ -6,8 +6,8 @@ from typing import List
 from cachesaver.typedefs import Request, Batch, Response
 
 from ..typedefs import Model
-from groq import Groq
-#from lazykey import KeyHandler
+from groq import AsyncGroq
+from lazykey import AsyncKeyHandler
 
 from dotenv import load_dotenv
 
@@ -35,11 +35,11 @@ def _extract_choice_and_usage(completion):
 class GroqAPILLM(Model):
     def __init__(self, use_multiple_keys: bool = True):
         if use_multiple_keys:
-            self.client = KeyHandler(json.loads(GROQ_API_KEY_LIST),
-                                     Groq)
+            self.client = AsyncKeyHandler(GROQ_API_KEY_LIST,
+                                     AsyncGroq)
             self.generation_function = self.client.request
         else:
-            self.client = Groq(
+            self.client = AsyncGroq(
                 api_key=GROQ_API_KEY,
             )
             self.generation_function = self.client.chat.completions.create
@@ -87,7 +87,7 @@ class GroqAPILLM(Model):
                 total_completion_tokens = 0
 
                 for _ in range(request.n):
-                    completion = self.generation_function(
+                    completion = await self.generation_function(
                         messages=[
                             {
                                 "role": "user",

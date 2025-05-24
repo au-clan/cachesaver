@@ -55,8 +55,8 @@ class AgentAggregateGame24(Agent):
         """
         Returns the aggregated actions for the Game of 24 task.
         """
-        if state.current_state.strip() == "24" or any("left" not in action for action in actions):
-            return [action for action in actions if "left" not in action]
+        if len(state.current_state.split(' ')) == 1:
+            return actions
         
         # Format the prompt
         proposals = ''
@@ -75,8 +75,9 @@ class AgentAggregateGame24(Agent):
 
         # Parse the response
         try:
+            selected_indexes = [int(i) - 1 for i in re.findall(r'\d+', responses[0])]
             selected_actions = [
-                actions[int(i) - 1] for i in re.findall(r"\d+", responses[0])
+                actions[i] for i in selected_indexes
             ]
         except:
             selected_actions = []
