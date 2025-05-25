@@ -13,7 +13,7 @@ sys.path.append(os.getcwd())
 
 from src.utils import tokens2cost
 from src.algorithms import *
-from src.models import OnlineLLM, API
+from src.models import OnlineLLM, API, GroqAPILLM
 from src.typedefs import DecodingParameters
 from src.tasks.hotpotqa import EnvironmentHotpotQA, BenchmarkHotpotQA, AgentBfsHotpotQA, AgentEvaluateHotpotQA, AgentActHotpotQA, AgentAggregateHotpotQA, AgentReactHotpotQA, AgentSelfEvaluateHotpotQA
 
@@ -28,12 +28,16 @@ async def run(args):
         client = AsyncTogether()
     elif args.provider == "local":
         raise NotImplementedError("Local client is not implemented yet.")
+    elif args.provider == "groq":
+        pass  # skip this check as groq model initializes its own client
     else:
         raise ValueError("Invalid provider. Choose 'openai', 'together', or 'local'.")
     
     # CacheSaver model layer
     if args.provider in ["openai", "together"]:
         model = OnlineLLM(client=client)
+    elif args.provider == "groq":
+        model = GroqAPILLM(use_multiple_keys=(not args.use_single_key))
     else:
         raise NotImplementedError("Local model is not implemented yet.")
 
@@ -168,8 +172,9 @@ async def run(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Solve HotpotQA using LLMs.")
-    parser.add_argument("--provider", type=str, help="LLM Provider", choices=["openai", "together", "local"], default="openai")
+    parser.add_argument("--provider", type=str, help="LLM Provider", choices=["openai", "together", "local", "groq"], default="openai")
     parser.add_argument("--model", type=str, help="LLM Model",  default="gpt-4o-mini")
+    parser.add_argument("--use_single_key", type=bool, help="Allows the usage of single key instead of multiple in groq")
     parser.add_argument("--batch_size", type=int, help="CacheSaver's batch size", default=300)
     parser.add_argument("--timeout", type=float, help="CacheSaver's timeout", default=0.05)
     parser.add_argument("--temperature", type=float, help="Temperature for the model", default=1.0)
@@ -185,6 +190,7 @@ if __name__ == "__main__":
     parser.add_argument("--value_cache", action="store_true", help="Use value cache")
     args = parser.parse_args()
 
-    logging.basicConfig(level=logging.DEBUG, filename=f"logs/game24/{args.method}.log", filemode="w")
+    os.makedirs("logs/hotpot", exist_ok=True)
+    logging.basicConfig(level=logging.DEBUG, filename=f"logs/hotpot/{args.method}.log", filemode="w")
 
     asyncio.run(run(args))

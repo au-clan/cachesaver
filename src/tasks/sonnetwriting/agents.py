@@ -50,7 +50,8 @@ class AgentAggregateSonnetWriting(Agent):
 
         # Parse responses
         try:
-            proposals = [actions[int(i) - 1] for i in re.findall(r'\d+', responses[0])]
+            indexes = [int(i.strip()) - 1 for i in re.findall(r'\d+', responses[0])]
+            proposals = [actions[i] for i in indexes if i < len(actions)]
         except:
             proposals = []
         return proposals

@@ -76,10 +76,9 @@ class AgentAggregateHumanEval(Agent):
         
 
         # Parse the response
-        pattern = r"\d+"
-        matchs = re.findall(pattern, responses[0])
         try:
-            aggregate_actions = [actions[int(i) - 1] for i in matchs]
+            indexes = [int(i.strip()) - 1 for i in re.findall(r'\d+', responses[0])]
+            aggregate_actions = [actions[i] for i in indexes if i < len(actions)]
         except:
             aggregate_actions = []
         return aggregate_actions

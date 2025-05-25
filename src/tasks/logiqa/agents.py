@@ -55,7 +55,7 @@ class AgentAggregateLogiQA(Agent):
         """
         # Format the prompt
         choices = '\n'.join(get_choices(state))
-        actions = '\n'.join([f"Answer: {a}" for a in actions])
+        actions = '\n'.join([f"({i+1}) Answer: {a}" for i, a in enumerate(actions)])
         prompt = prompts.aggregate.format(paragraph=state.context, question=state.question, choices=choices, k=k, actions=actions)
 
         # Format the request
@@ -68,8 +68,11 @@ class AgentAggregateLogiQA(Agent):
         )
 
         # Parse the response
-        response = responses[0].strip().lower().replace("answer: ", "")
-        selected_proposals = [r.strip() for r in response.split('\n')]
+        try:
+            indexes = [int(i.strip()) - 1 for i in re.findall(r'\d+', responses[0])]
+            selected_proposals = [actions[i] for i in indexes if i < len(actions)]
+        except:
+            selected_proposals = []
         return selected_proposals
     
 class AgentEvaluateLogiQA(Agent):
