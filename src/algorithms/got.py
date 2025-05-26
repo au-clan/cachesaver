@@ -93,7 +93,7 @@ class AlgorithmGOT(Algorithm):
                     proposed_states.append(self.env.step(state, action))
             
             if proposed_states == []:
-                return states
+                break
             
             # Early stop in case any state is solved
             if any(self.env.evaluate(state)[1] == 1 for state in states):

@@ -3,6 +3,7 @@ import random
 from urllib import response
 import numpy as np
 from typing import List, Tuple
+import itertools
 
 from . import prompts as prompts
 from .state import StateHotpotQA
@@ -45,16 +46,14 @@ class AgentActHotpotQA(Agent):
             params=params,
         )
 
+        patterns = r"(\b\w+)\s*(\[[^\]]*\])"
         proposals = [
-            r.strip()
+            join_matches(match)
             for response in responses
-            for r in reversed(response.split("\n"))
-            if any(
-                r.lower().startswith(action)
-                for action in ["lookup", "search", "finish"]
-            )
+            for match in re.findall(patterns, response)
+            if match
         ]
-        return proposals
+        return list(itertools.chain(*proposals))
 
 
 class AgentBfsHotpotQA(Agent):
@@ -116,8 +115,8 @@ class AgentAggregateHotpotQA(Agent):
         Returns a list of the k best actions for the HotpotQA task.
         """
 
-        # if "Finish" in state.current_state:
-        #     return [action for action in actions if "Finish" in action]
+        if len(actions) == 0:
+            return []  # No actions to aggregate
 
         # Format the prompt
         num_examples = 2
@@ -143,11 +142,11 @@ class AgentAggregateHotpotQA(Agent):
         )
 
         # Parse the responses
-        try:
-            aggregate_actions = [r.strip() for r in reversed(responses[0].split("\n")) if any(r.lower().startswith(action) for action in ["lookup", "search", "finish"])]
-        except:
-            aggregate_actions = []
-        return aggregate_actions
+        pattern = r"(\b\w+)\s*(\[[^\]]*\])"
+        aggregate_actions = [
+            join_matches(match) for match in re.findall(pattern, responses[0]) if match
+        ]
+        return list(itertools.chain(*aggregate_actions))
 
 
 class AgentReactHotpotQA(Agent):
@@ -331,3 +330,13 @@ class AgentEvaluateHotpotQA(Agent):
         if cache is not None:
             cache[state.current_state] = value
         return value
+
+
+# ---Helper functions---
+def join_matches(matches) -> List[str]:
+    """
+    Joins matched strings from a regex search into a single string.
+    """
+    if isinstance(matches[0], str):
+        matches = [matches]
+    return ["".join(match) for match in matches]

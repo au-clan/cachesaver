@@ -77,6 +77,9 @@ class AgentAggregateGame24(Agent):
         """
         Returns the aggregated actions for the Game of 24 task.
         """
+        if len(actions) == 0:
+            return []
+        
         if len(state.current_state.split(" ")) == 1:
             return actions
 

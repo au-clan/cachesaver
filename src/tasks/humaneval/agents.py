@@ -55,6 +55,9 @@ class AgentAggregateHumanEval(Agent):
         """
         Returns the aggregated actions for the HumanEval task.
         """
+        if len(actions) == 0:
+            return []
+
         # Format the prompt
         language = "py" if "def" in state.puzzle else "rs"
         instruct = prompts.SIMPLE_CHAT_INSTRUCTION_V2.format(lang=language)
