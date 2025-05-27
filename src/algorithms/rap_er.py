@@ -37,12 +37,14 @@ class AlgorithmRAP(Algorithm):
             agents: AgentDictRAP,
             env: Environment,
             num_evaluations: int,
+            num_tries: int,
             w_exp: float = 1.,
             depth_limit: int = 5,
             n_iters: int = 5,
             logprobs_model: Optional[API] = None,
-            num_retries: int = 3,
     ):
+        if num_tries <= 0:
+            raise ValueError("num_tries must be a positive integer")
         super().__init__(model, agents, env)
         self.logprobs_model = logprobs_model
         # Core agents and parameters
@@ -51,13 +53,14 @@ class AlgorithmRAP(Algorithm):
         self.step_params = agents['step_params']
         self.eval_params = agents['eval_params']
         self.num_evaluations = num_evaluations
+        self.num_tries = num_tries
 
         # World model adapter
         self.world_model: RAPWorldModel[State, str] = RAPWorldModel(
             step_agent=self.step_agent,
             step_params=self.step_params,
             env=self.env,
-            num_retries= num_retries,
+            num_tries = self.num_tries,
         )
         # Search config adapter
         self.search_config: RAPSearchConfig[State, str] = RAPSearchConfig(
@@ -69,7 +72,7 @@ class AlgorithmRAP(Algorithm):
             env=self.env,
             num_evaluations=self.num_evaluations,
             logprobs_model=self.logprobs_model,
-            num_retries=num_retries,
+            num_tries =self.num_tries,
         )
         # MCTS with trace output and mean cumulative reward
         self.search_algo = MCTS(
@@ -144,14 +147,14 @@ class RAPWorldModel(WorldModel):
         step_agent: Agent,
         step_params: DecodingParameters,
         env: Environment,
-        num_retries: int = 3
+        num_tries: int
     ):
         super().__init__()
         self.step_agent = step_agent
         self.step_params = step_params
         self.env = env
         self.init_state_value = None
-        self.num_retries = num_retries
+        self.num_tries = num_tries
 
     def init_state(self) -> State:
         # Directly use the provided state object
@@ -190,8 +193,8 @@ class RAPSearchConfig(SearchConfig):
         eval_params: DecodingParameters,
         env: Environment,
         num_evaluations: int,
-        logprobs_model: Optional[API] = None,
-        num_retries: int = 3
+        num_tries : int,
+        logprobs_model: Optional[API] = None
     ):
         super().__init__()
         self.model = model
@@ -199,7 +202,7 @@ class RAPSearchConfig(SearchConfig):
         self.eval_agent = eval_agent
         self.step_params = step_params
         self.logprob_eval_params = eval_params
-        self.num_retries = num_retries
+        self.num_tries = num_tries
 
         self.no_logprob_eval_params = DecodingParameters(
             temperature=eval_params.temperature,
@@ -220,7 +223,7 @@ class RAPSearchConfig(SearchConfig):
     async def get_actions(self, state: State) -> list[str] | None:
         self.step_counter += 1
         # Propose candidate actions via the step agent
-        for i in range(self.num_retries):
+        for i in range(self.num_tries):
             try:
                 # Use the step agent to generate actions
                 result: List[str] = await self.step_agent.act(
@@ -235,10 +238,10 @@ class RAPSearchConfig(SearchConfig):
             except Exception as e:
                 message = f"Error in step agent on attempt {i+1}: {e}"
                 logger.error(message)
-                if i == self.num_retries - 1:
+                if i == self.num_tries - 1:
                     raise RAPGenerationException(message)
-            if i == self.num_retries - 1:
-                message = f"Failed to get actions after {self.num_retries} retries for state: {state}"
+            if i == self.num_tries - 1:
+                message = f"Failed to get actions after {self.num_tries} retries for state: {state}"
                 logger.error(message)
                 raise RAPGenerationException(message)
 
@@ -249,7 +252,7 @@ class RAPSearchConfig(SearchConfig):
         self.eval_counter += 1
 
         # task specific reward [0.001, 20]
-        for i in range(self.num_retries):
+        for i in range(self.num_tries):
             try:
                 task_specific_reward = await self.eval_agent.act(
                     model=self.model,
@@ -264,16 +267,16 @@ class RAPSearchConfig(SearchConfig):
                     break
             except Exception as e:
                 logger.error(f"Error in eval agent on task_specific_reward attempt {i+1}: {e}")
-                if i == self.num_retries - 1:
+                if i == self.num_tries - 1:
                     task_specific_reward = 0.0
-            if i == self.num_retries - 1:
-                message = f"Failed to get task_specific_reward after {self.num_retries} retries for state: {next_state}"
+            if i == self.num_tries - 1:
+                message = f"Failed to get task_specific_reward after {self.num_tries} retries for state: {next_state}"
                 logger.error(message)
                 task_specific_reward = 0.0  # Default to 0 if all retries fail
 
 
         # logprobs reward
-        for i in range(self.num_retries):
+        for i in range(self.num_tries):
             try:
                 logprobs_reward = await self.eval_agent.logprobs_reward(
                     logprobs_model=self.logprobs_model,
@@ -288,15 +291,15 @@ class RAPSearchConfig(SearchConfig):
                     break
             except Exception as e:
                 logger.error(f"Error in eval agent on logprobs_reward attempt {i + 1}: {e}")
-                if i == self.num_retries - 1:
+                if i == self.num_tries - 1:
                     task_specific_reward = 0.0
-            if i == self.num_retries - 1:
-                message = f"Failed to get logprobs_reward after {self.num_retries} retries for state: {next_state}"
+            if i == self.num_tries - 1:
+                message = f"Failed to get logprobs_reward after {self.num_tries} retries for state: {next_state}"
                 logger.error(message)
                 logprobs_reward = 0.0  # Default to 0 if all retries fail
 
         # self eval reward
-        for i in range(self.num_retries):
+        for i in range(self.num_tries):
             try:
                 self_eval_reward = await self.eval_agent.self_eval_reward(
                     model=self.model,
@@ -311,10 +314,10 @@ class RAPSearchConfig(SearchConfig):
                     break
             except Exception as e:
                 logger.error(f"Error in eval agent on self_eval_reward attempt {i + 1}: {e}")
-                if i == self.num_retries - 1:
+                if i == self.num_tries - 1:
                     self_eval_reward = 0.0
-            if i == self.num_retries - 1:
-                message = f"Failed to get self_eval_reward after {self.num_retries} retries for state: {next_state}"
+            if i == self.num_tries - 1:
+                message = f"Failed to get self_eval_reward after {self.num_tries} retries for state: {next_state}"
                 logger.error(message)
                 self_eval_reward = 0.0  # Default to 0 if all retries fail
 

@@ -148,13 +148,18 @@ async def run(args):
             step_params=step_params,
             eval_params=eval_params,
         )
-        method = AlgorithmRAP(
-            model=api,
-            agents=agents,
-            env=EnvironmentHotpotQA,
-            num_evaluations=config.rap_er.num_evaluations,
-            logprobs_model=api if (args.provider=="together" and args.logprobs) else None
-        )
+        try:
+            method = AlgorithmRAP(
+                model=api,
+                agents=agents,
+                env=EnvironmentHotpotQA,
+                num_evaluations=config.rap_er.num_evaluations,
+                logprobs_model=api if (args.provider == "together" and args.logprobs) else None,
+                num_tries = args.num_tries,
+            )
+        except ValueError as e:
+            print(f"Error: {e}", file=sys.stderr)
+            sys.exit(1)
     else:
         raise NotImplementedError("Method not implemented yet.")
     
