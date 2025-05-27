@@ -55,6 +55,9 @@ class AgentAggregateHumanEval(Agent):
         """
         Returns the aggregated actions for the HumanEval task.
         """
+        if len(actions) == 0:
+            return []
+
         # Format the prompt
         language = "py" if "def" in state.puzzle else "rs"
         instruct = prompts.SIMPLE_CHAT_INSTRUCTION_V2.format(lang=language)
@@ -76,9 +79,12 @@ class AgentAggregateHumanEval(Agent):
         
 
         # Parse the response
-        pattern = r"```[^`]+```"
-        matchs = re.findall(pattern, responses[0])
-        return matchs if matchs else responses[0]
+        try:
+            indexes = [int(i.strip()) - 1 for i in re.findall(r'\d+', responses[0])]
+            aggregate_actions = [actions[i] for i in indexes if i < len(actions)]
+        except:
+            aggregate_actions = []
+        return aggregate_actions
 
 
 class AgentBfsHumanEval(Agent):

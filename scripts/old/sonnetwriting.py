@@ -141,9 +141,7 @@ if __name__ == "__main__":
     parser.add_argument("--value_cache", action="store_true", help="Use value cache")
     args = parser.parse_args()
 
-    if not os.path.exists("logs/sonnetwriting"):
-        os.makedirs("logs/sonnetwriting")
-    
-    logging.basicConfig(level=logging.INFO, filename=f"logs/sonnetwriting/{args.method}.log", filemode="w")
+    os.makedirs("logs/sonnetwriting", exist_ok=True)
+    logging.basicConfig(level=logging.DEBUG, filename=f"logs/sonnetwriting/{args.method}.log", filemode="w")
 
     asyncio.run(run(args))

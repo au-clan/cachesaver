@@ -46,9 +46,14 @@ class AlgorithmGOT(Algorithm):
         random.seed(randomness)
         states = [state.clone(randomness=random.randint(0, MAX_SEED))]
         logger.debug(f"Solving game: {idx}")
-        for step in range(self.num_steps):
-            print(f"Step: {step} ({idx})")
 
+        solved = False
+        for step in range(self.num_steps):
+            if solved:
+                logger.debug(f"Task {idx} solved at step {step - 1}.")
+                break
+
+            logger.debug(f"Step: {step} ({idx})")
             # Generate actions for each state
             action_coroutines = [
                 self.step_agent.act(
@@ -61,10 +66,8 @@ class AlgorithmGOT(Algorithm):
                 )
                 for i, state in enumerate(states)
             ]
-            actions = await asyncio.gather(*action_coroutines)
-            logger.debug(f"Actions taken: {actions}")
-
-            logger.debug(f"Actions generated for task {idx}; \n {actions}")
+            generated_actions = await asyncio.gather(*action_coroutines)
+            logger.debug(f"{len(generated_actions)} Actions generated for task {idx}; \n {generated_actions}")
 
             # Aggregate actions
             aggregate_coroutines = [
@@ -77,12 +80,11 @@ class AlgorithmGOT(Algorithm):
                     request_id=f"idx{idx}-aggregate{step}-{hash(state)}-agent{i}",
                     params=self.aggregate_params,
                 )
-                for i, (state, action) in enumerate(zip(states, actions))
+                for i, (state, action) in enumerate(zip(states, generated_actions))
             ]
 
             actions = await asyncio.gather(*aggregate_coroutines)
-            logger.debug(f"Actions chosen: {actions}")
-            logger.debug(f"Actions selected for task {idx}: \n{actions}")
+            logger.debug(f"{len(actions)} Actions selected for task {idx}: \n{actions}")
 
             # Execute actions on environment
             proposed_states = []
@@ -91,7 +93,11 @@ class AlgorithmGOT(Algorithm):
                     proposed_states.append(self.env.step(state, action))
             
             if proposed_states == []:
-                return states
+                break
+            
+            # Early stop in case any state is solved
+            if any(self.env.evaluate(state)[1] == 1 for state in states):
+                solved = True
             
             logger.debug(f"Env step for task {idx}: \n{proposed_states}")
             # Evaluate all proposals
@@ -108,8 +114,6 @@ class AlgorithmGOT(Algorithm):
                 for i, state in enumerate(proposed_states)
             ]
             values = await asyncio.gather(*value_coroutines)
-            logger.debug(f"Evaluations of states: {values}")
-
             logger.debug(f"Values given for task {idx}: \n{values}")
 
             # Choose the best states based on their value

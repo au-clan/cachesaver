@@ -39,20 +39,20 @@ D.The business district is southeast of the leisure area
 
 ---
 Possible answers:
-Answer: a
-Answer: a
-Answer: b
-Answer: c
-Answer: a
+(1) Answer: a
+(2) Answer: a
+(3) Answer: b
+(4) Answer: c
+(5) Answer: a
 
 Selected answers:
-Answer: a
-Answer: a
-Answer: a
+(1) Answer: a
+(2) Answer: a
+(5) Answer: a
 
 (End of example)
 
-Remember, your task is to select exactly {k} possible answers, which you think is correct with respect to the question and paragraph. Do not add any explanation, comments, introduction, conclusion, or modification, you shall only return your selected answers.
+Remember, your task is to select exactly {k} answers, which you think is correct with respect to the question and paragraph. Do not add any explanation, comments, introduction, conclusion, or modification, you shall only return the indexes of your {k} selected answers.
 
 {paragraph}
 
