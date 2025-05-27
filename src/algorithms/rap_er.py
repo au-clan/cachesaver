@@ -1,8 +1,9 @@
 import logging
 import asyncio
 import math
+import numbers
 
-from typing import TypedDict, List, Optional, Tuple
+from typing import TypedDict, List, Optional, Tuple, Any, Coroutine
 
 import numpy as np
 
@@ -40,6 +41,7 @@ class AlgorithmRAP(Algorithm):
             depth_limit: int = 5,
             n_iters: int = 5,
             logprobs_model: Optional[API] = None,
+            num_retries: int = 3,
     ):
         super().__init__(model, agents, env)
         self.logprobs_model = logprobs_model
@@ -54,7 +56,8 @@ class AlgorithmRAP(Algorithm):
         self.world_model: RAPWorldModel[State, str] = RAPWorldModel(
             step_agent=self.step_agent,
             step_params=self.step_params,
-            env=self.env
+            env=self.env,
+            num_retries= num_retries,
         )
         # Search config adapter
         self.search_config: RAPSearchConfig[State, str] = RAPSearchConfig(
@@ -66,6 +69,7 @@ class AlgorithmRAP(Algorithm):
             env=self.env,
             num_evaluations=self.num_evaluations,
             logprobs_model=self.logprobs_model,
+            num_retries=num_retries,
         )
         # MCTS with trace output and mean cumulative reward
         self.search_algo = MCTS(
@@ -91,10 +95,14 @@ class AlgorithmRAP(Algorithm):
         # __call__ signature: (world_model, search_config, log_file=None, **kwargs)
         self.world_model.update_init_state(state)
         self.search_config.update_namespace(namespace)
-        mcts_result: MCTSResult = await self.search_algo(
-            self.world_model,
-            self.search_config
-        )
+        try:
+            mcts_result: MCTSResult = await self.search_algo(
+                self.world_model,
+                self.search_config
+            )
+        except RAPGenerationException as e:
+            logger.error(f"RAP generation failed for state {state}: {e}")
+            return []
         # If no trace, return empty plan
         if mcts_result.trace is None:
             return []
@@ -135,13 +143,15 @@ class RAPWorldModel(WorldModel):
         self,
         step_agent: Agent,
         step_params: DecodingParameters,
-        env: Environment
+        env: Environment,
+        num_retries: int = 3
     ):
         super().__init__()
         self.step_agent = step_agent
         self.step_params = step_params
         self.env = env
         self.init_state_value = None
+        self.num_retries = num_retries
 
     def init_state(self) -> State:
         # Directly use the provided state object
@@ -181,6 +191,7 @@ class RAPSearchConfig(SearchConfig):
         env: Environment,
         num_evaluations: int,
         logprobs_model: Optional[API] = None,
+        num_retries: int = 3
     ):
         super().__init__()
         self.model = model
@@ -188,6 +199,7 @@ class RAPSearchConfig(SearchConfig):
         self.eval_agent = eval_agent
         self.step_params = step_params
         self.logprob_eval_params = eval_params
+        self.num_retries = num_retries
 
         self.no_logprob_eval_params = DecodingParameters(
             temperature=eval_params.temperature,
@@ -205,16 +217,31 @@ class RAPSearchConfig(SearchConfig):
         self.step_counter = 0
         self.eval_counter = 0
 
-    async def get_actions(self, state: State) -> List[str]:
+    async def get_actions(self, state: State) -> list[str] | None:
         self.step_counter += 1
         # Propose candidate actions via the step agent
-        return await self.step_agent.act(
-            model=self.model,
-            state=state,
-            namespace=self.namespace,
-            request_id=f"step{self.step_counter}-{hash(state)}",
-            params=self.step_params
-        )
+        for i in range(self.num_retries):
+            try:
+                # Use the step agent to generate actions
+                result: List[str] = await self.step_agent.act(
+                    model=self.model,
+                    state=state,
+                    namespace=self.namespace,
+                    request_id=f"step{self.step_counter}-{hash(state)}",
+                    params=self.step_params
+                )
+                if result and len(result) > 0:
+                    return result
+            except Exception as e:
+                message = f"Error in step agent on attempt {i+1}: {e}"
+                logger.error(message)
+                if i == self.num_retries - 1:
+                    raise RAPGenerationException(message)
+            if i == self.num_retries - 1:
+                message = f"Failed to get actions after {self.num_retries} retries for state: {state}"
+                logger.error(message)
+                raise RAPGenerationException(message)
+
 
     async def reward(self, state: State, action: str, **kwargs) -> Tuple[float, dict]:
         # Execute action and evaluate via environment
@@ -222,37 +249,75 @@ class RAPSearchConfig(SearchConfig):
         self.eval_counter += 1
 
         # task specific reward [0.001, 20]
-        task_specific_reward = await self.eval_agent.act(
-            model=self.model,
-            state=next_state,
-            namespace=self.namespace,
-            n=self.num_evaluations,
-            request_id=f"task_specific_eval{self.eval_counter}-{hash(next_state)}",
-            params=self.no_logprob_eval_params
-        )
-        task_specific_reward = task_specific_reward/self.num_evaluations
+        for i in range(self.num_retries):
+            try:
+                task_specific_reward = await self.eval_agent.act(
+                    model=self.model,
+                    state=next_state,
+                    namespace=self.namespace,
+                    n=self.num_evaluations,
+                    request_id=f"task_specific_eval{self.eval_counter}-{hash(next_state)}",
+                    params=self.no_logprob_eval_params
+                )
+                if task_specific_reward and isinstance(task_specific_reward, numbers.Number):
+                    task_specific_reward = task_specific_reward / self.num_evaluations
+                    break
+            except Exception as e:
+                logger.error(f"Error in eval agent on task_specific_reward attempt {i+1}: {e}")
+                if i == self.num_retries - 1:
+                    task_specific_reward = 0.0
+            if i == self.num_retries - 1:
+                message = f"Failed to get task_specific_reward after {self.num_retries} retries for state: {next_state}"
+                logger.error(message)
+                task_specific_reward = 0.0  # Default to 0 if all retries fail
+
 
         # logprobs reward
-        logprobs_reward = await self.eval_agent.logprobs_reward(
-            logprobs_model=self.logprobs_model,
-            state=state,
-            action=action,
-            next_state=next_state,
-            namespace=self.namespace,
-            num_evaluations=self.num_evaluations,
-            request_id=f"self_eval{self.eval_counter}-{hash(next_state)}",
-            eval_params=self.logprob_eval_params)
+        for i in range(self.num_retries):
+            try:
+                logprobs_reward = await self.eval_agent.logprobs_reward(
+                    logprobs_model=self.logprobs_model,
+                    state=state,
+                    action=action,
+                    next_state=next_state,
+                    namespace=self.namespace,
+                    num_evaluations=self.num_evaluations,
+                    request_id=f"self_eval{self.eval_counter}-{hash(next_state)}",
+                    eval_params=self.logprob_eval_params)
+                if logprobs_reward and isinstance(logprobs_reward, numbers.Number):
+                    break
+            except Exception as e:
+                logger.error(f"Error in eval agent on logprobs_reward attempt {i + 1}: {e}")
+                if i == self.num_retries - 1:
+                    task_specific_reward = 0.0
+            if i == self.num_retries - 1:
+                message = f"Failed to get logprobs_reward after {self.num_retries} retries for state: {next_state}"
+                logger.error(message)
+                logprobs_reward = 0.0  # Default to 0 if all retries fail
 
         # self eval reward
-        self_eval_reward = await self.eval_agent.self_eval_reward(
-            model=self.model,
-            state=state,
-            action=action,
-            next_state=next_state,
-            namespace=self.namespace,
-            num_evaluations=self.num_evaluations,
-            request_id=f"logprobs_eval{self.eval_counter}-{hash(next_state)}",
-            eval_params=self.no_logprob_eval_params)
+        for i in range(self.num_retries):
+            try:
+                self_eval_reward = await self.eval_agent.self_eval_reward(
+                    model=self.model,
+                    state=state,
+                    action=action,
+                    next_state=next_state,
+                    namespace=self.namespace,
+                    num_evaluations=self.num_evaluations,
+                    request_id=f"logprobs_eval{self.eval_counter}-{hash(next_state)}",
+                    eval_params=self.no_logprob_eval_params)
+                if self_eval_reward and isinstance(self_eval_reward, numbers.Number):
+                    break
+            except Exception as e:
+                logger.error(f"Error in eval agent on self_eval_reward attempt {i + 1}: {e}")
+                if i == self.num_retries - 1:
+                    self_eval_reward = 0.0
+            if i == self.num_retries - 1:
+                message = f"Failed to get self_eval_reward after {self.num_retries} retries for state: {next_state}"
+                logger.error(message)
+                self_eval_reward = 0.0  # Default to 0 if all retries fail
+
 
         return task_specific_reward + logprobs_reward + self_eval_reward, {"task_specific_reward": task_specific_reward, "logprobs_reward": logprobs_reward, "self_eval_reward": self_eval_reward}
 
@@ -261,3 +326,15 @@ class RAPSearchConfig(SearchConfig):
 
     def update_namespace(self, namespace: str):
         self.namespace = namespace
+
+
+class RAPGenerationException(Exception):
+    """
+    Custom exception for RAP generation errors.
+    """
+    def __init__(self, message: str):
+        super().__init__(message)
+        self.message = message
+
+    def __str__(self):
+        return f"RAPGenerationException: {self.message}"
