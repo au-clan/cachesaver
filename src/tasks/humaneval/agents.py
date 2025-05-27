@@ -3,6 +3,7 @@ import re
 
 from . import prompts as prompts
 from .state import StateHumanEval
+from ..utils import scale_logprob_reward_linear
 from ...typedefs import Request, Agent, Model, DecodingParameters
 
 class AgentActHumanEval(Agent):
@@ -147,6 +148,43 @@ class AgentEvaluateHumanEval(Agent):
         )
 
         return sum_overall_scores(responses)
+
+    @staticmethod
+    async def self_eval_reward(model: Model, state: StateHumanEval,
+                               num_evaluations: int, namespace: str, request_id: str,
+                               eval_params: DecodingParameters) -> float:
+        responses = await model.request(
+            prompt=prompts.self_evaluation_prompt.format(prompt = state.puzzle, implementation=state.current_state),
+            namespace=namespace,
+            n=num_evaluations,
+            request_id=request_id,
+            params=eval_params,
+        )
+        yes_count = sum(1 for r in responses if r.strip().lower().startswith("yes"))
+        score = yes_count / num_evaluations
+        score  = (score * 45) + 5 # based on task specific evaluation where score can be (5, 50)
+        return score
+
+    @staticmethod
+    async def logprobs_reward(logprobs_model: Model, state: StateHumanEval, namespace: str, request_id: str,
+                              eval_params: DecodingParameters) -> float:
+        if logprobs_model is None or not eval_params.logprobs:
+            return 0
+        responses = await logprobs_model.request(
+            prompt=prompts.self_evaluation_prompt.format(prompt = state.puzzle, implementation=state.current_state),
+            namespace=namespace,
+            n=1,
+            request_id=request_id,
+            params=eval_params,
+            return_logprobs=True
+        )
+        _, token_logprobs = responses
+        label, logprob = token_logprobs[0][0]
+        if label.strip().lower() == 'yes':
+            return scale_logprob_reward_linear(logprob, 45) + 5
+        elif label.strip().lower() == 'no':
+            return scale_logprob_reward_linear(logprob, 45, inverse=True) + 5
+        return 0
 
 # Helper function
 def sum_overall_scores(text):

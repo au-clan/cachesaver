@@ -42,3 +42,14 @@ Evaluation scores:
 Overall Score: <final score>
 
 Do not include any further thoughts or reasoning, just the evaluation scores and the final overall score."""
+
+self_evaluation_prompt = """You are a programming assistant. Your job is to determine whether a candidate solution correctly implements a given specification. Answer only with "yes" or "no".
+
+Function signature and docstring:
+{prompt}
+
+Implementation:
+{implementation}
+
+Do not include any further thoughts or reasoning, answer only with "yes" or "no".
+"""
