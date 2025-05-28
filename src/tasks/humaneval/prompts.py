@@ -41,7 +41,7 @@ Evaluation scores:
 
 Overall Score: <final score>
 
-Do not include any further thoughts or reasoning, just the evaluation scores and the final overall score."""
+Do not include any further thoughts or reasoning or the code, just the evaluation scores and the final overall score."""
 
 
 SIMPLE_CHAT_INSTRUCTION_BFS = """

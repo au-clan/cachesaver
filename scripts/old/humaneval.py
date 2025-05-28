@@ -6,7 +6,7 @@ from diskcache import Cache
 from openai import AsyncOpenAI
 from omegaconf import OmegaConf
 from together import AsyncTogether
-from cachesaver.pipelines import OnlineAPI
+from cachesaver.src.cachesaver.pipelines import OnlineAPI
 logger = logging.getLogger(__name__)
 
 import sys
@@ -14,27 +14,39 @@ sys.path.append(os.getcwd())
 
 from src.utils import tokens2cost
 from src.algorithms import *
-from src.models import OnlineLLM, API
+from src.models import OnlineLLM, API, GroqAPILLM
 from src.typedefs import DecodingParameters
-from src.tasks.humaneval import EnvironmentHumanEval, BenchmarkHumanEval, AgentActHumanEval, AgentAggregateHumanEval, AgentEvaluateHumanEval, AgentReactHumanEval, AgentSelfEvaluateHumanEval
+from src.tasks.humaneval import EnvironmentHumanEval, BenchmarkHumanEval, AgentActHumanEval, AgentAggregateHumanEval, \
+    AgentEvaluateHumanEval, AgentReactHumanEval, AgentSelfEvaluateHumanEval, AgentBfsHumanEval
 
 cache = Cache(f"caches/humaneval")
 
 async def run(args):
+    # LLM Provider
     if args.provider == "openai":
-        client = AsyncOpenAI()
+        if args.base_url and "localhost" in args.base_url:
+            # For local vLLM servers, use a dummy API key
+            client = AsyncOpenAI(base_url=args.base_url, api_key="dummy-key")
+        else:
+            client = AsyncOpenAI(base_url=args.base_url) if args.base_url else AsyncOpenAI()
     elif args.provider == "together":
         client = AsyncTogether()
     elif args.provider == "local":
-        raise NotImplementedError("Local client is not implement yet.")
+        raise NotImplementedError("Local client is not implemented yet.")
+    elif args.provider == "groq":
+        pass  # skip this check as groq model initializes its own client
     else:
-        raise ValueError("Invalid provider. Choose 'openai', 'together', or 'local'")
-    
+        raise ValueError("Invalid provider. Choose 'openai', 'together', or 'local'.")
+
+    # CacheSaver model layer
     if args.provider in ["openai", "together"]:
         model = OnlineLLM(client=client)
+    elif args.provider == "groq":
+        print("GROG")
+        model = GroqAPILLM(use_multiple_keys=(not args.use_single_key))
     else:
         raise NotImplementedError("Local model is not implemented yet.")
-    
+
     pipeline = OnlineAPI(
         model=model,
         cache=cache,
@@ -75,6 +87,21 @@ async def run(args):
             num_generate=config.got.num_generate,
             num_best=config.got.num_best,
             num_evaluations=config.got.num_evaluations,
+        )
+    elif args.method == "tot":
+        agents = AgentDictTOT(
+            step=AgentBfsHumanEval,
+            evaluate=AgentEvaluateHumanEval,
+            step_params=params,
+            eval_params=params,
+        )
+        method = AlgorithmTOT(
+            model=api,
+            agents=agents,
+            env=EnvironmentHumanEval,
+            num_selections=config.tot.num_selections,
+            num_steps=config.tot.num_steps,
+            num_evaluations=config.tot.num_evaluations,
         )
     elif args.method == "rap":
         agents = AgentDictRAP(
@@ -123,8 +150,9 @@ async def run(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Solve humaneval using LLMs.")
-    parser.add_argument("--provider", type=str, help="LLM provider", choices=["openai", "together", "local"], default="openai")
+    parser.add_argument("--provider", type=str, help="LLM provider", choices=["openai", "together", "local","groq"], default="openai")
     parser.add_argument("--model", type=str, help="LLM model", default="gpt-4o-mini")
+    parser.add_argument("--use_single_key", type=bool,help="Allows the usage of single key instead of multiple in groq", default=True)
     parser.add_argument("--batch_size", type=int, help="CacheSaver's batch size", default=300)
     parser.add_argument("--timeout", type=float, help="CacheSaver's timeout", default=0.05)
     parser.add_argument("--temperature", type=float, help="Temperature for the model", default=1.0)
@@ -138,11 +166,28 @@ if __name__ == "__main__":
     parser.add_argument("--method", type=str, help="Method to use", choices=["foa", "tot", "got", "rap"], default="foa")
     parser.add_argument("--conf_path", type=str, help="Path to corresponding config")
     parser.add_argument("--value_cache", action="store_true", help="Use value cache")
-    args = parser.parse_args()
+    args = parser.parse_args([
+        "--provider", "groq",
+        "--model", "llama-3.3-70b-versatile",
+        "--batch_size", "300",
+        "--timeout", "0.05",
+        "--temperature", "0.7",
+        "--max_completion_tokens", "100",
+        "--top_p", "1.0",
+        "--method", "tot",
+        "--conf_path", "game24.yaml",
+        "--dataset_path", "../../datasets/dataset_humaneval.csv.gz",
+        "--split", "mini",
+        "--value_cache"
+    ])
+    log_file = f"logs/humaneval/{args.method}.log"
+    log_dir = os.path.dirname(log_file)
 
-    if not os.path.exists("logs/humaneval"):
-        os.makedirs("logs/humaneval")
-    
-    logging.basicConfig(level=logging.INFO, filename=f"logs/humaneval/{args.method}.log", filemode="w")
+    # Ensure log directory exists
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+
+    # Set up logging
+    logging.basicConfig(level=logging.INFO, filename=log_file, filemode="w")
 
     asyncio.run(run(args))

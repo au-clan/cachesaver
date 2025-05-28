@@ -9,8 +9,8 @@ foa:
   origin: 150
 
 tot_bfs:
-  num_selections: 5
-  num_steps: 3
+  num_selections: 1
+  num_steps: 1
   num_evaluations: 3
   
 got:
