@@ -102,7 +102,7 @@ class AgentBfsHumanEval(Agent):
         # Format the prompt
         language = "py" if "def" in state.puzzle else "rs"
         ### change n, depending on how many to generate
-        instruct = prompts.SIMPLE_CHAT_INSTRUCTION_BFS.format(lang=language, n=5)
+        instruct = prompts.SIMPLE_CHAT_INSTRUCTION_BFS.format(lang=language)
         responses = await model.request(
             prompt=[
                 {"role": "system", "content": instruct},
@@ -113,15 +113,12 @@ class AgentBfsHumanEval(Agent):
             namespace=namespace,
             params=params,
         )
-        response_text = responses[0]
 
+        response_text = responses[0]
         code_blocks = re.findall(r'(```.*?```)', response_text, flags=re.DOTALL)
 
-        # Strip each code block
         actions = [block.strip() for block in code_blocks]
-
         return actions
-
 
 
 class AgentEvaluateHumanEval(Agent):
@@ -157,7 +154,7 @@ class AgentEvaluateHumanEval(Agent):
             params=params,
         )
         value = sum_overall_scores(responses)
-        return responses, value
+        return value
 
 class AgentReactHumanEval(Agent):
     """
@@ -285,16 +282,26 @@ class AgentSelfEvaluateHumanEval(Agent):
 
 # Helper function
 def sum_overall_scores(evaluations):
+    if not evaluations:
+        return 1
+
     values = []
     pattern = r"\b(?:overall[\s_]?score|score)\b(?:\s*(?:is|=|:|was|stands at|of))?\s*(-?\d+(?:\.\d+)?)"
-    
+
     for evaluation in evaluations:
+        if not isinstance(evaluation, str):
+            values.append(1)
+            continue
+
         match = re.search(pattern, evaluation, re.IGNORECASE)
         if match:
-            value = float(match.group(1))
+            try:
+                value = float(match.group(1))
+            except ValueError:
+                value = 1
         else:
             value = 1
-        values.append(value)
-    value = sum(values)
 
-    return value
+        values.append(value)
+
+    return sum(values)

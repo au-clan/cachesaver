@@ -8,10 +8,14 @@ foa:
   num_evaluations: 3
   origin: 120
 
-tot_bfs:
+tot:
   num_selections: 5
   num_steps: 4
-  num_evaluations: 3
+  num_evaluations: 1
+  pruning_threshold: 0.05             # Prune branches with values lower than this threshold
+  confidence_threshold: 20           # Confidence threshold to accept a solution early
+  max_iterations: 10                  # Max number of DFS attempts/branches
+
 
 got:
   num_selections: 5

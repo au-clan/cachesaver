@@ -8,7 +8,6 @@ from omegaconf import OmegaConf
 from together import AsyncTogether
 from cachesaver.pipelines import OnlineAPI
 logger = logging.getLogger(__name__)
-
 import sys
 sys.path.append(os.getcwd())
 
@@ -16,13 +15,12 @@ from src.utils import tokens2cost
 from src.algorithms import *
 from src.models import OnlineLLM, API, GroqAPILLM
 from src.typedefs import DecodingParameters
-from src.tasks.humaneval import EnvironmentHumanEval, BenchmarkHumanEval, AgentActHumanEval, AgentAggregateHumanEval, \
-    AgentEvaluateHumanEval, AgentReactHumanEval, AgentSelfEvaluateHumanEval, AgentBfsHumanEval
+from src.tasks.hotpotqa import EnvironmentHotpotQA, BenchmarkHotpotQA, AgentBfsHotpotQA, AgentEvaluateHotpotQA, AgentActHotpotQA, AgentAggregateHotpotQA, AgentReactHotpotQA, AgentSelfEvaluateHotpotQA
 
-cache = Cache(f"caches/humaneval")
+cache = Cache(f"caches/hotpotqa")
 
 async def run(args):
-    # LLM Provider
+
     if args.provider == "openai":
         if args.base_url and "localhost" in args.base_url:
             # For local vLLM servers, use a dummy API key
@@ -46,19 +44,21 @@ async def run(args):
         model = GroqAPILLM(use_multiple_keys=(not args.use_single_key))
     else:
         raise NotImplementedError("Local model is not implemented yet.")
-
+    # CacheSaver Pipeline: Batcher -> Reorderer -> Deduplicator -> Cache -> Model
     pipeline = OnlineAPI(
-        model=model,
-        cache=cache,
-        batch_size=args.batch_size,
-        timeout=args.timeout
-    )
+                    model=model,
+                    cache=cache,
+                    batch_size=args.batch_size,
+                    timeout=args.timeout
+                    )
 
+    # Cachesaver additional layer for wrapping: API -> Pipeline
     api = API(
         pipeline=pipeline,
         model=args.model
     )
 
+    # Decoding parameters
     params = DecodingParameters(
         temperature=args.temperature,
         max_completion_tokens=args.max_completion_tokens,
@@ -66,14 +66,56 @@ async def run(args):
         stop=args.stop,
         logprobs=args.logprobs
     )
-    
+
+    # Config
     config = OmegaConf.load(args.conf_path)
 
-    if args.method == "got":
+    # Setup the method
+    ## We can create a method factory for this
+    if args.method == "foa":
+        agents = AgentDictFOA(
+            step=AgentActHotpotQA,
+            evaluate=AgentEvaluateHotpotQA,
+            step_params=params,
+            eval_params=params,
+        )
+        method = AlgorithmFOA(
+            model=api,
+            agents = agents,
+            env=EnvironmentHotpotQA,
+            num_agents=config.foa.num_agents,
+            num_steps=config.foa.num_steps,
+            k=config.foa.k,
+            backtrack=config.foa.backtrack,
+            resampling=config.foa.resampling,
+            origin= config.foa.origin,
+            min_steps=config.foa.min_steps,
+            num_evaluations=config.foa.num_evaluations,
+        )
+    elif args.method == "tot":
+        agents = AgentDictTOT(
+            step=AgentBfsHotpotQA,
+            evaluate=AgentEvaluateHotpotQA,
+            step_params=params,
+            eval_params=params,
+        )
+        method = AlgorithmTOT_DFS(
+            model=api,
+            agents=agents,
+            env=EnvironmentHotpotQA,
+            num_selections=config.tot.num_selections,
+            num_steps=config.tot.num_steps,
+            num_evaluations=config.tot.num_evaluations,
+            pruning_threshold=config.tot.pruning_threshold,
+            confidence_threshold=config.tot.confidence_threshold,
+            max_iterations=config.tot.max_iterations,
+        )
+
+    elif  args.method == "got":
         agents = AgentDictGOT(
-            step=AgentActHumanEval,
-            aggregate=AgentAggregateHumanEval,
-            evaluate=AgentEvaluateHumanEval,
+            step=AgentActHotpotQA,
+            aggregate=AgentAggregateHotpotQA,
+            evaluate=AgentEvaluateHotpotQA,
             step_params=params,
             aggregate_params=params,
             eval_params=params,
@@ -81,48 +123,33 @@ async def run(args):
         method = AlgorithmGOT(
             model=api,
             agents=agents,
-            env=EnvironmentHumanEval,
+            env=EnvironmentHotpotQA,
             num_selections=config.got.num_selections,
             num_steps=config.got.num_steps,
             num_generate=config.got.num_generate,
             num_best=config.got.num_best,
             num_evaluations=config.got.num_evaluations,
         )
-    elif args.method == "tot":
-        agents = AgentDictTOT(
-            step=AgentBfsHumanEval,
-            evaluate=AgentEvaluateHumanEval,
-            step_params=params,
-            eval_params=params,
-        )
-        method = AlgorithmTOT(
-            model=api,
-            agents=agents,
-            env=EnvironmentHumanEval,
-            num_selections=config.tot.num_selections,
-            num_steps=config.tot.num_steps,
-            num_evaluations=config.tot.num_evaluations,
-        )
     elif args.method == "rap":
         agents = AgentDictRAP(
-            step=AgentReactHumanEval,
-            evaluate=AgentSelfEvaluateHumanEval,
+            step=AgentReactHotpotQA,
+            evaluate=AgentSelfEvaluateHotpotQA,
             step_params=params,
             eval_params=params,
         )
         method = AlgorithmRAP(
             model=api,
             agents=agents,
-            env=EnvironmentHumanEval,
+            env=EnvironmentHotpotQA,
             num_iterations=config.rap.num_iterations,
             num_samples=config.rap.num_samples,
             num_evaluations=config.rap.num_evaluations,
             exploration_constant=config.rap.exploration_constant,
         )
     else:
-        raise NotImplementedError(f"Method {args.method} is not implemented yet.")
+        raise NotImplementedError("Method not implemented yet.")
     
-    benchmark = BenchmarkHumanEval(path=args.dataset_path, split=args.split)
+    benchmark = BenchmarkHotpotQA(path=args.dataset_path, split=args.split)
     results = await method.benchmark(
         benchmark=benchmark,
         share_ns=args.share_ns,
@@ -135,23 +162,28 @@ async def run(args):
         for r in result:
             logger.info(f"\t{r}")
     for result in results:
-        evaluations = sorted([EnvironmentHumanEval.evaluate(state) for state in result], key=lambda x: x[1])
+        for r in result:
+            print(f"\t{r}")
+        evaluations = sorted([EnvironmentHotpotQA.evaluate(state) for state in result], key=lambda x: x[1])
         finished.append(evaluations[-1][0])
         correct.append(evaluations[-1][1])
     acc_finished = sum(finished) / len(finished)
     acc_correct = sum(correct) / len(correct)
-    print(f"Method: {args.method}")
-    print(f"Finished: {acc_finished}")
-    print(f"Correct: {acc_correct}")
+    if args.provider == "groq":  # GroqAPI is free so no costs
+        costs = {key: {"in": 0, "out": 0, "total": 0} for key in api.tokens.keys()}
+    else:
+        costs = {key: tokens2cost(api.tokens[key], args.model) for key in api.tokens.keys()}
 
-    costs = {key:tokens2cost(api.tokens[key], args.model) for key in api.tokens.keys()}
+    print(f"Method: {args.method}")
+    print(f"Finished: {acc_finished:.3f}%")
+    print(f"Correct: {acc_correct:.3f}%")
     for key, value in costs.items():
         print(f"\t{key}: {value['total']:.3f}$")
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Solve humaneval using LLMs.")
-    parser.add_argument("--provider", type=str, help="LLM provider", choices=["openai", "together", "local","groq"], default="openai")
-    parser.add_argument("--model", type=str, help="LLM model", default="gpt-4o-mini")
+    parser = argparse.ArgumentParser(description="Solve HotpotQA using LLMs.")
+    parser.add_argument("--provider", type=str, help="LLM Provider", choices=["openai", "together", "local","groq"], default="openai")
+    parser.add_argument("--model", type=str, help="LLM Model",  default="gpt-4o-mini")
     parser.add_argument("--use_single_key", type=bool,help="Allows the usage of single key instead of multiple in groq", default=True)
     parser.add_argument("--batch_size", type=int, help="CacheSaver's batch size", default=300)
     parser.add_argument("--timeout", type=float, help="CacheSaver's timeout", default=0.05)
@@ -175,19 +207,17 @@ if __name__ == "__main__":
         "--max_completion_tokens", "100",
         "--top_p", "1.0",
         "--method", "tot",
-        "--conf_path", "game24.yaml",
-        "--dataset_path", "../../datasets/dataset_humaneval.csv.gz",
+        "--conf_path", "hotpotqa.yaml",
+        "--dataset_path", "../../datasets/dataset_hotpotqa.csv.gz",
         "--split", "mini",
         "--value_cache"
     ])
-    log_file = f"logs/humaneval/{args.method}.log"
+    log_file = f"logs/hotpotqa/{args.method}.log"
     log_dir = os.path.dirname(log_file)
 
     # Ensure log directory exists
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
 
-    # Set up logging
     logging.basicConfig(level=logging.INFO, filename=log_file, filemode="w")
-
     asyncio.run(run(args))
