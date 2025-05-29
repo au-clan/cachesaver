@@ -9,6 +9,7 @@ from . import prompts as prompts
 from .state import StateHotpotQA
 from ...typedefs import Agent, Model, DecodingParameters
 
+act_cache = {}
 
 class AgentActHotpotQA(Agent):
     """
@@ -33,27 +34,38 @@ class AgentActHotpotQA(Agent):
         examples = "(Example)\n" + "\n\n(Example)\n".join(
             [example for example in prompts.examples_act[:num_examples]]
         )
-        prompt = prompts.act.format(
+        prompt = prompts.bfs.format(
             examples=examples, question=state.puzzle, current_state=state.current_state
         )
 
-        # Generate the response
-        responses = await model.request(
-            prompt=prompt,
-            n=n,
-            request_id=request_id,
-            namespace=namespace,
-            params=params,
-        )
+        if prompt in act_cache:
+            proposals = act_cache[prompt][:n]
+            act_cache[prompt] = act_cache[prompt][n:]
+        else:
+            proposals = []
+            act_cache[prompt] = []
 
-        patterns = r"(\b\w+)\s*(\[[^\]]*\])"
-        proposals = [
-            join_matches(match)
-            for response in responses
-            for match in re.findall(patterns, response)
-            if match
-        ]
-        return list(itertools.chain(*proposals))
+        while len(proposals) < n:
+            # Generate the response
+            responses = await model.request(
+                prompt=prompt,
+                n=1,
+                request_id=request_id,
+                namespace=namespace,
+                params=params,
+            )
+
+            patterns = r"(\b\w+)\s*(\[[^\]]*\])"
+            proposals.extend([
+                join_matches(match)
+                for match in re.findall(patterns, responses[0])
+                if match
+            ])
+        proposals = list(itertools.chain(*proposals))
+        random.seed(state.randomness)
+        random.shuffle(proposals)
+        act_cache[prompt].extend(proposals[n:])
+        return proposals[:n]
 
 
 class AgentBfsHotpotQA(Agent):
