@@ -38,6 +38,28 @@ class AgentActLogiQA(Agent):
         proposals = [r.lower().replace("answer: ", "").strip() for r in responses]
         return proposals
     
+class AgentBfsLogiQA(Agent):
+
+    @staticmethod
+    async def act(model: Model, state: StateLogiQA, namespace: str, request_id: str, params: DecodingParameters) -> List[str]:
+        # Format the prompt
+        paragraph = state.context
+        question = state.question
+        choises = '\n'.join(get_choices(state))
+        prompt = prompts.act.format(paragraph=paragraph, question=question, choises=choises)
+
+        # Format the request
+        responses = await model.request(
+            prompt=prompt,
+            n=1,
+            request_id=request_id,
+            namespace=namespace,
+            params=params
+        )
+
+        # Parse the response
+        proposals = [r.lower().replace("answer: ", "").strip() for r in responses]
+        return proposals
 
 class AgentAggregateLogiQA(Agent):
     @staticmethod

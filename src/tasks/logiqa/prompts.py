@@ -16,12 +16,40 @@ Answer: a
 
 (End of example)
 
-Remember, your task is to select only one choise, which you think answers the question with respect to the paragraph given. Do not add any explanation, comments, introduction or conclusion, you shall only return your answer.
+Remember, your task is to select only one choice, which you think answers the question with respect to the paragraph given. Do not add any explanation, comments, introduction or conclusion, you shall only return your answer.
 
 {paragraph}
 
 {question}
 {choises}'''
+
+bfs = '''You are participating in a multiple-choice quiz. You will be given a paragraph, which contains the information needed to answer the question.
+After the paragraph, you will be given your question together with four answer choices.
+
+(Example)
+
+In the planning of a new district in a township, it was decided to build a special community in the southeast, northwest, centered on the citizen park. These four communities are designated as cultural area, leisure area, commercial area and administrative service area. It is known that the administrative service area is southwest of the cultural area, and the cultural area is southeast of the leisure area.
+
+Based on the above statement, which of the following can be derived?
+A. Civic Park is north of the administrative service area  
+B. The leisure area is southwest of the cultural area  
+C. The cultural district is in the northeast of the business district  
+D. The business district is southeast of the leisure area
+
+---
+Answer: B, D
+
+(End of example)
+
+Remember, your task is to select up to two choices which you think best answer the question with respect to the paragraph given. Do not add any explanation, comments, introduction or conclusion. You shall only return your answer as one or two letters, separated by a comma if needed. For example: "A" or "A, C".
+
+{paragraph}
+
+{question}
+
+{choices}
+
+Answer:'''
 
 aggregate = '''You are participating in a multiple-choice quiz. You will be given a paragraph, which contains the information needed to answer the question.
 After the paragraph you will be given your question together with the four choices.

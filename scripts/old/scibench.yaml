@@ -15,7 +15,9 @@ foa:
   num_evaluations: 3
   origin: 30
 
-tot_bfs:
+tot:
   num_selections: 3
   num_steps: 6
   num_evaluations: 3
+  pruning_threshold: 0
+  max_iterations: 10

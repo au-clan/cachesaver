@@ -10,3 +10,9 @@ rap:
   num_samples: 5
   num_evaluations: 3
   exploration_constant: 1.0
+
+tot:
+  num_selections: 3
+  num_steps: 1
+  num_evaluations: 3
+  max_iterations: 10

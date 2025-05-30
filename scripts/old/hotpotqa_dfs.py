@@ -107,7 +107,6 @@ async def run(args):
             num_steps=config.tot.num_steps,
             num_evaluations=config.tot.num_evaluations,
             pruning_threshold=config.tot.pruning_threshold,
-            confidence_threshold=config.tot.confidence_threshold,
             max_iterations=config.tot.max_iterations,
         )
 
@@ -155,6 +154,7 @@ async def run(args):
         share_ns=args.share_ns,
         cache=args.value_cache,
     )
+    print("FINISHED")
     finished = []
     correct = []
     for i, result in enumerate(results):
@@ -200,7 +200,7 @@ if __name__ == "__main__":
     parser.add_argument("--value_cache", action="store_true", help="Use value cache")
     args = parser.parse_args([
         "--provider", "groq",
-        "--model", "llama-3.3-70b-versatile",
+        "--model", "meta-llama/llama-4-scout-17b-16e-instruct",
         "--batch_size", "300",
         "--timeout", "0.05",
         "--temperature", "0.7",
@@ -209,7 +209,7 @@ if __name__ == "__main__":
         "--method", "tot",
         "--conf_path", "hotpotqa.yaml",
         "--dataset_path", "../../datasets/dataset_hotpotqa.csv.gz",
-        "--split", "mini",
+        "--split", "test",
         "--value_cache"
     ])
     log_file = f"logs/hotpotqa/{args.method}.log"

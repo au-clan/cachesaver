@@ -18,9 +18,9 @@ class AlgorithmTOT_DFS(Algorithm):
                 num_selections: int,
                 num_steps: int,
                 num_evaluations: int,
-                pruning_threshold: float,
-                confidence_threshold: float,
-                max_iterations: int
+                pruning_threshold: float = None,
+                confidence_threshold: float = None,
+                max_iterations: int = None
                 ):
         super().__init__(model, agents, env)
         self.step_agent = agents["step"]
@@ -49,11 +49,12 @@ class AlgorithmTOT_DFS(Algorithm):
 
         output = []
         iteration_count = 0
-
+        print(f"TAAASK {idx} ")
         async def dfs(s, t):
             nonlocal iteration_count
 
             if t >= self.num_steps:
+                print("HERE")
                 iteration_count += 1
 
                 action_coroutines = [
@@ -75,6 +76,7 @@ class AlgorithmTOT_DFS(Algorithm):
                         next_state = self.env.step(state2, action)
                         state_proposals.append(next_state)
 
+                print(state_proposals)
                 if state_proposals == []:
                     return False
 
@@ -91,14 +93,11 @@ class AlgorithmTOT_DFS(Algorithm):
                     for i, state in enumerate(state_proposals)
                 ]
                 values = await asyncio.gather(*value_coroutines)
-
                 state_value_pairs = list(zip(state_proposals, values))
 
                 if state_value_pairs:
                     best_state, best_value = max(state_value_pairs, key=lambda x: x[1])
                     output.append((best_state, best_value))
-                else:
-                    return False
 
                 if self.env.evaluate(best_state)[1] == 1: ## early stopping
                     output.insert(0, (best_state, best_value))
@@ -131,6 +130,8 @@ class AlgorithmTOT_DFS(Algorithm):
             if state_proposals == []:
                 return False
 
+            print(state_proposals)
+
             value_coroutines = [
                 self.eval_agent.act(
                     model=self.model,
@@ -145,11 +146,15 @@ class AlgorithmTOT_DFS(Algorithm):
             ]
             values = await asyncio.gather(*value_coroutines)
 
+            print(values)
+
             state_value_pairs = list(zip(state_proposals, values))
             sorted_pairs = sorted(state_value_pairs, key=lambda x: x[1], reverse=True)
-            for state2, value in sorted_pairs:
-                if await dfs([state2], t + 1):  # Go one step deeper in the DFS search
-                    return True  # Stop and return if a solution is found
+
+            for state2, value in sorted_pairs[:self.num_selections]:
+                if value is not None and value> self.pruning_threshold:
+                    if await dfs([state2], t + 1):  # Go one step deeper in the DFS search
+                        return True  # Stop and return if a solution is foun
 
             return False
 
@@ -158,7 +163,7 @@ class AlgorithmTOT_DFS(Algorithm):
         except Exception as e:
             print(f"Error during initial dfs call: {e}")
 
-        output = sorted(output, key=lambda x: x[1], reverse=True)[:self.num_selections] if output else []
+        output = sorted(output, key=lambda x: x[1], reverse=True)[:self.num_selections] if output else [states]
         return [x[0] for x in output]
 
 

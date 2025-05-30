@@ -6,7 +6,7 @@ from diskcache import Cache
 from openai import AsyncOpenAI
 from omegaconf import OmegaConf
 from together import AsyncTogether
-from cachesaver.pipelines import OnlineAPI
+from cachesaver.src.cachesaver.pipelines import OnlineAPI
 logger = logging.getLogger(__name__)
 
 import sys
@@ -41,6 +41,7 @@ async def run(args):
     if args.provider in ["openai", "together"]:
         model = OnlineLLM(client=client)
     elif args.provider == "groq":
+        print("GROG")
         model = GroqAPILLM(use_multiple_keys=(not args.use_single_key))
     else:
         raise NotImplementedError("Local model is not implemented yet.")
@@ -144,7 +145,7 @@ async def run(args):
         )
     else:
         raise NotImplementedError(f"Method {args.method} is not implemented yet.")
-    
+
     benchmark = BenchmarkGame24(path=args.dataset_path, split=args.split)
     results = await method.benchmark(
         benchmark=benchmark,
@@ -178,7 +179,7 @@ async def run(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Solve Game 24 using LLMs.")
     parser.add_argument("--provider", type=str, help="LLM Provider", choices=["openai", "together", "local", "groq"], default="openai")
-    parser.add_argument("--use_single_key", type=bool, help="Allows the usage of single key instead of multiple in groq")
+    parser.add_argument("--use_single_key", type=bool, help="Allows the usage of single key instead of multiple in groq", default=True)
     parser.add_argument("--model", type=str, help="LLM Model",  default="gpt-4o-mini")
     parser.add_argument("--base_url", type=str, help="Base URL for the API", default=None)
     parser.add_argument("--batch_size", type=int, help="CacheSaver's batch size", default=300)
@@ -194,8 +195,29 @@ if __name__ == "__main__":
     parser.add_argument("--method", type=str, help="Method to use", choices=["foa", "tot", "rap", "got"], default="foa")
     parser.add_argument("--conf_path", type=str, help="Path to corresponding config")
     parser.add_argument("--value_cache", action="store_true", help="Use value cache")
-    args = parser.parse_args()
+    args = parser.parse_args([
+        "--provider", "groq",
+        "--model", "meta-llama/llama-4-scout-17b-16e-instruct",
+        "--batch_size", "300",
+        "--timeout", "0.05",
+        "--temperature", "0.7",
+        "--max_completion_tokens", "100",
+        "--top_p", "1.0",
+        "--method", "test",
+        "--conf_path", "game24.yaml",
+        "--dataset_path", "../../datasets/dataset_game24.csv.gz",
+        "--split", "mini",
+        "--value_cache"
+    ])
+    log_file = f"logs/game24/{args.method}.log"
+    log_dir = os.path.dirname(log_file)
 
-    logging.basicConfig(level=logging.INFO, filename=f"logs/game24/{args.method}.log", filemode="w")
+    # Ensure log directory exists
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+
+    # Set up logging
+    logging.basicConfig(level=logging.INFO, filename=log_file, filemode="w")
+
 
     asyncio.run(run(args))

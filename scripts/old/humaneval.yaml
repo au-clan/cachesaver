@@ -8,11 +8,12 @@ foa:
   num_evaluations: 3
   origin: 150
 
-tot_bfs:
+tot:
   num_selections: 1
   num_steps: 1
   num_evaluations: 3
-  
+  max_iterations: 10
+
 got:
   num_selections: 2
   num_steps: 1

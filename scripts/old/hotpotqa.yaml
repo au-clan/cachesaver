@@ -9,12 +9,10 @@ foa:
   origin: 10
 
 tot:
-  num_selections: 1
+  num_selections: 3
   num_steps: 5
   num_evaluations: 1
-  pruning_threshold: 0.05
-  confidence_threshold: 20
-  max_iterations: 10
+  max_iterations: 6
 
 got:
   num_selections: 3

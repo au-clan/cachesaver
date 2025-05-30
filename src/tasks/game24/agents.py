@@ -96,7 +96,8 @@ class AgentBfsGame24(Agent):
         else:
             current_numbers = get_current_numbers(state)
             prompt = prompts.bfs.format(input=current_numbers)
-    
+
+
         # Generate the response
         response = await model.request(
             prompt=prompt,
@@ -106,6 +107,8 @@ class AgentBfsGame24(Agent):
             params=params
         )
 
+        print("RESPONSE")
+        print(response)
         # Parse the response
         if state.current_state != "24":
             response = [response[0].rpartition(")")[0] + ")"]

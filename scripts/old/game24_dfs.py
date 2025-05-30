@@ -108,7 +108,6 @@ async def run(args):
             num_steps=config.tot.num_steps,
             num_evaluations=config.tot.num_evaluations,
             pruning_threshold=config.tot.pruning_threshold,
-            confidence_threshold=config.tot.confidence_threshold,
             max_iterations=config.tot.max_iterations,
         )
     elif args.method == "got":
@@ -212,7 +211,7 @@ if __name__ == "__main__":
         "--split", "mini",
         "--value_cache"
     ])
-    log_file = f"logs/game24/dfs_2.log"
+    log_file = f"logs/game24/dfs_5.log"
     log_dir = os.path.dirname(log_file)
 
     # Ensure log directory exists

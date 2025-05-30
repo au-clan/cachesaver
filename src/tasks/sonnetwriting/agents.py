@@ -1,3 +1,4 @@
+import re
 from typing import List
 import numpy as np
 
@@ -51,7 +52,44 @@ class AgentAggregateSonnetWriting(Agent):
         selections = responses[0].split('\n')[-k:]
         proposals = [actions[int(r.strip()) - 1] for r in selections]
         return proposals
-    
+
+class AgentBfsSonnetWriting(Agent):
+    @staticmethod
+    async def act(
+        model: Model,
+        state: StateSonnetWriting,
+        namespace: str,
+        request_id: str,
+        params: DecodingParameters,
+    ) -> List[str]:
+        prompt = prompts.bfs.format(input=state.current_state)
+
+        # Generate response
+        responses = await model.request(
+            prompt=prompt,
+            n=1,
+            request_id=request_id,
+            namespace=namespace,
+            params=params
+        )
+        # Parse responses
+        if not responses:
+            response_text = ""
+        else:
+            response_text = responses[0]
+
+        markdown_blocks = re.findall(r'```(?:[a-zA-Z]*\n)?(.*?)```', response_text, re.DOTALL)
+
+        if not markdown_blocks:
+            escaped_blocks = re.findall(r'\\`\\`\\`(.*?)\\`\\`\\`', response_text, re.DOTALL)
+            blocks = escaped_blocks
+        else:
+            blocks = markdown_blocks
+
+        actions = [block.strip() for block in blocks]
+
+        return actions
+
 class AgentEvaluateSonnetWriting(Agent):
     """
     Returns the evaluations of states for the Sonnet Writing task.

@@ -6,37 +6,44 @@ from diskcache import Cache
 from openai import AsyncOpenAI
 from omegaconf import OmegaConf
 from together import AsyncTogether
-from cachesaver.pipelines import OnlineAPI
+from cachesaver.src.cachesaver.pipelines import OnlineAPI
 logger = logging.getLogger(__name__)
 import sys
 sys.path.append(os.getcwd())
 
 from src.utils import tokens2cost
 from src.algorithms import *
-from src.models import OnlineLLM, API
+from src.models import OnlineLLM, API, GroqAPILLM
 from src.typedefs import DecodingParameters
 from src.tasks.hotpotqa import EnvironmentHotpotQA, BenchmarkHotpotQA, AgentBfsHotpotQA, AgentEvaluateHotpotQA, AgentActHotpotQA, AgentAggregateHotpotQA, AgentReactHotpotQA, AgentSelfEvaluateHotpotQA
 
 cache = Cache(f"caches/hotpotqa")
 
 async def run(args):
-    
-    # LLM Provider
+
     if args.provider == "openai":
-        client = AsyncOpenAI()
+        if args.base_url and "localhost" in args.base_url:
+            # For local vLLM servers, use a dummy API key
+            client = AsyncOpenAI(base_url=args.base_url, api_key="dummy-key")
+        else:
+            client = AsyncOpenAI(base_url=args.base_url) if args.base_url else AsyncOpenAI()
     elif args.provider == "together":
         client = AsyncTogether()
     elif args.provider == "local":
         raise NotImplementedError("Local client is not implemented yet.")
+    elif args.provider == "groq":
+        pass  # skip this check as groq model initializes its own client
     else:
         raise ValueError("Invalid provider. Choose 'openai', 'together', or 'local'.")
-    
+
     # CacheSaver model layer
     if args.provider in ["openai", "together"]:
         model = OnlineLLM(client=client)
+    elif args.provider == "groq":
+        print("GROG")
+        model = GroqAPILLM(use_multiple_keys=(not args.use_single_key))
     else:
         raise NotImplementedError("Local model is not implemented yet.")
-
     # CacheSaver Pipeline: Batcher -> Reorderer -> Deduplicator -> Cache -> Model
     pipeline = OnlineAPI(
                     model=model,
@@ -158,7 +165,10 @@ async def run(args):
         correct.append(evaluations[-1][1])
     acc_finished = sum(finished) / len(finished)
     acc_correct = sum(correct) / len(correct)
-    costs = {key:tokens2cost(api.tokens[key], args.model) for key in api.tokens.keys()}
+    if args.provider == "groq":  # GroqAPI is free so no costs
+        costs = {key: {"in": 0, "out": 0, "total": 0} for key in api.tokens.keys()}
+    else:
+        costs = {key: tokens2cost(api.tokens[key], args.model) for key in api.tokens.keys()}
 
     print(f"Method: {args.method}")
     print(f"Finished: {acc_finished:.3f}%")
@@ -168,8 +178,9 @@ async def run(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Solve HotpotQA using LLMs.")
-    parser.add_argument("--provider", type=str, help="LLM Provider", choices=["openai", "together", "local"], default="openai")
+    parser.add_argument("--provider", type=str, help="LLM Provider", choices=["openai", "together", "local","groq"], default="openai")
     parser.add_argument("--model", type=str, help="LLM Model",  default="gpt-4o-mini")
+    parser.add_argument("--use_single_key", type=bool,help="Allows the usage of single key instead of multiple in groq", default=True)
     parser.add_argument("--batch_size", type=int, help="CacheSaver's batch size", default=300)
     parser.add_argument("--timeout", type=float, help="CacheSaver's timeout", default=0.05)
     parser.add_argument("--temperature", type=float, help="Temperature for the model", default=1.0)
@@ -183,8 +194,26 @@ if __name__ == "__main__":
     parser.add_argument("--method", type=str, help="Method to use", choices=["foa", "tot", "got", "rap"], default="foa")
     parser.add_argument("--conf_path", type=str, help="Path to corresponding config")
     parser.add_argument("--value_cache", action="store_true", help="Use value cache")
-    args = parser.parse_args()
+    args = parser.parse_args([
+        "--provider", "groq",
+        "--model", "llama-3.3-70b-versatile",
+        "--batch_size", "300",
+        "--timeout", "0.05",
+        "--temperature", "0.7",
+        "--max_completion_tokens", "100",
+        "--top_p", "1.0",
+        "--method", "tot",
+        "--conf_path", "game24.yaml",
+        "--dataset_path", "../../datasets/dataset_hotpotqa.csv.gz",
+        "--split", "mini",
+        "--value_cache"
+    ])
+    log_file = f"logs/hotpotqa/{args.method}.log"
+    log_dir = os.path.dirname(log_file)
 
-    logging.basicConfig(level=logging.DEBUG, filename=f"logs/game24/{args.method}.log", filemode="w")
+    # Ensure log directory exists
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
 
+    logging.basicConfig(level=logging.INFO, filename=log_file, filemode="w")
     asyncio.run(run(args))

@@ -3,6 +3,21 @@ Below, you will be given your task and keywords to include in your sonnet writin
 
 {input}'''
 
+bfs = '''You are fluent in writing sonnets and must respond with only your sonnet texts—no explanations or extra comments. Write at least two full sonnets.
+
+You will be given a prompt and keywords to include in your sonnets.
+
+Each sonnet should be wrapped in triple backticks like this:
+\`\`\`
+<Sonnet here>
+\`\`\`
+
+Only return the sonnets, nothing else.
+
+Task and keywords:
+{input}'''
+
+
 aggregate = '''There have been created some sonnet writings with respect to the following task:
 {task}
 
@@ -18,7 +33,7 @@ You should only return the numbers of the selected sonnet writings.
 
 {sonnets}'''
 
-evaluate = '''You are given a sonnet writing below. Your task is to evaluete the sonnet based on the criterias:
+evaluate = '''You are given a sonnet writing below. Your task is to evaluate the sonnet based on the criterias:
     1. Follows the rhyme scheme: {rhyme_scheme}
     2. Contains these exact words: {words}
 

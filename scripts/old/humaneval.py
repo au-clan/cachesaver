@@ -6,7 +6,7 @@ from diskcache import Cache
 from openai import AsyncOpenAI
 from omegaconf import OmegaConf
 from together import AsyncTogether
-from cachesaver.pipelines import OnlineAPI
+from cachesaver.src.cachesaver.pipelines import OnlineAPI
 logger = logging.getLogger(__name__)
 
 import sys
@@ -129,6 +129,8 @@ async def run(args):
         cache=args.value_cache,
     )
     finished = []
+    print("FINISHED")
+    print(results)
     correct = []
     for i, result in enumerate(results):
         logger.info(f"Result {i}:")
@@ -136,17 +138,22 @@ async def run(args):
             logger.info(f"\t{r}")
     for result in results:
         evaluations = sorted([EnvironmentHumanEval.evaluate(state) for state in result], key=lambda x: x[1])
-        finished.append(evaluations[-1][0])
-        correct.append(evaluations[-1][1])
+        if evaluations:
+            finished.append(evaluations[-1][0])
+            correct.append(evaluations[-1][1])
+        else:
+            print("Evaluations list is empty, skipping append.")
     acc_finished = sum(finished) / len(finished)
     acc_correct = sum(correct) / len(correct)
     print(f"Method: {args.method}")
     print(f"Finished: {acc_finished}")
     print(f"Correct: {acc_correct}")
 
-    costs = {key:tokens2cost(api.tokens[key], args.model) for key in api.tokens.keys()}
-    for key, value in costs.items():
-        print(f"\t{key}: {value['total']:.3f}$")
+    if args.provider == "groq": # GroqAPI is free so no costs
+        costs = {key: {"in": 0, "out": 0, "total": 0} for key in api.tokens.keys()}
+    else:
+        costs = {key:tokens2cost(api.tokens[key], args.model) for key in api.tokens.keys()}
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Solve humaneval using LLMs.")
@@ -175,7 +182,7 @@ if __name__ == "__main__":
         "--max_completion_tokens", "100",
         "--top_p", "1.0",
         "--method", "tot",
-        "--conf_path", "game24.yaml",
+        "--conf_path", "humaneval.yaml",
         "--dataset_path", "../../datasets/dataset_humaneval.csv.gz",
         "--split", "mini",
         "--value_cache"

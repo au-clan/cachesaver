@@ -108,11 +108,16 @@ class AgentBfsHumanEval(Agent):
             params=params,
         )
 
-        response_text = responses[0]
-        code_blocks = re.findall(r'(```.*?```)', response_text, flags=re.DOTALL)
+        response_text = responses[0] if responses else ""
 
-        actions = [block.strip() for block in code_blocks]
-        return actions
+        code_blocks = re.findall(r'```(?:[a-zA-Z]*\n)?(.*?)```', response_text, flags=re.DOTALL)
+
+        if not code_blocks:
+            code_blocks = re.findall(r'\\`\\`\\`(.*?)\\`\\`\\`', response_text, flags=re.DOTALL)
+
+        code_blocks = [block.strip() for block in code_blocks]
+
+        return code_blocks
 
 
 class AgentEvaluateHumanEval(Agent):
