@@ -6,7 +6,7 @@ from diskcache import Cache
 from openai import AsyncOpenAI
 from omegaconf import OmegaConf
 from together import AsyncTogether
-from cachesaver.src.cachesaver.pipelines import OnlineAPI
+from cachesaver.pipelines import OnlineAPI
 logger = logging.getLogger(__name__)
 
 import sys
