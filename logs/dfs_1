@@ -1,0 +1,45 @@
+INFO:__main__:Result 0:
+INFO:__main__:	StateGame24(puzzle='1 1 4 6', current_state='12', steps=['1 + 4 = 5 (left: 1 5 6)', '1 + 5 = 6 (left: 6 6)', '6 + 6 = 12 (left: 12)', '(1 + (1 + 4)) + 6 = 12'], randomness=1121)
+INFO:__main__:	StateGame24(puzzle='1 1 4 6', current_state='Steps:', steps=['1 + 4 = 5 (left: 1 5 6)', '1 + 5 = 6 (left: 6 6)', '6 * 6 = 36 (left: 36)', 'Steps:'], randomness=1121)
+INFO:__main__:	StateGame24(puzzle='1 1 4 6', current_state='12', steps=['1 + 4 = 5 (left: 1 5 6)', '1 + 6 = 7 (left: 5 7)', '5 + 7 = 12 (left: 12)', '(1 + 4) + (1 + 6) = 12'], randomness=1121)
+INFO:__main__:	StateGame24(puzzle='1 1 4 6', current_state='Steps:', steps=['1 + 4 = 5 (left: 1 5 6)', '1 + 6 = 7 (left: 5 7)', '5 * 7 = 35 (left: 35)', 'Steps:'], randomness=1121)
+INFO:__main__:	StateGame24(puzzle='1 1 4 6', current_state='24, (6 * 4)', steps=['1 + 4 = 5 (left: 1 5 6)', '1 + 6 = 7 (left: 5 7)', '5 - 7 = -2 (left: -2)', '(1 + 6) + (1 + 4) = 8, 6 * 4 = 24, (1 + 4) * (1 + 6) = 35, 6 * (1 + 4) = 30, 24 + 0 = 24, (6 * 4)'], randomness=1121)
+INFO:__main__:Result 1:
+INFO:__main__:	StateGame24(puzzle='1 1 11 11', current_state='24', steps=['1 + 1 = 2 (left: 2 11 11)', '2 + 11 = 13 (left: 11 13)', '11 + 13 = 24 (left: 24)', '(1 + 1) + 11 + 11 = 24'], randomness=5711)
+INFO:__main__:	StateGame24(puzzle='1 1 11 11', current_state='24', steps=['1 + 1 = 2 (left: 2 11 11)', '2 + 11 = 13 (left: 11 13)', '11 + 13 = 24 (left: 24)', '(1 + 1) + 11 + 11 = 24'], randomness=5711)
+INFO:__main__:Result 2:
+INFO:__main__:	StateGame24(puzzle='1 1 3 8', current_state='8', steps=['1 + 3 = 4 (left: 1 4 8)', '1 + 4 = 5 (left: 5 8)', '8 / 5 = 1.6 (left: 1.6 5)', '1.6 * 5 = 8 (left: 8)'], randomness=2866)
+INFO:__main__:	StateGame24(puzzle='1 1 3 8', current_state='24 is also incorrect, but (8 / 1) * (3 + 1)', steps=['1 + 3 = 4 (left: 1 4 8)', '1 + 4 = 5 (left: 5 8)', '5 + 8 = 13 (left: 13)', '(1 + (1 + 3)) + 8 = 24 is incorrect, since (1 + (1 + 3)) + 8 = 13, not 24. However, using the given numbers, the expression (8 / 1) * (3 + 1) = (8 / 1) * 4 = 8 * 3 = 24 is also incorrect, but (8 / 1) * (3 + 1)'], randomness=2866)
+INFO:__main__:	StateGame24(puzzle='1 1 3 8', current_state='1 4 8', steps=['1 + 3 = 4 (left: 1 4 8)', '1 + 4 = 5 (left: 5 8)', '8 * 5 = 40 (left: 40)', '1 + 3 = 4 (left: 1 4 8)'], randomness=2866)
+INFO:__main__:	StateGame24(puzzle='1 1 3 8', current_state='24.', steps=['1 + 3 = 4 (left: 1 4 8)', '1 + 4 = 5 (left: 5 8)', '8 - 5 = 3 (left: 3)', '(8 - (1 + (1 + 3))) = 24 is not correct, following the given steps we have 3, so we need to find how to get 24 using 3 and the operations given, 3 * 8 = 24.'], randomness=2866)
+INFO:__main__:	StateGame24(puzzle='1 1 3 8', current_state='1 1 24', steps=['1 + 3 = 4 (left: 1 4 8)', '1 + 4 = 5 (left: 5 8)', '5 - 8 = -3 (left: -3)', '8 * 3 = 24 (left: 1 1 24)'], randomness=2866)
+INFO:__main__:Result 3:
+INFO:__main__:	StateGame24(puzzle='1 1 1 8', current_state='', steps=['8 + 1 = 9 (left: 1 1 9)', '1 + 1 = 2 (left: 2 9)', '2 + 9 = 11 (left: 11)', ''], randomness=5088)
+INFO:__main__:	StateGame24(puzzle='1 1 1 8', current_state='Steps:', steps=['8 + 1 = 9 (left: 1 1 9)', '1 + 1 = 2 (left: 2 9)', '2 * 9 = 18 (left: 18)', 'Steps:'], randomness=5088)
+INFO:__main__:	StateGame24(puzzle='1 1 1 8', current_state='24', steps=['8 + 1 = 9 (left: 1 1 9)', '1 + 1 = 2 (left: 2 9)', '2 - 9 = -7 (left: -7)', '(8 + 1) + (1 + 1) - (1 + 1 + 8 + 1 + 1 + 8) + (1 + 1 + 1 + 1 + 8 + 8 + 1) = 24'], randomness=5088)
+INFO:__main__:	StateGame24(puzzle='1 1 1 8', current_state='Steps:', steps=['8 + 1 = 9 (left: 1 1 9)', '1 * 1 = 1 (left: 1 9)', '1 + 9 = 10 (left: 10)', 'Steps:'], randomness=5088)
+INFO:__main__:	StateGame24(puzzle='1 1 1 8', current_state='2 8', steps=['8 + 1 = 9 (left: 1 1 9)', '1 + 1 = 2 (left: 2 9)', '9 / 2 = 4.5 (left: 4.5)', '1 * 8 = 8 (left: 2 8)'], randomness=5088)
+INFO:__main__:Result 4:
+INFO:__main__:	StateGame24(puzzle='6 6 6 6', current_state='24', steps=['6 + 6 = 12 (left: 6 6 12)', '6 + 6 = 12 (left: 12 12)', '12 + 12 = 24 (left: 24)', '(6 + 6) + (6 + 6) = 24'], randomness=9389)
+INFO:__main__:	StateGame24(puzzle='6 6 6 6', current_state='24', steps=['6 + 6 = 12 (left: 6 6 12)', '6 + 6 = 12 (left: 12 12)', '12 + 12 = 24 (left: 24)', '(6 + 6) + (6 + 6) = 24'], randomness=9389)
+INFO:__main__:Result 5:
+INFO:__main__:	StateGame24(puzzle='1 1 2 12', current_state='', steps=['1 + 1 = 2 (left: 2 2 12)', '12 / 2 = 6 (left: 2 6)', '2 + 6 = 8 (left: 8)', ''], randomness=9331)
+INFO:__main__:	StateGame24(puzzle='1 1 2 12', current_state='2 2 12', steps=['1 + 1 = 2 (left: 2 2 12)', '12 / 2 = 6 (left: 2 6)', '6 + 2 = 8 (left: 8)', '1 + 1 = 2 (left: 2 2 12)'], randomness=9331)
+INFO:__main__:	StateGame24(puzzle='1 1 2 12', current_state='(2 * (12 / (1 + 1)))', steps=['1 + 1 = 2 (left: 2 2 12)', '12 / 2 = 6 (left: 2 6)', '2 * 6 = 12 (left: 12)', '(2 * (12 / (1 + 1)))'], randomness=9331)
+INFO:__main__:	StateGame24(puzzle='1 1 2 12', current_state='24.', steps=['1 + 1 = 2 (left: 2 2 12)', '12 / 2 = 6 (left: 2 6)', '6 - 2 = 4 (left: 4)', '(12 / (1 + 1)) - 2 = 24 is incorrect, however, 12 / (1 + 1) = 6 and then 6 * 4 = 24.'], randomness=9331)
+INFO:__main__:	StateGame24(puzzle='1 1 2 12', current_state='2 2 12', steps=['1 + 1 = 2 (left: 2 2 12)', '12 / 2 = 6 (left: 2 6)', '2 - 6 = -4 (left: -4)', '1 + 1 = 2 (left: 2 2 12)'], randomness=9331)
+INFO:__main__:Result 6:
+INFO:__main__:	StateGame24(puzzle='1 2 2 6', current_state='2 2 6', steps=['1 + 2 = 3 (left: 2 3 6)', '2 + 3 = 5 (left: 5 6)', '5 + 6 = 11 (left: 11)', '1 * 2 = 2 (left: 2 2 6)'], randomness=3731)
+INFO:__main__:	StateGame24(puzzle='1 2 2 6', current_state='Steps:', steps=['1 + 2 = 3 (left: 2 3 6)', '2 + 3 = 5 (left: 5 6)', '6 * 5 = 30 (left: 30)', 'Steps:'], randomness=3731)
+INFO:__main__:	StateGame24(puzzle='1 2 2 6', current_state='24', steps=['1 + 2 = 3 (left: 2 3 6)', '3 - 2 = 1 (left: 1 6)', '1 + 6 = 7 (left: 7)', '(1 + 2) + (2 + (6 - (1 + 2))) = 24'], randomness=3731)
+INFO:__main__:	StateGame24(puzzle='1 2 2 6', current_state='Steps:', steps=['1 + 2 = 3 (left: 2 3 6)', '3 - 2 = 1 (left: 1 6)', '1 * 6 = 6 (left: 6)', 'Steps:'], randomness=3731)
+INFO:__main__:	StateGame24(puzzle='1 2 2 6', current_state='(6 - (1 + 2 - 2)) * (1 + 2)', steps=['1 + 2 = 3 (left: 2 3 6)', '3 - 2 = 1 (left: 1 6)', '6 - 1 = 5 (left: 5)', '(6 - (1 + 2 - 2)) * (1 + 2)'], randomness=3731)
+INFO:__main__:Result 7:
+INFO:__main__:	StateGame24(puzzle='1 1 10 12', current_state='24', steps=['1 + 1 = 2 (left: 2 10 12)', '2 + 10 = 12 (left: 12 12)', '12 + 12 = 24 (left: 24)', '(1 + 1 + 10) + 12 = 24'], randomness=5781)
+INFO:__main__:	StateGame24(puzzle='1 1 10 12', current_state='24', steps=['1 + 1 = 2 (left: 2 10 12)', '2 + 10 = 12 (left: 12 12)', '12 + 12 = 24 (left: 24)', '(1 + 1 + 10) + 12 = 24'], randomness=5781)
+INFO:__main__:Result 8:
+INFO:__main__:	StateGame24(puzzle='2 2 10 10', current_state='24', steps=['2 + 2 = 4 (left: 4 10 10)', '4 + 10 = 14 (left: 10 14)', '10 + 14 = 24 (left: 24)', '(2 + 2) + 10 + 10 = 24'], randomness=9772)
+INFO:__main__:	StateGame24(puzzle='2 2 10 10', current_state='24', steps=['2 + 2 = 4 (left: 4 10 10)', '4 + 10 = 14 (left: 10 14)', '10 + 14 = 24 (left: 24)', '(2 + 2) + 10 + 10 = 24'], randomness=9772)
+INFO:__main__:Result 9:
+INFO:__main__:	StateGame24(puzzle='1 1 1 12', current_state='24', steps=['1 + 1 = 2 (left: 1 2 12)', '1 * 2 = 2 (left: 2 12)', '2 * 12 = 24 (left: 24)', '(1 * (1 + 1)) * 12 = 24'], randomness=4140)
+INFO:__main__:	StateGame24(puzzle='1 1 1 12', current_state='24', steps=['1 + 1 = 2 (left: 1 2 12)', '1 * 2 = 2 (left: 2 12)', '2 * 12 = 24 (left: 24)', '(1 * (1 + 1)) * 12 = 24'], randomness=4140)
