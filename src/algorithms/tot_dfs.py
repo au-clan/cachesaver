@@ -49,12 +49,11 @@ class AlgorithmTOT_DFS(Algorithm):
 
         output = []
         iteration_count = 0
-        print(f"TAAASK {idx} ")
+        
         async def dfs(s, t):
             nonlocal iteration_count
 
             if t >= self.num_steps:
-                print("HERE")
                 iteration_count += 1
 
                 action_coroutines = [
@@ -76,7 +75,6 @@ class AlgorithmTOT_DFS(Algorithm):
                         next_state = self.env.step(state2, action)
                         state_proposals.append(next_state)
 
-                print(state_proposals)
                 if state_proposals == []:
                     return False
 
@@ -101,7 +99,7 @@ class AlgorithmTOT_DFS(Algorithm):
 
                 if self.env.evaluate(best_state)[1] == 1: ## early stopping
                     output.insert(0, (best_state, best_value))
-                    return True  # returning a list with best_state for consistency
+                    return True  
 
                 if (self.max_iterations is not None and iteration_count >= self.max_iterations):
                     print(f"Early stopping: Max iterations reached")
@@ -130,8 +128,6 @@ class AlgorithmTOT_DFS(Algorithm):
             if state_proposals == []:
                 return False
 
-            print(state_proposals)
-
             value_coroutines = [
                 self.eval_agent.act(
                     model=self.model,
@@ -146,15 +142,13 @@ class AlgorithmTOT_DFS(Algorithm):
             ]
             values = await asyncio.gather(*value_coroutines)
 
-            print(values)
-
             state_value_pairs = list(zip(state_proposals, values))
             sorted_pairs = sorted(state_value_pairs, key=lambda x: x[1], reverse=True)
 
             for state2, value in sorted_pairs[:self.num_selections]:
                 if value is not None and value> self.pruning_threshold:
-                    if await dfs([state2], t + 1):  # Go one step deeper in the DFS search
-                        return True  # Stop and return if a solution is foun
+                    if await dfs([state2], t + 1):  
+                        return True  
 
             return False
 
