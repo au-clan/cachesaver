@@ -19,7 +19,6 @@ class AlgorithmTOT_DFS(Algorithm):
                 num_steps: int,
                 num_evaluations: int,
                 pruning_threshold: float = None,
-                confidence_threshold: float = None,
                 max_iterations: int = None
                 ):
         super().__init__(model, agents, env)
@@ -34,7 +33,6 @@ class AlgorithmTOT_DFS(Algorithm):
         self.num_evaluations = num_evaluations
 
         self.pruning_threshold = pruning_threshold
-        self.confidence_threshold = confidence_threshold
         self.max_iterations = max_iterations
 
         """
@@ -49,7 +47,6 @@ class AlgorithmTOT_DFS(Algorithm):
 
         output = []
         iteration_count = 0
-        
         async def dfs(s, t):
             nonlocal iteration_count
 
@@ -90,16 +87,18 @@ class AlgorithmTOT_DFS(Algorithm):
                     )
                     for i, state in enumerate(state_proposals)
                 ]
+
                 values = await asyncio.gather(*value_coroutines)
                 state_value_pairs = list(zip(state_proposals, values))
 
-                if state_value_pairs:
-                    best_state, best_value = max(state_value_pairs, key=lambda x: x[1])
-                    output.append((best_state, best_value))
+                if not state_value_pairs:
+                    return False
+
+                best_state, best_value = max(state_value_pairs, key=lambda x: x[1])
+                output.append((best_state, best_value))
 
                 if self.env.evaluate(best_state)[1] == 1: ## early stopping
-                    output.insert(0, (best_state, best_value))
-                    return True  
+                    return True  # returning a list with best_state for consistency
 
                 if (self.max_iterations is not None and iteration_count >= self.max_iterations):
                     print(f"Early stopping: Max iterations reached")
@@ -146,9 +145,9 @@ class AlgorithmTOT_DFS(Algorithm):
             sorted_pairs = sorted(state_value_pairs, key=lambda x: x[1], reverse=True)
 
             for state2, value in sorted_pairs[:self.num_selections]:
-                if value is not None and value> self.pruning_threshold:
-                    if await dfs([state2], t + 1):  
-                        return True  
+                if self.pruning_threshold is not None and value > self.pruning_threshold:
+                    if await dfs([state2], t + 1):  # Go one step deeper in the DFS search
+                        return True  # Stop and return if a solution is foun
 
             return False
 
