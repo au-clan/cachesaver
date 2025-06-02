@@ -16,7 +16,8 @@ from src.utils import tokens2cost
 from src.algorithms import *
 from src.models import OnlineLLM, API
 from src.typedefs import DecodingParameters
-from src.tasks.humaneval import EnvironmentHumanEval, BenchmarkHumanEval, AgentActHumanEval, AgentAggregateHumanEval, AgentEvaluateHumanEval
+from src.tasks.humaneval import EnvironmentHumanEval, BenchmarkHumanEval, AgentActHumanEval, AgentAggregateHumanEval, \
+    AgentEvaluateHumanEval, AgentBfsHumanEval
 
 cache = Cache(f"caches/humaneval")
 
@@ -52,7 +53,8 @@ async def run(args):
         max_completion_tokens=args.max_completion_tokens,
         top_p=args.top_p,
         stop=args.stop,
-        logprobs=args.logprobs
+        logprobs=args.logprobs,
+        self_eval = args.self_eval
     )
     
     config = OmegaConf.load(args.conf_path)
@@ -76,6 +78,42 @@ async def run(args):
             num_best=config.got.num_best,
             num_evaluations=config.got.num_evaluations,
         )
+    elif args.method == "rap_er":
+        step_params = DecodingParameters(
+            temperature=args.temperature,
+            max_completion_tokens=args.max_completion_tokens,
+            top_p=args.top_p,
+            stop=args.stop,
+            logprobs=False,
+            self_eval=args.self_eval
+        )
+
+        eval_params = DecodingParameters(
+            temperature=args.temperature,
+            max_completion_tokens=args.max_completion_tokens,
+            top_p=args.top_p,
+            stop=args.stop,
+            logprobs=args.logprobs,
+            self_eval=args.self_eval
+        )
+        agents = AgentDictRAP(
+            step=AgentBfsHumanEval,
+            evaluate=AgentEvaluateHumanEval,
+            step_params=step_params,
+            eval_params=eval_params,
+        )
+        try:
+            method = AlgorithmRAP(
+                model=api,
+                agents=agents,
+                env=EnvironmentHumanEval,
+                num_evaluations=config.rap_er.num_evaluations,
+                logprobs_model=api if (args.provider=="together" and args.logprobs) else None,
+                num_tries = args.num_tries,
+            )
+        except ValueError as e:
+            print(f"Error: {e}", file=sys.stderr)
+            sys.exit(1)
     else:
         raise NotImplementedError(f"Method {args.method} is not implemented yet.")
     
@@ -93,10 +131,17 @@ async def run(args):
             logger.info(f"\t{r}")
     for result in results:
         evaluations = sorted([EnvironmentHumanEval.evaluate(state) for state in result], key=lambda x: x[1])
-        finished.append(evaluations[-1][0])
-        correct.append(evaluations[-1][1])
-    acc_finished = sum(finished) / len(finished)
-    acc_correct = sum(correct) / len(correct)
+        try:
+            finished.append(evaluations[-1][0])
+            correct.append(evaluations[-1][1])
+        except IndexError:
+            print(f"Index out of range: evaluations[-1][0]", file=sys.stderr)
+    try:
+        acc_finished = sum(finished) / len(finished)
+        acc_correct = sum(correct) / len(correct)
+    except ZeroDivisionError:
+        acc_finished = 0
+        acc_correct = 0
     print(f"Method: {args.method}")
     print(f"Finished: {acc_finished}")
     print(f"Correct: {acc_correct}")
