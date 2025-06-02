@@ -96,14 +96,14 @@ async def run(args):
             logprobs=args.logprobs,
             self_eval=args.self_eval
         )
-        agents = AgentDictRAP(
+        agents = AgentDictRAPER(
             step=AgentBfsHumanEval,
             evaluate=AgentEvaluateHumanEval,
             step_params=step_params,
             eval_params=eval_params,
         )
         try:
-            method = AlgorithmRAP(
+            method = AlgorithmRAPER(
                 model=api,
                 agents=agents,
                 env=EnvironmentHumanEval,

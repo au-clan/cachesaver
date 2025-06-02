@@ -127,13 +127,13 @@ async def run(args):
             num_evaluations=config.got.num_evaluations,
         )
     elif args.method == "rap":
-        agents = AgentDictRAP(
+        agents = AgentDictRAPER(
             step=AgentReactGame24,
             evaluate=AgentSelfEvaluateGame24,
             step_params=params,
             eval_params=params,
         )
-        method = AlgorithmRAP(
+        method = AlgorithmRAPER(
             model=api,
             agents=agents,
             env=EnvironmentGame24,
@@ -160,14 +160,14 @@ async def run(args):
             logprobs=args.logprobs,
             self_eval=args.self_eval
         )
-        agents = AgentDictRAP(
+        agents = AgentDictRAPER(
             step=AgentBfsGame24,
             evaluate=AgentEvaluateGame24,
             step_params=step_params,
             eval_params=eval_params,
         )
         try:
-            method = AlgorithmRAP(
+            method = AlgorithmRAPER(
                 model=api,
                 agents=agents,
                 env=EnvironmentGame24,

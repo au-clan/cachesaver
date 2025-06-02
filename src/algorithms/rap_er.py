@@ -19,14 +19,14 @@ from ..third_party.llm_reasoners_mcts import MCTSResult
 logger = logging.getLogger(__name__)
 
 
-class AgentDictRAP(TypedDict):
+class AgentDictRAPER(TypedDict):
     step: Agent
     evaluate: Agent
     step_params: DecodingParameters
     eval_params: DecodingParameters
 
 
-class AlgorithmRAP(Algorithm):
+class AlgorithmRAPER(Algorithm):
     """
     RAP (Reasoning via Planning) implementation using Monte-Carlo Tree Search from llm-reasoners.
     """
@@ -34,7 +34,7 @@ class AlgorithmRAP(Algorithm):
     def __init__(
             self,
             model: API,
-            agents: AgentDictRAP,
+            agents: AgentDictRAPER,
             env: Environment,
             num_evaluations: int,
             num_tries: int,

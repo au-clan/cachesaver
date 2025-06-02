@@ -142,14 +142,14 @@ async def run(args):
             logprobs=args.logprobs,
             self_eval=args.self_eval
         )
-        agents = AgentDictRAP(
+        agents = AgentDictRAPER(
             step=AgentBfsHotpotQA,
             evaluate=AgentEvaluateHotpotQA,
             step_params=step_params,
             eval_params=eval_params,
         )
         try:
-            method = AlgorithmRAP(
+            method = AlgorithmRAPER(
                 model=api,
                 agents=agents,
                 env=EnvironmentHotpotQA,
