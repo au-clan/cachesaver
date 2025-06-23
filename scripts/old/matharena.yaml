@@ -1,13 +1,20 @@
 ---
+got:
+  num_selections: 3
+  num_steps: 5
+  num_generate: 5
+  num_evaluations: 3
+  num_best: 2
+  
 foa:
-  num_agents : 3
-  num_steps: 3
-  k : 1
-  backtrack : 0.5
-  resampling : "linear_filtered"
-  min_steps : 4
-  num_evaluations : 3
-  origin : 120
+  num_agents: 7
+  num_steps: 9
+  k: 2
+  backtrack: 0.5
+  resampling: "linear_filtered"
+  min_steps: 1
+  num_evaluations: 3
+  origin: 30
 
 tot:
   num_selections : 3
