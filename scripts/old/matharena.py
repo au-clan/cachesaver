@@ -19,7 +19,7 @@ from src.models import OnlineLLM, API
 from src.typedefs import DecodingParameters
 from src.tasks.matharena.environment import EnvironmentMathArena
 from src.tasks.matharena.benchmark import BenchmarkMathArena
-from src.tasks.matharena.agents import AgentActMathArena, AgentEvaluateMathArena, AgentBfsMathArena
+from src.tasks.matharena.agents import AgentActMathArena, AgentEvaluateMathArena, AgentBfsMathArena, AgentAggregateMathArena
 
 cache = Cache(f"caches/matharena")
 
@@ -104,6 +104,25 @@ async def run(args):
             num_selections=config.tot.num_selections,
             num_steps=config.tot.num_steps,
             num_evaluations=config.tot.num_evaluations,
+        )
+    elif args.method == "got":
+        agents = AgentDictGOT(
+            step=AgentActMathArena,
+            aggregate=AgentAggregateMathArena,
+            evaluate=AgentEvaluateMathArena,
+            step_params=params,
+            aggregate_params=params,
+            eval_params=params,
+        )
+        method = AlgorithmGOT(
+            model=api,
+            agents=agents,
+            env=EnvironmentMathArena,
+            num_selections=config.got.num_selections,
+            num_steps=config.got.num_steps,
+            num_generate=config.got.num_generate,
+            num_best=config.got.num_best,
+            num_evaluations=config.got.num_evaluations,
         )
     else:
         raise NotImplementedError("Method not implemented yet.")

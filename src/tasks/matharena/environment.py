@@ -72,6 +72,7 @@ class EnvironmentMathArena(Environment):
         logger.debug(f"Last step: {state.steps[-1] if state.steps else 'No steps'}")
         if not state.steps:
             logger.debug("No steps found - returning (False, 0.0)")
+        logger.debug(f"State is - {state}")  
         final = EnvironmentMathArena.is_final(state)
         if final:
             score = verify_answer(state.answer, state.steps[-1])

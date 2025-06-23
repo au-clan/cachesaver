@@ -114,6 +114,8 @@ class BenchmarkHLE(Benchmark):
             raw_subject=raw_subject,
             category=category,
             canary=canary,
+            current_state="",
+            steps=[],
             randomness=None
         )
         return index, state

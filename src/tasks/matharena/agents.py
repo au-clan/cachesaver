@@ -11,96 +11,104 @@ act_cache = {}
 class AgentActMathArena(Agent):
     """Agent for direct mathematical problem-solving actions."""
     
-    async def act(model: Model, state: StateMathArena, n: int, namespace: str, request_id: str, params: DecodingParameters) -> List[str]:
-        # Format the prompt
+    # async def act(model: Model, state: StateMathArena, n: int, namespace: str, request_id: str, params: DecodingParameters) -> List[str]:
+    #     # Format the prompt
 
-        prompt = prompts.bfs.format(
-            problem=state.problem,
-            existing_steps="\n".join(state.steps)
-        )
-
-        if prompt in act_cache:
-            proposals = act_cache[prompt][:n]
-            act_cache[prompt] = act_cache[prompt][n:]
-        else:
-            proposals = []
-            act_cache[prompt] = []
-        
-        while len(proposals) < n:
-            response = await model.request(
-                prompt=prompt,
-                n=1,
-                request_id=request_id,
-                namespace=namespace,
-                params=params
-            )
-            logger.debug(f"[ACT] LLM raw response:\n{response[0]}")
-            
-            raw = response[0]
-            extracted = AgentActMathArena._parse_multiple_steps(raw, step_n=state.step_n + 1, existing_steps="\n".join(state.steps))
-
-            logger.debug(f"[ACT] Extracted steps:\n{extracted}")
-            proposals.extend(extracted)
-
-
-        # Shuffle & return
-        random.seed(state.randomness)
-        random.shuffle(proposals)
-        act_cache[prompt].extend(proposals[n:])
-        return proposals[:n]
-
-    @staticmethod
-    def _parse_multiple_steps(response: str, step_n: int, existing_steps: str) -> List[str]:
-        """Parses multiple 'Next step X: $...$' lines into step strings."""
-        lines = response.strip().split("\n")
-        steps = []
-
-        for line in lines:
-            match = re.match(r"Next step\s*\d*\s*:\s*(.+)", line.strip())
-            if match:
-                step_text = match.group(1).strip()
-                if step_text not in existing_steps and len(step_text) > 1:
-                    formatted = f"Step {step_n}: {step_text}"
-                    steps.append(formatted)
-
-        return steps
-    
-    # async def act(model: Model, state: StateMathArena, n: int, namespace: str, 
-    #               request_id: str, params: DecodingParameters) -> List[str]:
-        
-    #     existing_steps = "\n".join(state.steps) if state.steps else 'None\n'
-    #     if (state.values and state.values[max(state.values)] >= 0.9) or \
-    #        (state.steps and "answer is" in state.steps[-1].lower()):
-    #         prompt = prompts.summary.format(
-    #             problem=state.problem,
-    #             existing_steps=existing_steps
-    #         )
-    #     else:
-    #         prompt = prompts.bfs.format(
-    #             problem=state.problem,
-    #             existing_steps=existing_steps
-    #         )
-
-    #     # Generate multiple possible next steps
-    #     responses = await model.request(
-    #         prompt=prompt,
-    #         n=n,  # BFS uses single response with multiple steps
-    #         request_id=request_id,
-    #         namespace=namespace,
-    #         params=params
+    #     prompt = prompts.bfs.format(
+    #         problem=state.problem,
+    #         existing_steps="\n".join(state.steps)
     #     )
-        
-    #     # Parse multiple steps from single response
-    #     proposals = ["Next step: " + step.strip() 
-    #                 for step in responses[0].split("Next step:") 
-    #                 if step.strip()]
-    #     proposals = [r.strip().split('\n')[:5] for r in proposals]
-    #     proposals = [parse_proposal(r, state.step_n, existing_steps) 
-    #                 for r in proposals]
 
-    #     logger.debug(f"Prompt sent to model: {prompt}")
-    #     logger.debug(f"Responses from model: {responses}")
-    #     return proposals
+    #     if prompt in act_cache:
+    #         proposals = act_cache[prompt][:n]
+    #         act_cache[prompt] = act_cache[prompt][n:]
+    #     else:
+    #         proposals = []
+    #         act_cache[prompt] = []
+        
+    #     while len(proposals) < n:
+    #         response = await model.request(
+    #             prompt=prompt,
+    #             n=1,
+    #             request_id=request_id,
+    #             namespace=namespace,
+    #             params=params
+    #         )
+    #         logger.debug(f"[ACT] LLM raw response:\n{response[0]}")
+            
+    #         raw = response[0]
+    #         extracted = AgentActMathArena._parse_multiple_steps(raw, step_n=state.step_n + 1, existing_steps="\n".join(state.steps))
+
+    #         logger.debug(f"[ACT] Extracted steps:\n{extracted}")
+    #         proposals.extend(extracted)
+
+
+    #     # Shuffle & return
+    #     random.seed(state.randomness)
+    #     random.shuffle(proposals)
+    #     act_cache[prompt].extend(proposals[n:])
+    #     return proposals[:n]
+
+    # @staticmethod
+    # def _parse_multiple_steps(response: str, step_n: int, existing_steps: str) -> List[str]:
+    #     """Parses multiple 'Next step X: $...$' lines into step strings."""
+    #     lines = response.strip().split("\n")
+    #     steps = []
+
+    #     for line in lines:
+    #         match = re.search(r"Next step\s*\d*\s*:\s*(.+)", line.strip())
+    #         if not match and line.startswith("Next step"):
+    #             parts = line.split(":")
+    #             if len(parts) > 1:
+    #                 step_text = parts[1].strip()
+    #                 if step_text not in existing_steps and len(step_text) > 1:
+    #                     formatted = f"Step {step_n}: {step_text}"
+    #                     steps.append(formatted)
+    #         else:
+    #             step_text = match.group(1).strip()
+    #             if step_text not in existing_steps and len(step_text) > 1:
+    #                 formatted = f"Step {step_n}: {step_text}"
+    #                 steps.append(formatted)
+
+    #     return steps
+    
+    @staticmethod
+    async def act(model: Model, state: StateMathArena, n: int, namespace: str, 
+                  request_id: str, params: DecodingParameters) -> List[str]:
+        
+        existing_steps = "\n".join(state.steps) if state.steps else 'None\n'
+        if (state.values and state.values[max(state.values)] >= 0.9) or \
+           (state.steps and "answer is" in state.steps[-1].lower()):
+            prompt = prompts.summary.format(
+                problem=state.problem,
+                existing_steps=existing_steps
+            )
+        else:
+            prompt = prompts.bfs.format(
+                problem=state.problem,
+                existing_steps=existing_steps
+            )
+
+        # Generate multiple possible next steps
+        responses = await model.request(
+            prompt=prompt,
+            n=n,  # BFS uses single response with multiple steps
+            request_id=request_id,
+            namespace=namespace,
+            params=params
+        )
+        
+        # Parse multiple steps from single response
+        proposals = ["Next step: " + step.strip() 
+                    for step in responses[0].split("Next step:") 
+                    if step.strip()]
+        proposals = [r.strip().split('\n')[:5] for r in proposals]
+        proposals = [parse_proposal(r, state.step_n, existing_steps) 
+                    for r in proposals]
+
+        logger.debug(f"Prompt sent to model: {prompt}")
+        logger.debug(f"Responses from model: {responses}")
+        return proposals
 
 class AgentBfsMathArena(Agent):
     """Agent for exploring multiple solution paths using BFS."""
@@ -205,6 +213,31 @@ class AgentEvaluateMathArena(Agent):
                 cache[state.current_state] = value
             state.values[state.step_n] = value
         return value
+    
+class AgentAggregateMathArena(Agent):
+    
+    @staticmethod
+    async def act(model: Model, state: StateMathArena, actions: List[str], k: int, namespace: str, request_id: str, params: DecodingParameters) -> List[str]:
+        """
+        Returns the aggregated action for Matharena task.
+        """
+        # Format the prompt
+        steps = '\n'.join(actions)
+        prompt = prompts.aggregate.format(problem=state.puzzle, k=k, steps=steps)
+
+        # Generate the response
+        responses = await model.request(
+            prompt=prompt,
+            n=1,
+            request_id=request_id,
+            namespace=namespace,
+            params=params
+        )
+
+        # Parse the response
+        pattern = r'\d+'
+        matchs = re.findall(pattern, responses[0])
+        return [actions[int(i.strip()) - 1] for i in matchs]
 
 #---Helper functions---#
 def parse_proposal(response: List[str], step_n: int, existing_steps: str) -> str:

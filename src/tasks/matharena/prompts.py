@@ -72,7 +72,7 @@ Next step 1: $...$
 Next step 2: $...$
 Next step 3: $...$
 And when the final answer comes, write it as final answer = $answer which you got$
-Below is the input. Please follow the format strictly.
+Below is the input. Please follow the format strictly. Give the final answer at the end always. Don't just leave by writing the steps. 
 
 Problem: {problem}
 Existing steps:
@@ -94,6 +94,7 @@ Next step: $Minute\_angle = 6 \times 15 = 90^\circ$, $Hour\_angle = 90 + 15 \tim
 summary = '''
 Given a math problem and its corresponding solution, your task is to extract the final answer obtained in the solution.
 You should summarize the answer using the format: "The final answer is $...$". Replace "..." with the answer obtained in the solution.
+There should always be a final answer. 
 Problem: {problem}
 Solution: {existing_steps}
 Extracted answer:'''
@@ -103,13 +104,13 @@ evaluate = '''Your task is to assess whether the provided solution steps can suc
 The score should be a decimal between 0 and 1. If all the provided steps are incorrect (every step is wrong), the score should be 0. If all steps are correct and the final answer is successfully calculated, the score should be 1. The more errors there are in the steps, the closer the score should be to 0. The closer the steps are to the final correct answer, the closer the score should be to 1.
 Steps that only contain verbal descriptions without any mathematical expressions should generally receive a low score. A score equal to or greater than 0.9 can only be given if the answer has already been calculated to a specific numerical value. If the thought process is complete but the answer is not computed, or only the mathematical expression is written without solving it, the score must be below 0.9.
 
-First provide an analysis, then the score. Your analysis and scoring should be entirely based on the given steps. Do not continue solving the problem. Please study the following examples.
+First provide an analysis, then the score. Your analysis and scoring should be entirely based on the given steps. Continue solving the problem. Please study the following examples.
 
 {examples}
 
 Below is a problem and the existing steps, with analysis and scoring. Be careful not to output the next steps in the analysis, and the scoring should be based entirely on the steps given in the input.
 The output format is limited to: "Analysis:...\nScore:...", where ... indicates omitted output content, which is the part you need to fill in.
-Solve the problem step-by-step. If you're ready, finish with:
+Solve the problem step-by-step . Finish with:
 'the final answer is:  <your final numerical result>'
 
 Input:

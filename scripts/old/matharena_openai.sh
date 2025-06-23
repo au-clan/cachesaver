@@ -10,7 +10,7 @@ python scripts/old/matharena.py\
     --dataset_path datasets/dataset_mathArena_aime2023.jsonl.gz\
     --split mini\
     --share_ns \
-    --method foa\
+    --method got\
     --conf_path scripts/old/matharena.yaml\
     --value_cache
 
