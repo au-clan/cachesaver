@@ -19,12 +19,13 @@ from src.models import OnlineLLM, API
 from src.typedefs import DecodingParameters
 from src.tasks.matharena.environment import EnvironmentMathArena
 from src.tasks.matharena.benchmark import BenchmarkMathArena
-from src.tasks.matharena.agents import AgentActMathArena, AgentEvaluateMathArena, AgentBfsMathArena
+from src.tasks.matharena.agents import AgentActMathArena, AgentEvaluateMathArena, AgentBfsMathArena, AgentAggregateMathArena
 
-cache = Cache(f"caches/hle")
+cache = Cache(f"caches/matharena")
 
 async def run(args):
-    
+    finished = []
+    correct = []
     # LLM Provider
     if args.provider == "openai":
         client = AsyncOpenAI()
@@ -104,66 +105,66 @@ async def run(args):
             num_steps=config.tot.num_steps,
             num_evaluations=config.tot.num_evaluations,
         )
+    elif args.method == "got":
+        agents = AgentDictGOT(
+            step=AgentActMathArena,
+            aggregate=AgentAggregateMathArena,
+            evaluate=AgentEvaluateMathArena,
+            step_params=params,
+            aggregate_params=params,
+            eval_params=params,
+        )
+        method = AlgorithmGOT(
+            model=api,
+            agents=agents,
+            env=EnvironmentMathArena,
+            num_selections=config.got.num_selections,
+            num_steps=config.got.num_steps,
+            num_generate=config.got.num_generate,
+            num_best=config.got.num_best,
+            num_evaluations=config.got.num_evaluations,
+        )
     else:
         raise NotImplementedError("Method not implemented yet.")
     
     benchmark = BenchmarkMathArena(path=args.dataset_path, split=args.split)
 
-    logger.debug(f"Benchmark details:")
-    logger.debug(f"- Path: {args.dataset_path}")
-    logger.debug(f"- Split: {args.split}")
-    logger.debug(f"- Size: {len(benchmark)}")
-    logger.debug(f"- First state: {benchmark[0] if len(benchmark) > 0 else 'Empty'}")
-
-    logger.debug(f"Starting benchmark execution:")
-    logger.debug(f"- Method: {args.method}")
-    logger.debug(f"- Config: {config[args.method]}")
-    logger.debug(f"- Share NS: {args.share_ns}")
-    logger.debug(f"- Value Cache: {args.value_cache}")
-
     pdb.set_trace()
     results = await method.benchmark(
         benchmark=benchmark,
         share_ns=args.share_ns,
-        cache=args.value_cache,
+        cache=args.value_cache
     )
-    logger.info(f"Benchmark returned {len(results)} results")
+    # logger.info(f"Benchmark returned {len(results)} results")
     
+    print("RESULTS:", results)
     for i, result in enumerate(results):
-        logger.debug(f"Processing result {i}/{len(results)}:")
-        logger.debug(f"- States in result: {len(result)}")
-        for j, r in enumerate(result):
-            logger.debug(f"  - State {j}: {r}")
         
+        print("SORTED EVALUATIONS:", sorted([EnvironmentMathArena.evaluate(state) for state in result], key=lambda x: x[1]))
+
         evaluations = sorted([EnvironmentMathArena.evaluate(state) for state in result], key=lambda x: x[1])
         logger.debug(f"- Evaluations: {evaluations}")
         finished.append(evaluations[-1][0])
         correct.append(evaluations[-1][1])
-        logger.debug(f"- Finished: {evaluations[-1][0]}")
-        logger.debug(f"- Correct: {evaluations[-1][1]}")
         
-    #debug
-    if not results:
-        logger.error("Benchmark returned empty results")
-        return
-    #debug
     
-    finished = []
-    correct = []
-    for i, result in enumerate(results):
-        logger.debug(f"Result {i}:")
-        for r in result:
-            logger.debug(f"\t{r}")
-    for result in results:
-        for r in result:
-            print(f"\t{r}")
-        evaluations = sorted([EnvironmentMathArena.evaluate(state) for state in result], key=lambda x: x[1])
-        finished.append(evaluations[-1][0])
-        correct.append(evaluations[-1][1])
-    logging.info(f"Finished list: {finished}")
-    if len(finished) == 0:
-        logging.error("No tasks were finished. Exiting.")
-        return
+    # # finished = []
+    # # correct = []
+    # # for i, result in enumerate(results):
+    # #     logger.debug(f"Result {i}:")
+    # #     for r in result:
+    # #         logger.debug(f"\t{r}")
+    # for result in results:
+    #     # for r in result:
+    #     #     print(f"\t{r}")
+    #     print("SORTED EVALUATIONS:", sorted([EnvironmentMathArena.evaluate(state) for state in result], key=lambda x: x[1]))
+    #     evaluations = sorted([EnvironmentMathArena.evaluate(state) for state in result], key=lambda x: x[1])
+    #     finished.append(evaluations[-1][0])
+    #     correct.append(evaluations[-1][1])
+    # # logging.info(f"Finished list: {finished}")
+    # # if len(finished) == 0:
+    # #     logging.error("No tasks were finished. Exiting.")
+    # #     return
     
     pdb.set_trace()
     acc_finished = sum(finished) / len(finished)
@@ -172,6 +173,8 @@ async def run(args):
     costs = {key:tokens2cost(api.tokens[key], args.model) for key in api.tokens.keys()}
 
     print("DEBUG: Final Results:")
+    print(f"DEBUG: {len(results)} results")
+    print(f"DEBUG: {len(finished)} finished")
     print(f"DEBUG: finished={finished}")
     print(f"DEBUG: correct={correct}")
     print(f"DEBUG: costs={costs}")
@@ -182,28 +185,28 @@ async def run(args):
         print(f"\t{key}: {value['total']:.3f}$")
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Solve HLE using LLMs.")
+    parser = argparse.ArgumentParser(description="Solve MathArena using LLMs.")
     parser.add_argument("--provider", type=str, help="LLM Provider", choices=["openai", "together", "local"], default="openai")
     parser.add_argument("--model", type=str, help="LLM Model",  default="gpt-4o-mini")
     parser.add_argument("--batch_size", type=int, help="CacheSaver's batch size", default=300)
-    parser.add_argument("--timeout", type=float, help="CacheSaver's timeout", default=0.05)
+    parser.add_argument("--timeout", type=float, help="CacheSaver's timeout", default=2.0)
     parser.add_argument("--temperature", type=float, help="Temperature for the model", default=1.0)
     parser.add_argument("--max_completion_tokens", type=int, help="Max completion tokens", default=100)
     parser.add_argument("--top_p", type=float, help="Top P for the model", default=1.0)
     parser.add_argument("--stop", type=str, nargs="+", help="Stop sequence for the model", default=None)
     parser.add_argument("--logprobs", action="store_true", help="Logprobs for the model")
-    parser.add_argument("--dataset_path", type=str, help="Path to the dataset", default="datasets/dataset_hle_sample_without_images.jsonl.gz")
+    parser.add_argument("--dataset_path", type=str, help="Path to the dataset", default="datasets/dataset_mathArena_aime2023.jsonl.gz")
     parser.add_argument("--split", type=str, help="Split of the dataset", choices=["mini", "train", "validation", "test"], default="mini")
     parser.add_argument("--share_ns", action="store_true", help="Share namespace between puzzles")
     parser.add_argument("--method", type=str, help="Method to use", choices=["foa", "tot"], default="foa")
-    parser.add_argument("--conf_path", type=str, help="Path to corresponding config", default="scripts/hle.yaml")
+    parser.add_argument("--conf_path", type=str, help="Path to corresponding config", default="scripts/old/matharena.yaml")
     parser.add_argument("--value_cache", action="store_true", help="Use value cache")
     args = parser.parse_args()
 
 
     print(f"Dataset path: {args.dataset_path}")
     print(args)
-    file_path = f"logs/hle/{args.method}.log"
+    file_path = f"logs/matharena/{args.method}.log"
     # Add after dataset loading
     
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
@@ -219,4 +222,3 @@ if __name__ == "__main__":
     )
     logger.debug("Starting script execution")
     asyncio.run(run(args))
-
