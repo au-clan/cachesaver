@@ -4,6 +4,9 @@ from typing import Tuple
 
 from .state import StateHLE
 from ...typedefs import Environment, MAX_SEED
+import logging
+logger = logging.getLogger(__name__)
+import math
 
 OBS_CORRECT = "Answer is CORRECT."
 OBS_INCORRECT = "Answer is INCORRECT."
@@ -18,20 +21,13 @@ class EnvironmentHLE(Environment):
         """
         Takes a step in the environment based on the given action.
         """
-        # Parse the type and the argument of the action
-        act = action.split("\n")[-1]
-        action_type, argument = parse_action(act.split(": ")[-1])
         
-        # Perform the action and obtain the observation
-        obs = perform_action(action_type, argument, state)
-        step = f"\nAction {len(state.steps)+ 1}: " + action + f"\nObservation {len(state.steps) + 1}: {obs}"
-
         # Randomness handling
-        random.seed(state.randomness if hasattr(state, 'randomness') else 0)
+        random.seed(state.randomness)
         randomness = random.randint(0, MAX_SEED)
 
         # Create new state with updated information
-        state = StateHLE(
+        new_state = StateHLE(
             id=state.id,
             question=state.question,
             image=state.image,
@@ -44,42 +40,68 @@ class EnvironmentHLE(Environment):
             raw_subject=state.raw_subject,
             category=state.category,
             canary=state.canary,
-            steps=state.steps + [step],
-            randomness=state.randomness
+            steps=state.steps + [action],
+            current_state=state.current_state + f"\n{action}",
+            step_n=state.step_n + 1,
+            values=state.values,
+            randomness=randomness
         )
-        return state
+        logger.debug(f"Steps before update: {state.steps}")
+        logger.debug(f"Action added: {action}")
+        logger.debug(f"New steps: {new_state.steps}")
+        return new_state
 
     @staticmethod
     def is_valid(state: StateHLE, action: str) -> bool:
         """
         Checks if the action taken is valid.
         """
-        action_type, _ = parse_action(action.split("\n")[-1].split(": ")[-1])
-        return action_type in ["Analyze", "Explain", "Finish"]
+        raise NotImplementedError("Action validation logic is not implemented.")
+
 
     @staticmethod
     def is_final(state: StateHLE) -> bool:
         """
         Checks if the current state is a final state.
         """
-        if not state.steps:
+        try:
+            # Check if the last step contains "The final answer is"
+            if len(state.steps) > 0 and "the final answer is" in state.steps[-1].lower():
+                return True
+            
+            # Check if the highest value in `state.values` is >= 0.9
+            if len(state.values) > 0 and state.values[max(state.values)] >= 0.1:
+                return True
+            
+            # Optional: Check if the maximum number of steps has been reached
+            MAX_STEPS = 10  # Define a reasonable limit for steps
+            if state.step_n >= MAX_STEPS:
+                return True
+
             return False
-        expression = state.steps[-1].split("\n")[-2]  # Get the last action
-        action_type, _ = parse_action(expression.split(": ")[-1])
-        return action_type == "Finish"
+        except Exception as e:
+            logger.error(f"Error in is_final: {e}")
+            return False
 
     @staticmethod
     def evaluate(state: StateHLE) -> Tuple[bool, float]:
         """
         Evaluates the current state.
         """
-        is_final = EnvironmentHLE.is_final(state)
-        if is_final:
-            last_obs = state.steps[-1].split("\n")[-1]
-            if last_obs == OBS_CORRECT:
-                return True, 1.0
-            return True, 0.0
-        return False, 0.0
+        logger.debug(f"Evaluating state with steps: {state.steps}")
+        logger.debug(f"Last step: {state.steps[-1] if state.steps else 'No steps'}")
+        if not state.steps:
+            logger.debug("No steps found - returning (False, 0.0)")
+        logger.debug(f"State is - {state}")  
+        final = EnvironmentHLE.is_final(state)
+        if final:
+            score = verify_answer(state.answer, state.steps[-1])
+            logger.debug(f"Final state detected. Score: {score}")
+            return True, score
+        else:
+            logger.debug("State is not final.")
+
+            return False, 0.0
 
 #---Helper functions---#
 def parse_action(string: str) -> Tuple[str, str]:
@@ -96,23 +118,44 @@ def parse_action(string: str) -> Tuple[str, str]:
         return action_type.lower().capitalize(), argument.strip()
     return None, None
 
-def perform_action(action_type: str, argument: str, state: StateHLE) -> str:
-    """
-    Performs the specified action and returns an observation.
-    """
-    if action_type == "Analyze":
-        # Analyze the image or question content
-        return f"Analysis of '{argument}': Considering {state.category} category..."
-    
-    elif action_type == "Explain":
-        # Provide explanation based on rationale
-        return f"Explanation: {state.rationale if hasattr(state, 'rationale') else 'No rationale available'}"
-    
-    elif action_type == "Finish":
-        # Check if the answer matches
-        if argument.lower() == state.answer.lower():
-            return OBS_CORRECT
-        return OBS_INCORRECT
-    
+def verify_answer(answer: float, output: str):
+    if not output:
+        #print(f'The output is empty and cannot match the answer!\n')
+        return 0.0
+
+    if 'In summary, ' in output:
+        spl_ans = output.split('In summary, ')[-1]
+        spl_ans = spl_ans.strip()
     else:
-        return 'Invalid Action. Valid Actions are Analyze[<topic>], Explain[<aspect>], and Finish[<answer>].'
+        spl_ans = output.strip()
+
+    try:
+        match = re.findall(r'[^^{.\-0123456789]-?[0-9]+\.?[0-9]*[^^}.0123456789]', spl_ans)[-1][1:][:-1]
+        model_ans = float(match)
+
+        # standard (adjustable)
+        if abs(answer) >= 1:
+            result = math.isclose(model_ans, answer, abs_tol=0.1)
+        else:
+            result = math.isclose(model_ans, answer, rel_tol=0.1)
+
+        #print(f'The ans of model is:{model_ans}, while the ground truth is {answer}.\n')
+        return result * 1.0
+
+    except Exception as e:
+        try:
+            match = re.findall(r'-?[0-9]+\.?[0-9]*', spl_ans)[-1]
+            model_ans = float(match)
+
+            # standard (adjustable)
+            if abs(answer) >= 1:
+                result = math.isclose(model_ans, answer, abs_tol=0.1)
+            else:
+                result = math.isclose(model_ans, answer, rel_tol=0.1)
+
+            #print(f'The ans of model is:{model_ans}, while the ground truth is {answer}.\n')
+            return result * 1.0
+        except Exception as e:
+            #print(f'Result not matched, error type:{e}\n')
+            #print(f'The ans of model is:{spl_ans}, while the ground truth is {answer}.\n')
+            return 0.0
