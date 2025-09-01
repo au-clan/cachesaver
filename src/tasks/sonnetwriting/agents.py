@@ -120,7 +120,10 @@ class AgentEvaluateSonnetWriting(Agent):
 
         # Parse response
         evaluations = [r.lower().replace("evaluation: ", "").strip() for r in responses]
-        value = sum([int(e) for e in evaluations]) / n
+        try:
+            value = sum([int(e) for e in evaluations]) / n
+        except ValueError:
+            value = 0
 
         # Cache the value
         if cache is not None:

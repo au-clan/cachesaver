@@ -16,7 +16,7 @@ class BenchmarkSonnetWriting(Benchmark):
             data_path (str): Path to the dataset.
             split (str): Name of the dataset split (e.g., "mini", "train", "validation", "test").
         """
-        df = pd.read_json(path, lines=True,
+        df = pd.read_json(path.replace("csv", "jsonl"), lines=True,
                           compression='gzip')
         df.reset_index(inplace=True)
         # todo 200 entires in this dataset
