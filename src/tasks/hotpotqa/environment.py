@@ -5,11 +5,13 @@ from typing import Tuple
 from langchain.agents.react.base import DocstoreExplorer
 
 from .state import StateHotpotQA
+from ... import EnvironmentFactory
 from ...typedefs import Environment, MAX_SEED
 
 OBS_CORRECT = "Answer is CORRECT."
 OBS_INCORRECT = "Answer is INCORRECT."
 
+@EnvironmentFactory.register
 class EnvironmentHotpotQA(Environment):
     """
     Environment for the HotpotQA task.

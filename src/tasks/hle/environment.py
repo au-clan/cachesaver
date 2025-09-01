@@ -3,11 +3,13 @@ import random
 from typing import Tuple
 
 from .state import StateHLE
+from ... import EnvironmentFactory
 from ...typedefs import Environment, MAX_SEED
 
 OBS_CORRECT = "Answer is CORRECT."
 OBS_INCORRECT = "Answer is INCORRECT."
 
+@EnvironmentFactory.register
 class EnvironmentHLE(Environment):
     """
     Environment for the HLE (Human-Labeled Explanations) task.

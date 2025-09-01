@@ -4,6 +4,7 @@ from typing import Tuple
 import pandas as pd
 
 from .state import StateMathArena
+from ... import BenchmarkFactory
 from ...typedefs import Benchmark
 
 import sys
@@ -14,6 +15,7 @@ def get_split_sizes(total_size, proportions=(0.1, 0.4, 0.25, 0.25)):
         sizes = [max(1, int(total_size * p)) for p in proportions]
         return sizes
 
+@BenchmarkFactory.register
 class BenchmarkMathArena(Benchmark):
     
 

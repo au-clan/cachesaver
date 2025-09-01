@@ -4,9 +4,11 @@ import pandas as pd
 from typing import Tuple
 
 from .state import StateLogiQA
+from ... import BenchmarkFactory
 from ...typedefs import Benchmark
 
 
+@BenchmarkFactory.register
 class BenchmarkLogiQA(Benchmark):
     def __init__(self, path: str, split: str = "mini"):
 
@@ -60,7 +62,7 @@ class BenchmarkLogiQA(Benchmark):
         option_d = self.data[idx][7]
 
         # Create a state object
-        # Note: Left None for randomness, which enforces a state.clone() call in the algorithm
+        # Note: Left None for randomness, which enforces a state.clone() call in the method
         state = StateLogiQA(
             context=context,
             question=question,

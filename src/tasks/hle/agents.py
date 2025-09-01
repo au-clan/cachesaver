@@ -3,8 +3,10 @@ from typing import List, Tuple
 
 from . import prompts as prompts
 from .state import StateHLE
+from ... import AgentFactory
 from ...typedefs import Agent, Model, DecodingParameters
 
+@AgentFactory.register
 class AgentActHLE(Agent):
     """
     Agent performing the Act operation for the HLE task.
@@ -34,6 +36,7 @@ class AgentActHLE(Agent):
         actions = [r.strip() for r in responses]
         return actions
 
+@AgentFactory.register
 class AgentBfsHLE(Agent):
     """
     Agent performing the BFS operation for the HLE task.
@@ -63,6 +66,7 @@ class AgentBfsHLE(Agent):
         proposals = [r.strip() for r in response[0].split("\n")]
         return proposals
 
+@AgentFactory.register
 class AgentReactHLE(Agent):
     """
     Agent performing the ReAct operation for the HLE task.
@@ -92,6 +96,7 @@ class AgentReactHLE(Agent):
         react_actions = [r.strip() for r in responses]
         return react_actions
 
+@AgentFactory.register
 class AgentEvaluateHLE(Agent):
     """
     Agent performing the Evaluate operation for the HLE task.

@@ -5,8 +5,10 @@ import numpy as np
 
 from . import prompts as prompts
 from .state import StateHumanEval
+from ... import AgentFactory
 from ...typedefs import Request, Agent, Model, DecodingParameters
 
+@AgentFactory.register
 class AgentActHumanEval(Agent):
     @staticmethod
     async def act(
@@ -41,6 +43,7 @@ class AgentActHumanEval(Agent):
         return actions
 
 
+@AgentFactory.register
 class AgentAggregateHumanEval(Agent):
     @staticmethod
     async def act(
@@ -87,6 +90,7 @@ class AgentAggregateHumanEval(Agent):
         return aggregate_actions
 
 
+@AgentFactory.register
 class AgentBfsHumanEval(Agent):
     @staticmethod
     async def act(
@@ -124,6 +128,7 @@ class AgentBfsHumanEval(Agent):
 
 
 
+@AgentFactory.register
 class AgentEvaluateHumanEval(Agent):
     @staticmethod
     async def act(
@@ -159,6 +164,7 @@ class AgentEvaluateHumanEval(Agent):
         value = sum_overall_scores(responses)
         return responses, value
 
+@AgentFactory.register
 class AgentReactHumanEval(Agent):
     """
     Agent performing the ReAct operation for the HumanEval task.
@@ -199,6 +205,7 @@ class AgentReactHumanEval(Agent):
         react_actions = [r.strip() for r in responses]
         return react_actions
 
+@AgentFactory.register
 class AgentSelfEvaluateHumanEval(Agent):
     """
     Agent that performs self-evaluation of reasoning steps for HumanEval.

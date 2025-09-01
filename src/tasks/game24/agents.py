@@ -5,11 +5,12 @@ import numpy as np
 
 from . import prompts as prompts
 from .state import StateGame24
+from ... import AgentFactory
 from ...typedefs import Request, Agent, Model, DecodingParameters
 
 act_cache = {}
 
-
+@AgentFactory.register
 class AgentActGame24(Agent):
     """ """
 
@@ -62,6 +63,7 @@ class AgentActGame24(Agent):
         return proposals[:n]
 
 
+@AgentFactory.register
 class AgentAggregateGame24(Agent):
 
     @staticmethod
@@ -109,6 +111,7 @@ class AgentAggregateGame24(Agent):
         return selected_actions
 
 
+@AgentFactory.register
 class AgentBfsGame24(Agent):
 
     @staticmethod
@@ -153,6 +156,7 @@ class AgentBfsGame24(Agent):
         return proposals
 
 
+@AgentFactory.register
 class AgentEvaluateGame24(Agent):
 
     @staticmethod
@@ -203,9 +207,10 @@ class AgentEvaluateGame24(Agent):
         return value
 
 
+@AgentFactory.register
 class AgentReactGame24(Agent):
     """
-    Agent for React algorithm
+    Agent for React method
     """
 
     @staticmethod
@@ -243,9 +248,10 @@ class AgentReactGame24(Agent):
         return proposals
 
 
+@AgentFactory.register
 class AgentRapGame24(Agent):
     """
-    Agent for React algorithm
+    Agent for React method
     """
 
     @staticmethod
@@ -280,6 +286,7 @@ class AgentRapGame24(Agent):
         return proposals
 
 
+@AgentFactory.register
 class AgentSelfEvaluateGame24(Agent):
     """
     Agent that performs self-evaluation of reasoning steps for Game24.

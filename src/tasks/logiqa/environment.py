@@ -3,8 +3,10 @@ import random
 from typing import Tuple
 
 from .state import StateLogiQA
+from ... import EnvironmentFactory
 from ...typedefs import Environment, MAX_SEED
 
+@EnvironmentFactory.register
 class EnvironmentLogiQA(Environment):
 
     @staticmethod

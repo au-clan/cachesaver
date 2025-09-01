@@ -1,9 +1,12 @@
 from typing import Tuple, List
 from dataclasses import dataclass
+
 from ...typedefs import Environment
+from ... import EnvironmentFactory
 from .state import StateMathArena
 
 @dataclass
+@EnvironmentFactory.register
 class EnvironmentMathArena(Environment):
     """Environment for MathArena task."""
 

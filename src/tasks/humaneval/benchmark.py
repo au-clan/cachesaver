@@ -3,8 +3,10 @@ import random
 from typing import Tuple
 
 from .state import StateHumanEval
+from ... import BenchmarkFactory
 from ...typedefs import Benchmark
 
+@BenchmarkFactory.register
 class BenchmarkHumanEval(Benchmark):
     def __init__(self, path: str, split: str = "mini") -> None:
         """

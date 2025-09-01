@@ -4,9 +4,11 @@ from typing import Tuple
 import pandas as pd
 
 from .state import StateSonnetWriting
+from ... import BenchmarkFactory
 from ...typedefs import Benchmark
 
 
+@BenchmarkFactory.register
 class BenchmarkSonnetWriting(Benchmark):
     def __init__(self, path: str, split: str = "mini"):
         """
@@ -73,7 +75,7 @@ class BenchmarkSonnetWriting(Benchmark):
         target = self.data[idx][2]
 
         # Create a state object
-        # Note: Left None for randomness, which enforces a state.clone() call in the algorithm
+        # Note: Left None for randomness, which enforces a state.clone() call in the method
         state = StateSonnetWriting(
             puzzle=input,
             current_state=input,

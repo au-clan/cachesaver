@@ -14,10 +14,12 @@ import multiprocessing
 
 
 from .state import StateHumanEval
+from ... import EnvironmentFactory
 from ...typedefs import Environment, MAX_SEED
 
 TIMEOUT = 5.0
 
+@EnvironmentFactory.register
 class EnvironmentHumanEval(Environment):
 
     @staticmethod

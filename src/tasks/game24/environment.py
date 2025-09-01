@@ -4,8 +4,10 @@ from typing import Tuple
 from sympy import simplify
 
 from .state import StateGame24
+from ... import EnvironmentFactory
 from ...typedefs import Environment, MAX_SEED
 
+@EnvironmentFactory.register
 class EnvironmentGame24(Environment):
 
     @staticmethod

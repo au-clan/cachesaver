@@ -4,9 +4,11 @@ from typing import List
 
 from . import prompts as prompts
 from .state import StateSciBench
+from ... import AgentFactory
 from ...typedefs import Agent, Model, DecodingParameters
 
 
+@AgentFactory.register
 class AgentActSciBench(Agent):
 
     @staticmethod
@@ -50,6 +52,7 @@ class AgentActSciBench(Agent):
         return proposals
 
 
+@AgentFactory.register
 class AgentReactSciBench(Agent):
 
     @staticmethod
@@ -93,6 +96,7 @@ class AgentReactSciBench(Agent):
         return proposals
 
 
+@AgentFactory.register
 class AgentBfsSciBench(Agent):
 
     @staticmethod
@@ -139,6 +143,7 @@ class AgentBfsSciBench(Agent):
         return proposals
 
 
+@AgentFactory.register
 class AgentAggregateSciBench(Agent):
 
     @staticmethod
@@ -184,6 +189,7 @@ class AgentAggregateSciBench(Agent):
         return out
 
 
+@AgentFactory.register
 class AgentEvaluateSciBench(Agent):
 
     @staticmethod
@@ -232,6 +238,7 @@ class AgentEvaluateSciBench(Agent):
             state.values[state.step_n] = value
         return value
 
+@AgentFactory.register
 class AgentSelfEvaluateSciBench(Agent):
     """
     Agent that performs self-evaluation of reasoning steps for HotpotQA.

@@ -2,8 +2,10 @@ import pandas as pd
 from typing import Tuple
 
 from .state import StateGame24
+from ... import BenchmarkFactory
 from ...typedefs import Benchmark
 
+@BenchmarkFactory.register
 class BenchmarkGame24(Benchmark):
     def __init__(self, path: str, split: str = "mini"):
 
@@ -32,7 +34,7 @@ class BenchmarkGame24(Benchmark):
         x = self.data[idx][1]
 
         # Create a state object
-        # Note: Left None for randomness, which enforces a state.clone() call in the algorithm
+        # Note: Left None for randomness, which enforces a state.clone() call in the method
         state = StateGame24(
             puzzle=x,
             current_state=x,

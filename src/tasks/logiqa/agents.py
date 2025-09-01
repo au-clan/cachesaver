@@ -4,8 +4,10 @@ import numpy as np
 
 from . import prompts as prompts
 from .state import StateLogiQA
+from ... import AgentFactory
 from ...typedefs import Agent, Model, DecodingParameters
 
+@AgentFactory.register
 class AgentActLogiQA(Agent):
     @staticmethod
     async def act(
@@ -39,6 +41,7 @@ class AgentActLogiQA(Agent):
         return proposals
     
 
+@AgentFactory.register
 class AgentAggregateLogiQA(Agent):
     @staticmethod
     async def act(
@@ -75,6 +78,7 @@ class AgentAggregateLogiQA(Agent):
             selected_proposals = []
         return selected_proposals
     
+@AgentFactory.register
 class AgentEvaluateLogiQA(Agent):
     @staticmethod
     async def act(
@@ -121,6 +125,7 @@ class AgentEvaluateLogiQA(Agent):
             cache[state.current_state] = value
         return value
 
+@AgentFactory.register
 class AgentReactLogiQA(Agent):
     @staticmethod
     async def act(
@@ -172,6 +177,7 @@ class AgentReactLogiQA(Agent):
 
         return proposals
 
+@AgentFactory.register
 class AgentSelfEvaluateLogiQA(Agent):
     @staticmethod
     async def act(

@@ -2,6 +2,7 @@ import random
 from typing import Tuple, Set, Dict, Any
 
 from .state import StateSonnetWriting
+from ... import EnvironmentFactory
 from ...typedefs import Environment, MAX_SEED
 
 import re
@@ -10,6 +11,7 @@ import pyphen
 import syllables
 import pronouncing
 
+@EnvironmentFactory.register
 class EnvironmentSonnetWriting(Environment):
 
     @staticmethod

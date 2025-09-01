@@ -5,8 +5,10 @@ from langchain import Wikipedia
 from langchain.agents.react.base import DocstoreExplorer
 
 from .state import StateHotpotQA
+from ... import BenchmarkFactory
 from ...typedefs import Benchmark
 
+@BenchmarkFactory.register
 class BenchmarkHotpotQA(Benchmark):
     def __init__(self, path: str, split: str = "mini"):
         """
@@ -83,7 +85,7 @@ class BenchmarkHotpotQA(Benchmark):
         y = self.data[idx][2]
 
         # Create a state object
-        # Note: Left None for randomness, which enforces a state.clone() call in the algorithm
+        # Note: Left None for randomness, which enforces a state.clone() call in the method
         state = StateHotpotQA(
             puzzle=x,
             current_state="",

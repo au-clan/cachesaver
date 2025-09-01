@@ -3,8 +3,10 @@ from typing import List, Tuple
 
 from . import prompts as prompts
 from .state import StateMathArena
+from ... import AgentFactory
 from ...typedefs import Agent, Model, DecodingParameters
 
+@AgentFactory.register
 class AgentActMathArena(Agent):
     """
     Agent performing the Act operation for the MathArena task.
@@ -36,6 +38,7 @@ class AgentActMathArena(Agent):
 
         return actions
 
+@AgentFactory.register
 class AgentBfsMathArena(Agent):
     """
     Agent performing the BFS operation for the MathArena task.
@@ -66,6 +69,7 @@ class AgentBfsMathArena(Agent):
 
         return approaches
 
+@AgentFactory.register
 class AgentCotMathArena(Agent):
     """
     Agent performing the Chain-of-Thought operation for the MathArena task.
@@ -100,6 +104,7 @@ class AgentCotMathArena(Agent):
 
         return solution_chains
 
+@AgentFactory.register
 class AgentEvaluateMathArena(Agent):
     """
     Agent performing the Evaluate operation for the MathArena task.

@@ -4,9 +4,11 @@ import re
 
 from . import prompts as prompts
 from .state import StateSonnetWriting
+from ... import AgentFactory
 from ...typedefs import Agent, Model, DecodingParameters
 
 
+@AgentFactory.register
 class AgentActSonnetWriting(Agent):
     """ """
 
@@ -36,6 +38,7 @@ class AgentActSonnetWriting(Agent):
         return proposals
 
 
+@AgentFactory.register
 class AgentAggregateSonnetWriting(Agent):
     """
     Returns the aggregate actions for the Sonnet Writing task.
@@ -80,6 +83,7 @@ class AgentAggregateSonnetWriting(Agent):
         return proposals
 
 
+@AgentFactory.register
 class AgentEvaluateSonnetWriting(Agent):
     """
     Returns the evaluations of states for the Sonnet Writing task.
@@ -131,6 +135,7 @@ class AgentEvaluateSonnetWriting(Agent):
         return value
 
 
+@AgentFactory.register
 class AgentReactSonnetWriting(Agent):
     @staticmethod
     async def act(
@@ -186,6 +191,7 @@ class AgentReactSonnetWriting(Agent):
         return actions
 
 
+@AgentFactory.register
 class AgentSelfEvaluateSonnetWriting(Agent):
     @staticmethod
     async def act(

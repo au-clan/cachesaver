@@ -4,8 +4,10 @@ import random
 from typing import Tuple
 
 from .state import StateSciBench
+from ... import EnvironmentFactory
 from ...typedefs import Environment, MAX_SEED
 
+@EnvironmentFactory.register
 class EnvironmentSciBench(Environment):
     
     @staticmethod

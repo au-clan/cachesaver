@@ -7,10 +7,12 @@ import itertools
 
 from . import prompts as prompts
 from .state import StateHotpotQA
+from ... import AgentFactory
 from ...typedefs import Agent, Model, DecodingParameters
 
 act_cache = {}
 
+@AgentFactory.register
 class AgentActHotpotQA(Agent):
     """
     Agent performing the Act operation for the HotpotQA task.
@@ -68,6 +70,7 @@ class AgentActHotpotQA(Agent):
         return proposals[:n]
 
 
+@AgentFactory.register
 class AgentBfsHotpotQA(Agent):
     """
     Agent performing the BFS operation for the HotpotQA task.
@@ -108,6 +111,7 @@ class AgentBfsHotpotQA(Agent):
         return proposals
 
 
+@AgentFactory.register
 class AgentAggregateHotpotQA(Agent):
     """
     Agent performing the Aggregate operation for the HotpotQA task.
@@ -161,6 +165,7 @@ class AgentAggregateHotpotQA(Agent):
         return list(itertools.chain(*aggregate_actions))
 
 
+@AgentFactory.register
 class AgentReactHotpotQA(Agent):
     """
     Agent performing the ReAct operation for the HotpotQA task.
@@ -202,6 +207,7 @@ class AgentReactHotpotQA(Agent):
         return react_actions
 
 
+@AgentFactory.register
 class AgentSelfEvaluateHotpotQA(Agent):
     """
     Agent that performs self-evaluation of reasoning steps for HotpotQA.
@@ -284,6 +290,7 @@ class AgentSelfEvaluateHotpotQA(Agent):
         return value
 
 
+@AgentFactory.register
 class AgentEvaluateHotpotQA(Agent):
     """
     Agent performing the Evaluate operation for the HotpotQA task.

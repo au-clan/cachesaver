@@ -7,6 +7,7 @@ from .state import StateHLE
 from ...typedefs import Benchmark
 
 
+@BenchmarkFactory.register
 class BenchmarkHLE(Benchmark):
     def __init__(self, path: str, split: str = "mini"):
         """
@@ -100,7 +101,7 @@ class BenchmarkHLE(Benchmark):
         canary = self.data[idx][10]
 
         # Create a state object
-        # Note: Left None for randomness, which enforces a state.clone() call in the algorithm
+        # Note: Left None for randomness, which enforces a state.clone() call in the method
         state = StateHLE(
             id=id,
             question=question,

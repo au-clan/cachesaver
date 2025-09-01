@@ -2,8 +2,10 @@ import pandas as pd
 from typing import Tuple
 
 from .state import StateSciBench
+from ... import BenchmarkFactory
 from ...typedefs import Benchmark
 
+@BenchmarkFactory.register
 class BenchmarkSciBench(Benchmark):
     def __init__(self, path: str, split: str = "mini", task: str = "class"):
         """
@@ -61,7 +63,7 @@ class BenchmarkSciBench(Benchmark):
         y = self.data[idx][2]
 
         # Create a state object
-        # Note: Left None for randomness, which enforces a state.clone() call in the algorithm
+        # Note: Left None for randomness, which enforces a state.clone() call in the method
         state = StateSciBench(
             puzzle=x,
             current_state="",
