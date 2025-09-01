@@ -5,7 +5,7 @@ import itertools
 from diskcache import Cache
 from cachesaver.pipelines import OnlineAPI
 
-from src.algorithms import AgentDictGOT, AlgorithmGOT
+from src.methods import AgentDictGOT, MethodGOT
 from src.models import API
 from src.typedefs import DecodingParameters
 from src.tasks.logiqa import (
@@ -119,9 +119,9 @@ class TestGoTLogiQA:
             evaluate=AgentEvaluateLogiQA,
             step_params=self.params,
             aggregate_params=self.params,
-            eval_params=self.params,
+            evaluate_params=self.params,
         )
-        algorithm = AlgorithmGOT(
+        method = MethodGOT(
             model=offline_model_openai,
             agents=agents,
             env=self.env,
@@ -133,7 +133,7 @@ class TestGoTLogiQA:
         )
 
         result_coroutine = [
-            algorithm.solve(
+            method.solve(
                 idx=i,
                 state=state,
                 namespace="test_small",
@@ -161,7 +161,7 @@ class TestGoTLogiQA:
             evaluate=AgentEvaluateLogiQA,
             step_params=self.params,
             aggregate_params=self.params,
-            eval_params=self.params,
+            evaluate_params=self.params,
         )
 
         async with OnlineAPI(
@@ -175,7 +175,7 @@ class TestGoTLogiQA:
                 model="gpt-4.1-nano"
             )
 
-            algorithm = AlgorithmGOT(
+            method = MethodGOT(
                 model=api,
                 agents=agents,
                 env=self.env,
@@ -187,7 +187,7 @@ class TestGoTLogiQA:
             )
 
             result_coroutine = [
-                algorithm.solve(
+                method.solve(
                     idx=i,
                     state=state,
                     namespace="test_small",

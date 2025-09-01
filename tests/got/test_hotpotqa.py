@@ -6,7 +6,7 @@ import tempfile
 from diskcache import Cache
 from cachesaver.pipelines import OnlineAPI
 
-from src.algorithms import AgentDictGOT, AlgorithmGOT
+from src.methods import AgentDictGOT, MethodGOT
 from src.models import API
 from src.typedefs import DecodingParameters
 from src.tasks.hotpotqa import (
@@ -99,9 +99,9 @@ class TestGoTHotpotQA:
             evaluate=AgentEvaluateHotpotQA,
             step_params=self.params,
             aggregate_params=self.params,
-            eval_params=self.params,
+            evaluate_params=self.params,
         )
-        algorithm = AlgorithmGOT(
+        method = MethodGOT(
             model=offline_model,
             agents=agents,
             env=env,
@@ -111,8 +111,8 @@ class TestGoTHotpotQA:
             num_evaluations=1,
         )
 
-        # Run the algorithm
-        result = await algorithm.solve(
+        # Run the method
+        result = await method.solve(
             idx=0,
             state=state,
             namespace="test_small",
@@ -142,10 +142,10 @@ class TestGoTHotpotQA:
             evaluate=AgentEvaluateHotpotQA,
             step_params=self.params,
             aggregate_params=self.params,
-            eval_params=self.params,
+            evaluate_params=self.params,
         )
 
-        # Run the algorithm
+        # Run the method
         async with OnlineAPI(
             model=online_model,
             cache=cache,
@@ -157,7 +157,7 @@ class TestGoTHotpotQA:
                 model=self.llm,
             )
 
-            algorithm = AlgorithmGOT(
+            method = MethodGOT(
                 model=api,
                 agents=agents,
                 env=env,
@@ -167,7 +167,7 @@ class TestGoTHotpotQA:
                 num_evaluations=1,  # Testing with Groq, so only 1 evaluation as groq does not support n>1
             )
 
-            result = await algorithm.solve(
+            result = await method.solve(
                 idx=0,
                 state=state,
                 namespace="test_small",

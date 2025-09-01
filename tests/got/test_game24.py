@@ -6,7 +6,7 @@ import tempfile
 from diskcache import Cache
 from cachesaver.pipelines import OnlineAPI
 
-from src.algorithms import AgentDictGOT, AlgorithmGOT
+from src.methods import AgentDictGOT, MethodGOT
 from src.models import API
 from src.typedefs import DecodingParameters
 from src.tasks.game24 import (
@@ -88,9 +88,9 @@ class TestGoTOffline:
             evaluate=AgentEvaluateGame24,
             step_params=self.params,
             aggregate_params=self.params,
-            eval_params=self.params,
+            evaluate_params=self.params,
         )
-        method = AlgorithmGOT(
+        method = MethodGOT(
             model=offline_model,
             agents=agents,
             env=env,
@@ -158,9 +158,9 @@ class TestGoTOnline:
                 evaluate=AgentEvaluateGame24,
                 step_params=self.params,
                 aggregate_params=self.params,
-                eval_params=self.params,
+                evaluate_params=self.params,
             )
-            method = AlgorithmGOT(
+            method = MethodGOT(
                 model=api,
                 agents=agents,
                 env=env,

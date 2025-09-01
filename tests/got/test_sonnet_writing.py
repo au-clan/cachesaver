@@ -7,11 +7,11 @@ from diskcache import Cache
 from cachesaver.pipelines import OnlineAPI
 import itertools
 
-from src.algorithms import AgentDictGOT, AlgorithmGOT
+from src.methods import AgentDictGOT, MethodGOT
 from src.models import API
 from src.tasks.game24 import benchmark
 from src.tasks.sonnetwriting.benchmark import BenchmarkSonnetWriting
-from src.typedefs import Algorithm, DecodingParameters
+from src.typedefs import Method, DecodingParameters
 from src.tasks.sonnetwriting import (
     EnvironmentSonnetWriting,
     AgentActSonnetWriting,
@@ -156,9 +156,9 @@ class TestGoTSonnetWriting:
             evaluate=AgentEvaluateSonnetWriting,
             step_params=self.params,
             aggregate_params=self.params,
-            eval_params=self.params,
+            evaluate_params=self.params,
         )
-        algorithm = AlgorithmGOT(
+        method = MethodGOT(
             model=offline_model_openai,
             agents=agents,
             env=env,
@@ -170,7 +170,7 @@ class TestGoTSonnetWriting:
         )
 
         result_coroutine = [
-            algorithm.solve(
+            method.solve(
                 idx=i,
                 state=state,
                 namespace="test_small",
@@ -201,7 +201,7 @@ class TestGoTSonnetWriting:
             evaluate=AgentEvaluateSonnetWriting,
             step_params=self.params,
             aggregate_params=self.params,
-            eval_params=self.params,
+            evaluate_params=self.params,
         )
 
         async with OnlineAPI(
@@ -215,7 +215,7 @@ class TestGoTSonnetWriting:
                 model="gpt-4.1-nano"
             )
 
-            algorithm = AlgorithmGOT(
+            method = MethodGOT(
                 model=api,
                 agents=agents,
                 env=env,
@@ -227,7 +227,7 @@ class TestGoTSonnetWriting:
             )
 
             results_coroutine = [
-                algorithm.solve(
+                method.solve(
                     idx=i,
                     state=state,
                     namespace="test_small",
