@@ -2,8 +2,9 @@ import random
 import logging
 import asyncio
 from typing import TypedDict, List, Tuple, Optional
+from omegaconf import OmegaConf
 from ..typedefs import Method, Model, Agent, Environment, DecodingParameters, State, Benchmark, MAX_SEED
-from .. import MethodFactory
+from .. import MethodFactory, AgentDictFactory
 import numpy as np
 
 logger = logging.getLogger(__name__)
@@ -49,11 +50,12 @@ class Node:
             logger.debug(f"Backpropagating value {value} to node with state: {node.state.current_state}")
             node = node.parent
 
+@AgentDictFactory.register
 class AgentDictRAP(TypedDict):
     step: Agent
     evaluate: Agent
     step_params: DecodingParameters
-    eval_params: DecodingParameters
+    evaluate_params: DecodingParameters
 
 @MethodFactory.register
 class MethodRAP(Method):
@@ -61,31 +63,27 @@ class MethodRAP(Method):
                 model: Model,
                 agents: AgentDictRAP,
                 env: Environment,
-                num_iterations: int,
-                num_samples: int,
-                num_evaluations: int,
-                exploration_constant: float = 1.0,
-                max_depth: int = 10
+                config: OmegaConf
                 ):
-        super().__init__(model, agents, env)
+        super().__init__(model, agents, env, config)
         logger.debug("Initializing RAP Method with parameters:")
-        logger.debug(f"num_iterations: {num_iterations}")
-        logger.debug(f"num_samples: {num_samples}")
-        logger.debug(f"num_evaluations: {num_evaluations}")
-        logger.debug(f"exploration_constant: {exploration_constant}")
-        logger.debug(f"max_depth: {max_depth}")
+        logger.debug(f"num_iterations: {config.num_iterations}")
+        logger.debug(f"num_samples: {config.num_samples}")
+        logger.debug(f"num_evaluations: {config.num_evaluations}")
+        logger.debug(f"exploration_constant: {config.exploration_constant}")
+        logger.debug(f"max_depth: {config.max_depth}")
 
         self.step_agent = agents["step"]
         self.eval_agent = agents["evaluate"]
 
         self.step_params = agents["step_params"]
-        self.eval_params = agents["eval_params"]
+        self.evaluate_params = agents["evaluate_params"]
 
-        self.num_iterations = num_iterations
-        self.num_samples = num_samples
-        self.num_evaluations = num_evaluations
-        self.exploration_constant = exploration_constant
-        self.max_depth = max_depth
+        self.num_iterations = config.num_iterations
+        self.num_samples = config.num_samples
+        self.num_evaluations = config.num_evaluations
+        self.exploration_constant = config.exploration_constant
+        self.max_depth = config.max_depth
 
     async def select(self, node: Node) -> Node:
         logger.debug(f"Starting selection from node with state: {node.state.current_state}")
@@ -148,7 +146,7 @@ class MethodRAP(Method):
                 n=self.num_evaluations,
                 namespace=namespace,
                 request_id=f"{request_id}-simulate{i}",
-                params=self.eval_params
+                params=self.evaluate_params
             )
             for i in range(self.num_evaluations)
         ]

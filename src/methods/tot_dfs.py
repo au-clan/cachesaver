@@ -1,15 +1,17 @@
 import random
 import asyncio
 from typing import TypedDict
+from omegaconf import OmegaConf
 from ..typedefs import Method, Model, Agent, Environment, DecodingParameters, State, Benchmark, MAX_SEED
-from .. import MethodFactory
+from .. import MethodFactory, AgentDictFactory
 import logging
 
+@AgentDictFactory.register
 class AgentDictTOT(TypedDict):
     step: Agent
     evaluate: Agent
     step_params: DecodingParameters
-    eval_params: DecodingParameters
+    evaluate_params: DecodingParameters
 
 @MethodFactory.register
 class MethodTOT_DFS(Method):
@@ -17,31 +19,24 @@ class MethodTOT_DFS(Method):
                 model: Model,
                 agents: AgentDictTOT,
                 env: Environment,
-                num_selections: int,
-                num_steps: int,
-                num_evaluations: int,
-                convergence_threshold: float,
-                pruning_threshold: float,
-                confidence_threshold: float,
-                max_iterations: int,
-                convergence_count: int
+                config: OmegaConf
                 ):
-        super().__init__(model, agents, env)
+        super().__init__(model, agents, env, config)
         self.step_agent = agents["step"]
         self.eval_agent = agents["evaluate"]
 
         self.step_params = agents["step_params"]
-        self.eval_params = agents["eval_params"]
+        self.evaluate_params = agents["evaluate_params"]
 
-        self.num_selections = num_selections
-        self.num_steps = num_steps
-        self.num_evaluations = num_evaluations
+        self.num_selections = config.num_selections
+        self.num_steps = config.num_steps
+        self.num_evaluations = config.num_evaluations
 
-        self.convergence_threshold = convergence_threshold
-        self.pruning_threshold = pruning_threshold
-        self.confidence_threshold = confidence_threshold
-        self.max_iterations = max_iterations
-        self.convergence_count = convergence_count
+        self.convergence_threshold = config.convergence_threshold
+        self.pruning_threshold = config.pruning_threshold
+        self.confidence_threshold = config.confidence_threshold
+        self.max_iterations = config.max_iterations
+        self.convergence_count = config.convergence_count
 
         """
         max_iterations: Attempts Unique branches
@@ -91,7 +86,7 @@ class MethodTOT_DFS(Method):
                         n=self.num_evaluations,
                         namespace=namespace,
                         request_id=f"idx{idx}-evaluation{t}-{hash(state)}",
-                        params=self.eval_params,
+                        params=self.evaluate_params,
                         cache=value_cache
                     )
                     for state in state_proposals
@@ -154,7 +149,7 @@ class MethodTOT_DFS(Method):
                     n=self.num_evaluations,
                     namespace=namespace,
                     request_id=f"idx{idx}-evaluation{t}-{hash(state)}-agent{i}",
-                    params=self.eval_params,
+                    params=self.evaluate_params,
                     cache=value_cache
                 )
                 for i, state in enumerate(state_proposals)

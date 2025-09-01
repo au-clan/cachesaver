@@ -2,10 +2,12 @@ import random
 import logging
 import asyncio
 from typing import TypedDict
+from omegaconf import OmegaConf
 from ..typedefs import Method, Model, Agent, Environment, DecodingParameters, State, Benchmark, MAX_SEED
-from .. import MethodFactory
+from .. import MethodFactory, AgentDictFactory
 logger = logging.getLogger(__name__)
 
+@AgentDictFactory.register
 class AgentDictReact(TypedDict):
     step: Agent # React Agent
     step_params: DecodingParameters
@@ -16,14 +18,14 @@ class MethodReact(Method):
                  model: Model,
                  agents: AgentDictReact,
                  env: Environment,
-                 num_steps: int
+                 config: OmegaConf,
                  ):
-        super().__init__(model, agents, env)
+        super().__init__(model, agents, env, config)
         self.step_agent = agents["step"]
 
         self.step_params = agents["step_params"]
 
-        self.num_steps = num_steps
+        self.num_steps = config.num_steps
 
     async def solve(self, idx: int, state: State, namespace: str, value_cache: dict = None):
         randomness = idx

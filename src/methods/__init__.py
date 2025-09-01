@@ -1,5 +1,5 @@
 from .foa import AgentDictFOA, MethodFOA
-from .tot_bfs import AgentDictTOT, MethodTOT
+from .tot_bfs import AgentDictTOT, MethodTOT_BFS
 from .tot_dfs import AgentDictTOT, MethodTOT_DFS
 from .got import AgentDictGOT, MethodGOT
 from .rap import MethodRAP, AgentDictRAP

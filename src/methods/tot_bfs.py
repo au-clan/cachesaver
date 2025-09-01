@@ -2,15 +2,17 @@ import random
 import logging
 import asyncio
 from typing import TypedDict
+from omegaconf import OmegaConf
 from ..typedefs import Method, Model, Agent, Environment, DecodingParameters, State, Benchmark, MAX_SEED
-from .. import MethodFactory
+from .. import MethodFactory, AgentDictFactory
 logger = logging.getLogger(__name__)
 
+@AgentDictFactory.register
 class AgentDictTOT(TypedDict):
     step: Agent
     evaluate: Agent
     step_params: DecodingParameters
-    eval_params: DecodingParameters
+    evaluate_params: DecodingParameters
 
 @MethodFactory.register
 class MethodTOT_BFS(Method):
@@ -18,21 +20,19 @@ class MethodTOT_BFS(Method):
                 model: Model,
                 agents: AgentDictTOT,
                 env: Environment,
-                num_selections: int,
-                num_steps: int,
-                num_evaluations: int
+                config: OmegaConf,
                 ):
-        super().__init__(model, agents, env)
+        super().__init__(model, agents, env, config)
 
         self.step_agent = agents["step"]
         self.eval_agent = agents["evaluate"]
 
         self.step_params = agents["step_params"]
-        self.eval_params = agents["eval_params"]
+        self.evaluate_params = agents["evaluate_params"]
 
-        self.num_selections = num_selections
-        self.num_steps = num_steps
-        self.num_evaluations = num_evaluations
+        self.num_selections = config.num_selections
+        self.num_steps = config.num_steps
+        self.num_evaluations = config.num_evaluations
 
     async def solve(self, idx:int, state: State, namespace: str, value_cache: dict = None):
         
@@ -75,7 +75,7 @@ class MethodTOT_BFS(Method):
                     n=self.num_evaluations,
                     namespace=namespace,
                     request_id=f"idx{idx}-evaluation{step}-{hash(state)}-agent{i}",
-                    params=self.eval_params,
+                    params=self.evaluate_params,
                     cache=value_cache
                 )
                 for i, state in enumerate(state_proposals)

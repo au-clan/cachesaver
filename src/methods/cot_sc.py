@@ -2,11 +2,13 @@ import random
 import logging
 import asyncio
 from typing import TypedDict
+from omegaconf import OmegaConf
 from ..typedefs import Method, Model, Agent, Environment, DecodingParameters, State, Benchmark, MAX_SEED
-from .. import MethodFactory
+from .. import MethodFactory, AgentDictFactory
 from ..utils import Resampler
 logger = logging.getLogger(__name__)
 
+@AgentDictFactory.register
 class AgentDictCoT(TypedDict):
     step: Agent # ActAgent
     step_params: DecodingParameters
@@ -18,15 +20,16 @@ class MethodCOT_SC(Method):
                  model: Model,
                  agents: AgentDictCoT,
                  env: Environment,
-                 n: int = 1
+                 config: OmegaConf,
                 ):
-        super().__init__(model, agents, env)
+        super().__init__(model, agents, env, config)
         
         self.step_agent = agents["step"]
         self.step_params = agents["step_params"]
 
-        assert n > 1, "CoT-SC needs at least 2 outputs"
-        self.n = n
+        self.n = config.n
+        assert self.n > 1, "CoT-SC needs at least 2 outputs"
+        
 
     async def solve(self, idx: int, state: State, namespace: str):
         randomness = idx

@@ -3,31 +3,29 @@ import asyncio
 import logging
 from tqdm.asyncio import tqdm
 from typing import TypedDict
+from omegaconf import OmegaConf
 from ..typedefs import Method, Model, Agent, Environment, DecodingParameters, State, Benchmark, MAX_SEED
-from .. import MethodFactory
+from .. import MethodFactory, AgentDictFactory
 logger = logging.getLogger(__name__)
 
+@AgentDictFactory.register
 class AgentDictGOT(TypedDict):
     step: Agent
     aggregate: Agent
     evaluate: Agent
     step_params: DecodingParameters
     aggregate_params: DecodingParameters
-    eval_params: DecodingParameters
+    evaluate_params: DecodingParameters
 
 @MethodFactory.register
 class MethodGOT(Method):
     def __init__(self, 
                  model: Model, 
                  agents: AgentDictGOT, 
-                 env: Environment, 
-                 num_selections: int, 
-                 num_steps: int,
-                 num_generate: int,
-                 num_best: int,
-                 num_evaluations: int,
+                 env: Environment,
+                 config: OmegaConf
                  ):
-        super().__init__(model, agents, env)
+        super().__init__(model, agents, env, config)
 
         self.step_agent = agents["step"]
         self.aggregate_agent = agents["aggregate"]
@@ -35,13 +33,13 @@ class MethodGOT(Method):
 
         self.step_params = agents["step_params"]
         self.aggregate_params = agents["aggregate_params"]
-        self.eval_params = agents["eval_params"]
+        self.evaluate_params = agents["evaluate_params"]
 
-        self.num_selections = num_selections
-        self.num_steps = num_steps
-        self.num_generate = num_generate
-        self.num_best = num_best
-        self.num_evaluations = num_evaluations
+        self.num_selections = config.num_selections
+        self.num_steps = config.num_steps
+        self.num_generate = config.num_generate
+        self.num_best = config.num_best
+        self.num_evaluations = config.num_evaluations
 
     async def solve(self, idx: int, state: State, namespace: str, value_cache: dict = None):
         randomness = idx
@@ -110,7 +108,7 @@ class MethodGOT(Method):
                     n=self.num_evaluations,
                     namespace=namespace,
                     request_id=f"idx{idx}-evaluation{step}-{hash(state)}-agent{i}",
-                    params=self.eval_params,
+                    params=self.evaluate_params,
                     cache=value_cache
                 )
                 for i, state in enumerate(proposed_states)

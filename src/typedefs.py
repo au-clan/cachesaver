@@ -1,6 +1,7 @@
 from typing import List, Tuple, Any, NamedTuple, Optional
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from omegaconf import OmegaConf
 from cachesaver.typedefs import Batch, Response, SingleRequestModel, BatchRequestModel
 from cachesaver.typedefs import Request as CacheSaverRequest
 from torch.utils.data import Dataset
@@ -99,10 +100,11 @@ class Agent(ABC):
         pass
     
 class Method(ABC):
-    def __init__(self, model: Model, agents: dict[str, Agent], env: Environment):
+    def __init__(self, model: Model, agents: dict[str, Agent], env: Environment, config: OmegaConf):
         self.model = model
         self.agent = agents
         self.env = env
+        self.config = config
 
     @abstractmethod
     async def solve(self) -> List[State]:
