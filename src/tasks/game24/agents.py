@@ -327,7 +327,7 @@ class AgentSelfEvaluateGame24(Agent):
                 ),
             )
 
-        eval_params = DecodingParameters(
+        evaluate_params = DecodingParameters(
             temperature=params.temperature,
             max_completion_tokens=params.max_completion_tokens,
             top_p=params.top_p,
@@ -340,7 +340,7 @@ class AgentSelfEvaluateGame24(Agent):
             n=n,
             request_id=request_id,
             namespace=namespace,
-            params=eval_params,
+            params=evaluate_params,
         )
 
         # Calculate the average probability of "Yes" across all responses

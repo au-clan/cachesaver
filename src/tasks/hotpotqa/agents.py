@@ -245,7 +245,7 @@ class AgentSelfEvaluateHotpotQA(Agent):
                 current_state=state.current_state, step=last_step
             )
 
-        eval_params = DecodingParameters(
+        evaluate_params = DecodingParameters(
             temperature=params.temperature,
             max_completion_tokens=params.max_completion_tokens,
             top_p=params.top_p,
@@ -258,7 +258,7 @@ class AgentSelfEvaluateHotpotQA(Agent):
             n=n,
             request_id=request_id,
             namespace=namespace,
-            params=eval_params,
+            params=evaluate_params,
         )
 
         # Calculate the average probability of "Yes" across all responses

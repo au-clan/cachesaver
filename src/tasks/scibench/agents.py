@@ -273,7 +273,7 @@ class AgentSelfEvaluateSciBench(Agent):
 
             prompt = prompts.self_evaluate_step.format(input=state.puzzle, previous_steps=state.steps[:-1] if len(state.steps) > 1 else "None", step=state.steps[-1])
 
-        eval_params = DecodingParameters(
+        evaluate_params = DecodingParameters(
             temperature=params.temperature,
             max_completion_tokens=params.max_completion_tokens,
             top_p=params.top_p,
@@ -286,7 +286,7 @@ class AgentSelfEvaluateSciBench(Agent):
             n=n,
             request_id=request_id,
             namespace=namespace,
-            params=eval_params,
+            params=evaluate_params,
         )
 
         # Calculate the average probability of "Yes" across all responses
