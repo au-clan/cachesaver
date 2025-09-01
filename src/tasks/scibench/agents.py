@@ -1,4 +1,5 @@
 import re
+import numpy as np
 from typing import List
 
 from . import prompts as prompts
@@ -86,9 +87,6 @@ class AgentReactSciBench(Agent):
             params=params,
         )
 
-        for r in responses:
-            print(r)
-            print("---")
         # Parse the response
         proposals = [r.strip().split("\n")[:5] for r in responses]
         proposals = [parse_proposal(r, state.step_n, existing_steps) for r in proposals]
@@ -233,6 +231,86 @@ class AgentEvaluateSciBench(Agent):
                 cache[state.current_state] = value
             state.values[state.step_n] = value
         return value
+
+class AgentSelfEvaluateSciBench(Agent):
+    """
+    Agent that performs self-evaluation of reasoning steps for HotpotQA.
+    Uses the LLM's own estimation of correctness by evaluating each reasoning step.
+    Uses the probability of "Yes" as a reward signal for correct reasoning.
+    """
+
+    @staticmethod
+    async def act(
+        model: Model,
+        state: StateSciBench,
+        n: int,
+        namespace: str,
+        request_id: str,
+        params: DecodingParameters,
+        cache: dict=None,        
+    ) -> float:
+        """
+        Returns a value estimation for the current state based on self-evaluation.
+        """
+
+        if cache is not None and state.current_state in cache:
+            value = cache[state.current_state]
+        
+        if len(state.steps) == 0:
+            print("No steps to evaluate!")
+            return 0.0
+        
+        if (len(state.steps) > 0) and ("the final answer is" in state.steps[-1].lower()):
+            prompt = prompts.self_evaluate_answer.format(input=state.puzzle, answer=state.steps[-1])
+        else:
+
+            prompt = prompts.self_evaluate_step.format(input=state.puzzle, previous_steps=state.steps[:-1] if len(state.steps) > 1 else "None", step=state.steps[-1])
+
+        eval_params = DecodingParameters(
+            temperature=params.temperature,
+            max_completion_tokens=params.max_completion_tokens,
+            top_p=params.top_p,
+            stop=params.stop,
+            logprobs=True,
+        )
+
+        responses = await model.request(
+            prompt=prompt,
+            n=n,
+            request_id=request_id,
+            namespace=namespace,
+            params=eval_params,
+        )
+
+        # Calculate the average probability of "Yes" across all responses
+        yes_probabilities = []
+        for response in responses:
+            # Get the logprobs for the first token after the prompt
+            if hasattr(response, "logprobs") and response.logprobs:
+                first_token_logprobs = response.logprobs[0]
+                # Look for Yes token probability
+                yes_prob = next(
+                    (
+                        prob
+                        for token, prob in first_token_logprobs.items()
+                        if token.lower() in ["yes", "yes.", "yes!"]
+                    ),
+                    0.0,
+                )
+                yes_probabilities.append(np.exp(yes_prob))
+
+        if yes_probabilities:
+            value = sum(yes_probabilities) / len(yes_probabilities)
+            value = value * 20
+        else:
+            value = 0.001
+
+        if cache is not None:
+            cache[state.current_state] = value
+
+        return value
+
+
 
 
 # ---Helper functions---#

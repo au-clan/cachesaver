@@ -1,3 +1,15 @@
+###################
+###---Prompts---###
+###################
+
+io = '''
+Given a science problem, your task is to answer the question step-by-step in a clear and specific manner.
+The format of the solution is limited to: "Solution: ...\nSummary: The final answer is $...$"
+Please complete the answer step-by-step, and finally outline the final answer.
+Problem: {problem}
+Solution:'''
+
+
 react = '''Given a science problem, you need to answer the problem based on your existing knowledge. The input may include some existing steps to solve the question and you should continue to complete the solution based on these existing steps.
 
 If the input does not provide any existing steps, you need to analyze the problem and then give the first step in solving or calculating the problem. If partial solution steps are provided, you need to output the next step along the lines of the existing steps.
@@ -89,6 +101,36 @@ Existing steps:
 {existing_steps}
 Output:'''
 
+self_evaluate_step = '''You are evaluating a step in a scientific procedure. Given the task requirements and the current step, determine if this step is correct and contributes meaningfully to the solution. Consider:
+1. Is the step scientifically valid and logically sound?
+2. Does it follow from the previous steps?
+3. Does it help progress toward solving the task?
+4. Does it avoid major scientific misconceptions?
+
+Task: {input}
+
+Previous steps:
+{previous_steps}
+
+Current step: {step}
+
+Is this step correct and well-reasoned? Answer with a single word: Yes or No.
+'''
+
+self_evaluate_answer = '''You are evaluating a complete scientific solution. Given the task requirements and the full answer, determine if it meets all criteria. Consider:
+1. Is the answer scientifically accurate?
+2. Does it clearly and correctly address the main question?
+3. Are all reasoning steps logically consistent and well-justified?
+4. Does it use appropriate scientific terminology and avoid misconceptions?
+5. Is it complete and concise?
+
+Task: {input}
+
+Answer:
+{answer}
+
+Is this scientific answer correct and well-reasoned? Answer with a single word: Yes or No.
+'''
 
 ################################
 ###---Examples for fewshot---###
