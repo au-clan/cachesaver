@@ -7,7 +7,7 @@ from cachesaver.typedefs import Request, Batch, Response
 
 from ..typedefs import Model
 from groq import AsyncGroq
-from lazykey import AsyncKeyHandler
+#from lazykey import AsyncKeyHandler
 
 from dotenv import load_dotenv
 
