@@ -46,15 +46,25 @@ def clean_log(file_path: str):
 
 def tokens2cost(tokens: dict, model_name: str) -> dict:
     catalog = {
+        # Llama-3 models
         "meta-llama/Llama-3.3-70B-Instruct-Turbo" : {"in": 0.88, "out": 0.88},
         "meta-llama/Llama-3.2-90B-Vision-Instruct-Turbo" : {"in": 0.88, "out": 0.88},
         "meta-llama/Llama-3.2-11B-Vision-Instruct-Turbo" : {"in": 0.18, "out": 0.18},
-
         "meta-llama/Llama-3.1-8B-Instruct" : {"in": 0.05, "out": 0.05},  # guesstimated values
+        
+        # Llama-4 models
         "unsloth/Llama-4-Scout-17B-16E-Instruct" : {"in": 0.15, "out": 0.15},  # guesstimated values
         "unsloth/Llama-4-Maverick-17B-128E-Instruct-FP8" : {"in": 0.15, "out": 0.15},  # guesstimated values
+
+        # Llama 4 models (Together AI)
+        "meta-llama/Llama-4-Scout-17B-16E-Instruct" : {"in": 0.18, "out": 0.59},
+        "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8" : {"in": 0.27, "out": 0.85},
+
+        # GPT-4o models
         "gpt-4o": {"in": 2.50, "out": 10.00},
         "gpt-4o-mini": {"in": 0.15, "out": 0.60},
+
+        # GPT-3.5 models
         "gpt-3.5-turbo": {"in": 0.50, "out": 1.50},
         
         # GPT-4.1 models
@@ -62,9 +72,11 @@ def tokens2cost(tokens: dict, model_name: str) -> dict:
         "gpt-4.1-mini": {"in": 0.40, "out": 1.60},
         "gpt-4.1": {"in": 2.00, "out": 8.00},
 
-        # LLama 4 models (Together AI)
-        "meta-llama/Llama-4-Scout-17B-16E-Instruct" : {"in": 0.18, "out": 0.59},
-        "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8" : {"in": 0.27, "out": 0.85},
+        # GPT-5 models
+        "gpt-5-nano": {"in": 0.05, "out": 0.40},
+        "gpt-5-mini": {"in": 0.25, "out": 2.00},
+        "gpt-5": {"in": 1.25, "out": 10.00},
+
 
     }
 
