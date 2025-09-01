@@ -1,0 +1,14 @@
+python "scripts/simple/simple.py"\
+                --benchmark "game24"\
+                --method "foa" \
+                --model "gpt-5-nano" \
+                --batch_size 1 \
+                --timeout 2.0 \
+                --temperature 0.7 \
+                --max_completion_tokens 200 \
+                --top_p 1.0 \
+                --dataset_path "datasets/dataset_${benchmark}.csv.gz" \
+                --split "$split" \
+                --correctness 1 \
+                --allow_batch_overflow 1 \
+                --value_cache
