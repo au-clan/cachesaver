@@ -98,7 +98,7 @@ class Agent(ABC):
     def act(model: Model, state: State) -> Any:
         pass
     
-class Algorithm(ABC):
+class Method(ABC):
     def __init__(self, model: Model, agents: dict[str, Agent], env: Environment):
         self.model = model
         self.agent = agents

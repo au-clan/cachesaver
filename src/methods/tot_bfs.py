@@ -2,7 +2,8 @@ import random
 import logging
 import asyncio
 from typing import TypedDict
-from ..typedefs import Algorithm, Model, Agent, Environment, DecodingParameters, State, Benchmark, MAX_SEED
+from ..typedefs import Method, Model, Agent, Environment, DecodingParameters, State, Benchmark, MAX_SEED
+from .. import MethodFactory
 logger = logging.getLogger(__name__)
 
 class AgentDictTOT(TypedDict):
@@ -11,7 +12,8 @@ class AgentDictTOT(TypedDict):
     step_params: DecodingParameters
     eval_params: DecodingParameters
 
-class AlgorithmTOT(Algorithm):
+@MethodFactory.register
+class MethodTOT_BFS(Method):
     def __init__(self,
                 model: Model,
                 agents: AgentDictTOT,

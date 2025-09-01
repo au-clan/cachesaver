@@ -2,14 +2,16 @@ import random
 import logging
 import asyncio
 from typing import TypedDict
-from ..typedefs import Algorithm, Model, Agent, Environment, DecodingParameters, State, Benchmark, MAX_SEED
+from ..typedefs import Method, Model, Agent, Environment, DecodingParameters, State, Benchmark, MAX_SEED
+from .. import MethodFactory
 logger = logging.getLogger(__name__)
 
 class AgentDictReact(TypedDict):
     step: Agent # React Agent
     step_params: DecodingParameters
 
-class AlgorithmReact(Algorithm):
+@MethodFactory.register
+class MethodReact(Method):
     def __init__(self,
                  model: Model,
                  agents: AgentDictReact,

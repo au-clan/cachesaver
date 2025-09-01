@@ -2,7 +2,8 @@ import random
 import logging
 import asyncio
 from typing import TypedDict
-from ..typedefs import Algorithm, Model, Agent, Environment, DecodingParameters, State, Benchmark, MAX_SEED
+from ..typedefs import Method, Model, Agent, Environment, DecodingParameters, State, Benchmark, MAX_SEED
+from .. import MethodFactory
 from ..utils import Resampler
 logger = logging.getLogger(__name__)
 
@@ -12,7 +13,8 @@ class AgentDictFOA(TypedDict):
     step_params: DecodingParameters
     eval_params: DecodingParameters
 
-class AlgorithmFOA(Algorithm):
+@MethodFactory.register
+class MethodFOA(Method):
     def __init__(self, 
                  model: Model, 
                  agents: AgentDictFOA,

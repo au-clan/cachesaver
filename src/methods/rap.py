@@ -2,7 +2,8 @@ import random
 import logging
 import asyncio
 from typing import TypedDict, List, Tuple, Optional
-from ..typedefs import Algorithm, Model, Agent, Environment, DecodingParameters, State, Benchmark, MAX_SEED
+from ..typedefs import Method, Model, Agent, Environment, DecodingParameters, State, Benchmark, MAX_SEED
+from .. import MethodFactory
 import numpy as np
 
 logger = logging.getLogger(__name__)
@@ -54,7 +55,8 @@ class AgentDictRAP(TypedDict):
     step_params: DecodingParameters
     eval_params: DecodingParameters
 
-class AlgorithmRAP(Algorithm):
+@MethodFactory.register
+class MethodRAP(Method):
     def __init__(self,
                 model: Model,
                 agents: AgentDictRAP,
@@ -66,7 +68,7 @@ class AlgorithmRAP(Algorithm):
                 max_depth: int = 10
                 ):
         super().__init__(model, agents, env)
-        logger.debug("Initializing RAP Algorithm with parameters:")
+        logger.debug("Initializing RAP Method with parameters:")
         logger.debug(f"num_iterations: {num_iterations}")
         logger.debug(f"num_samples: {num_samples}")
         logger.debug(f"num_evaluations: {num_evaluations}")

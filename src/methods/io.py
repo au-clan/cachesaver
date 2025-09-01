@@ -2,7 +2,8 @@ import random
 import logging
 import asyncio
 from typing import TypedDict
-from ..typedefs import Algorithm, Model, Agent, Environment, DecodingParameters, State, Benchmark, MAX_SEED
+from ..typedefs import Method, Model, Agent, Environment, DecodingParameters, State, Benchmark, MAX_SEED
+from .. import MethodFactory
 from ..utils import Resampler
 logger = logging.getLogger(__name__)
 
@@ -11,7 +12,8 @@ class AgentDictIO(TypedDict):
     step_params: DecodingParameters
 
 
-class AlgorithmIO(Algorithm):
+@MethodFactory.register
+class MethodIO(Method):
     def __init__(self,
                  model: Model,
                  agents: AgentDictIO,
@@ -23,6 +25,7 @@ class AlgorithmIO(Algorithm):
         self.step_agent = agents["step"]
         self.step_params = agents["step_params"]
 
+        assert n == 1, "IO has only 1 output"
         self.n = n
 
     async def solve(self, idx: int, state: State, namespace: str):
