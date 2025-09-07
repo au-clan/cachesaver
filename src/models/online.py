@@ -7,8 +7,8 @@ from cachesaver.typedefs import Request, Batch, Response
 from ..typedefs import Model
 
 class OnlineLLM(Model):
-    def __init__(self, client: Any, max_n: int = 128):
-        self.client = client
+    def __init__(self, provider: str, max_n: int = 128):
+        self.client = client_init(provider)
         self.max_n = max_n
 
     async def request(self, request: Request) -> Response:
@@ -34,7 +34,7 @@ class OnlineLLM(Model):
                         messages=prompts,
                         model=request.model,
                         n=current_n,
-                        max_tokens=request.max_completion_tokens or None,
+                        max_completion_tokens=request.max_completion_tokens or None,
                         temperature=request.temperature or 1,
                         stop=request.stop or None,
                         top_p=request.top_p or 1,
@@ -63,3 +63,13 @@ class OnlineLLM(Model):
         requests = [self.request(request) for request in batch.requests]
         completions = await asyncio.gather(*requests)
         return completions
+    
+def client_init(provider: str) -> Any:
+    if provider == "openai":
+        from openai import AsyncOpenAI
+        return AsyncOpenAI()
+    elif provider == "together":
+        from together import AsyncTogether
+        return AsyncTogether()
+    else:
+        raise ValueError(f"Unknown provider: {provider}")
