@@ -18,6 +18,9 @@ class BenchmarkHotpotQA(Benchmark):
             data_path (str): Path to the dataset.
             split (str): Name of the dataset split (e.g., "mini", "train", "validation", "test").
         """
+
+        self.name = "hotpotqa"
+        
         df = pd.read_csv(path, usecols=["question", "answer"], compression="gzip")
         df.reset_index(inplace=True)
         data = list(zip(df['index'], df['question'], df['answer']))

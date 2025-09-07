@@ -13,6 +13,8 @@ class BenchmarkHumanEval(Benchmark):
         Initializes the Benchmark for HumanEval dataset.
         """
 
+        self.name = "humaneval"
+
         df = pd.read_csv(path, usecols=["prompt", "entry_point", "test"], compression="gzip")
         df.reset_index(inplace=True)
         data = list(zip(df['index'], df['prompt'], df['entry_point'], df['test']))

@@ -16,6 +16,9 @@ class BenchmarkSciBench(Benchmark):
             split (str): Name of the dataset split (e.g., "mini", "train", "validation", "test").
             task (str): Name of the task to be performed.
         """
+
+        self.name = "scibench"
+        
         df = pd.read_csv(path, compression="gzip")
         df = df[df.task == task].copy()
         df.reset_index(inplace=True)

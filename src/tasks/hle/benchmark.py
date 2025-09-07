@@ -17,6 +17,9 @@ class BenchmarkHLE(Benchmark):
             data_path (str): Path to the dataset.
             split (str): Name of the dataset split (e.g., "mini", "train", "validation", "test").
         """
+
+        self.name = "hle"
+        
         df = pd.read_json(path, lines=True,
                           compression='gzip')
         df.reset_index(inplace=True)

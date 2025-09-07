@@ -12,6 +12,8 @@ from ...typedefs import Benchmark
 class BenchmarkLogiQA(Benchmark):
     def __init__(self, path: str, split: str = "mini"):
 
+        self.name = "logiqa"
+
         df = pd.read_csv(path, usecols=["right_choice", "context", "question", "option_a", "option_b", "option_c",
                                         "option_d"], compression="gzip")
         df.reset_index(inplace=True)

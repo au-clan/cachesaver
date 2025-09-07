@@ -9,6 +9,8 @@ from ...typedefs import Benchmark
 class BenchmarkGame24(Benchmark):
     def __init__(self, path: str, split: str = "mini"):
 
+        self.name = "game24"
+
         df = pd.read_csv(path, usecols=["Puzzles"], compression="gzip")
         df.reset_index(inplace=True)
         data = list(zip(df['index'], df['Puzzles']))
@@ -24,7 +26,7 @@ class BenchmarkGame24(Benchmark):
         elif split == "test":
             self.data = data[900:1000]
         else:
-            raise ValueError("Invalid set name")
+            raise ValueError(f"Invalid set name: {split}")
 
     def __len__(self) -> int:
         return len(self.data)
