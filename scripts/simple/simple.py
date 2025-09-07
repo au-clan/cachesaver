@@ -25,11 +25,8 @@ async def run(args, trial, cache_path):
     os.makedirs(os.path.dirname(cache_path), exist_ok=True)
     cache = Cache(cache_path)
 
-    # LLM Provider
-    client = AsyncOpenAI()
-
     # Model
-    model = OnlineLLM(client=client)
+    model = OnlineLLM(provider=args.provider)
 
     # Pipeline
     pipeline = OnlineAPI(
@@ -67,41 +64,48 @@ async def run(args, trial, cache_path):
         method=args.method,
         benchmark=args.benchmark,
         params=params,
-        model=model,
+        model=api,
         env=environment,
         config=config)
+    
+    print(type(method.model))
 
     # Benchmark
-    benchmark = BenchmarkFactory.get(args.benchmark)
+    benchmark = BenchmarkFactory.get(args.benchmark, split=args.split)
 
-    # # Run the method
-    # results = await method.benchmark(
-    #     benchmark=benchmark,
-    #     share_ns=args.share_ns,
-    #     cache=args.value_cache
-    # )
+    # Run the method
+    results = await method.benchmark(
+        benchmark=benchmark,
+        ns_ratio=args.ns_ratio,
+        cache=args.value_cache
+    )
 
-    print("All set up!")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("Solve tasks with different methods.")
     #parser.add_argument("--provider", type=str, help="LLM provider")
     #parser.add_argument("--base_url", type=str, help="Base URL for the API")
-    parser.add_argument("--benchmark", type=str, help="Benchmark to be solved")
-    parser.add_argument("--method", type=str, help="Method to be used")
-    parser.add_argument("--model", type=str, help="LLM model")
-    parser.add_argument("--batch_size", type=int, help="CacheSaver's batch size")
-    parser.add_argument("--timeout", type=float, help="CacheSaver's timeout")
-    parser.add_argument("--temperature", type=float, help="Temperature for the model")
-    parser.add_argument("--max_completion_tokens", type=int, help="Max completion tokens")
-    parser.add_argument("--top_p", type=float, help="Top P for the model")
-    parser.add_argument("--stop", type=str, nargs="+", help="Stop sequence for the model")
-    parser.add_argument("--logprobs", action="store_true", help="Logprobs for the model")
-    parser.add_argument("--dataset_path", type=str, help="Path to the dataset")
-    parser.add_argument("--split", type=str, help="Split of the dataset")
-    parser.add_argument("--value_cache", action="store_true", help="Use value cache")
-    parser.add_argument("--correctness", type=int, help="Use original ('correct') implementation")
-    parser.add_argument("--allow_batch_overflow", type=int, help="Allow batch overflow in CacheSaver")
+    parser.add_argument("--benchmark", type=str)
+    parser.add_argument("--method", type=str)
+    parser.add_argument("--model", type=str)
+    parser.add_argument("--batch_size", type=int)
+    parser.add_argument("--timeout", type=float)
+    parser.add_argument("--temperature", type=float)
+    parser.add_argument("--max_completion_tokens", type=int)
+    parser.add_argument("--top_p", type=float)
+    parser.add_argument("--stop", type=str, nargs="+")
+    parser.add_argument("--logprobs", action="store_true")
+    parser.add_argument("--dataset_path", type=str)
+    parser.add_argument("--split", type=str)
+    parser.add_argument("--value_cache", action="store_true")
+    parser.add_argument("--correctness", type=int)
+    parser.add_argument("--allow_batch_overflow", type=int)
+    parser.add_argument("--ns_ratio", type=float)
+    parser.add_argument("--provider", type=str)
+
     args = parser.parse_args()
+
+    if args.ns_ratio > 1.0 or args.ns_ratio < 0.0:
+        raise ValueError("ns_ratio must be between 0.0 and 1.0")
 
     asyncio.run(run(args, trial=0, cache_path="caches/developping"))
