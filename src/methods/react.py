@@ -51,15 +51,23 @@ class MethodReact(Method):
                 break
         return [state]
     
-    async def benchmark(self, benchmark: Benchmark, share_ns: bool=False, cache: bool=True):
+    async def benchmark(self, benchmark: Benchmark, ns_ratio: bool=False):
+
+        # Set up Namespace distibution
+        n_shared = int(ns_ratio * len(benchmark))
+        n_unique = len(benchmark) - n_shared
+        namespaces = [f"benchmark_{0}" for _ in range(n_shared)] + [f"benchmark_{i+1}" for i in range(n_unique)]
+        random.seed(42)
+        random.shuffle(namespaces)
+
         solve_coroutines = [
             self.solve(
                 idx=index,
                 state=state,
-                namespace="benchmark" if share_ns else f"benchmark-{index}",
+                namespace=ns,
                 value_cache=None
             )
-            for index, state in benchmark
+            for (index, state), ns in zip(benchmark, namespaces)
         ]
         results = await asyncio.gather(*solve_coroutines)
         return results

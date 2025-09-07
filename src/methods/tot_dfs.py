@@ -181,16 +181,24 @@ class MethodTOT_DFS(Method):
         return [x[0] for x in output]  # Return only the states, not the values
 
 
-    async def benchmark(self, benchmark: Benchmark, share_ns: bool=False, cache: bool=True):
+    async def benchmark(self, benchmark: Benchmark, ns_ratio: bool=False, cache: bool=True):
         cache = {} if cache else None
+
+        # Set up Namespace distibution
+        n_shared = int(ns_ratio * len(benchmark))
+        n_unique = len(benchmark) - n_shared
+        namespaces = [f"benchmark_{0}" for _ in range(n_shared)] + [f"benchmark_{i+1}" for i in range(n_unique)]
+        random.seed(42)
+        random.shuffle(namespaces)
+        
         solve_coroutines = [
             self.solve(
                 idx=index,
                 state=state,
-                namespace="benchmark" if share_ns else f"benchmark-{index}",
+                namespace=ns,
                 value_cache=cache
             )
-            for index, state in benchmark
+            for (index, state), ns in zip(benchmark, namespaces)
         ]
         results = await asyncio.gather(*solve_coroutines)
         return results
