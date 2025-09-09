@@ -1,3 +1,5 @@
+import random
+import asyncio
 from typing import List, Tuple, Any, NamedTuple, Optional
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
@@ -5,6 +7,7 @@ from omegaconf import OmegaConf
 from cachesaver.typedefs import Batch, Response, SingleRequestModel, BatchRequestModel
 from cachesaver.typedefs import Request as CacheSaverRequest
 from torch.utils.data import Dataset
+from src.utils import timed
 
 MAX_SEED = 10000
 
@@ -110,6 +113,34 @@ class Method(ABC):
     async def solve(self) -> List[State]:
         pass
 
-    @abstractmethod
-    async def benchmark(self, benchmark: Benchmark) -> List[List[State]]:
-        pass
+    async def benchmark(self, benchmark: Benchmark, ns_ratio: bool=False, **kwargs) -> Tuple[List[float], List[List[State]]]:
+        cache = {} if kwargs.pop("value_cache", False) else None
+
+        # Set up Namespace distibution
+        n_shared = int(ns_ratio * len(benchmark))
+        n_unique = len(benchmark) - n_shared
+        namespaces = [f"benchmark_{0}" for _ in range(n_shared)] + [f"benchmark_{i+1}" for i in range(n_unique)]
+        
+        random.seed(42)
+        random.shuffle(namespaces)
+
+        solve_coroutines = [
+            timed(
+                label=f"Idx: {index}",
+                coroutine=self.solve(
+                idx=index,
+                state=state,
+                namespace=ns,
+                **{"value_cache": cache} if cache is not None else {},
+                **kwargs
+                )
+            )
+            for (index, state), ns in zip(benchmark, namespaces)
+        ]
+        
+        # Run all solves in parallel
+        # Results : [Label, Duration, States]
+        results: List[Tuple[str, float, List[State]]] = await asyncio.gather(*solve_coroutines)
+        results = sorted(results, key=lambda x: x[0])
+        labels, durations, states = zip(*results)
+        return durations, states

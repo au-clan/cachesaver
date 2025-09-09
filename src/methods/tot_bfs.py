@@ -93,27 +93,3 @@ class MethodTOT_BFS(Method):
                     return states
 
         return states
-
-    async def benchmark(self, benchmark: Benchmark, ns_ratio: bool=False, cache: bool=True):
-        cache = {} if cache else None
-
-        # Set up Namespace distibution
-        n_shared = int(ns_ratio * len(benchmark))
-        n_unique = len(benchmark) - n_shared
-        namespaces = [f"benchmark_{0}" for _ in range(n_shared)] + [f"benchmark_{i+1}" for i in range(n_unique)]
-        random.seed(42)
-        random.shuffle(namespaces)
-
-        solve_coroutines = [
-            self.solve(
-                idx=index,
-                state=state,
-                namespace=ns,
-                value_cache=cache
-            )
-            for (index, state), ns in zip(benchmark, namespaces)
-        ]
-        results = await asyncio.gather(*solve_coroutines)
-        return results
-
-
