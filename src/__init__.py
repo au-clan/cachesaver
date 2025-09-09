@@ -83,7 +83,7 @@ class MethodFactory:
                 "step": AgentFactory.get("act", benchmark),
                 "evaluate": AgentFactory.get("evaluate", benchmark),
             }
-        elif method == "tot_bfs":
+        elif method in ["tot_bfs", "tot_dfs"]:
             agents = {
                 "step": AgentFactory.get("bfs", benchmark),
                 "evaluate": AgentFactory.get("evaluate", benchmark),
