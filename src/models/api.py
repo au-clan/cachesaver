@@ -14,6 +14,8 @@ class API(ABC):
     def __init__(self, pipeline: Model, model: str):
         self.pipeline = pipeline
         self.model = model
+
+        self.tabs = set()
         self.calls = defaultdict(lambda: {
             "total": 0,       # Total calls
             "cacher": 0,      # Calls saved by the cacher
@@ -27,7 +29,7 @@ class API(ABC):
         })
 
         self.latencies = defaultdict(list)
-        self.reuse = defaultdict(dict)
+        self.reuse = defaultdict(lambda: defaultdict(int))
     
     async def request(self, prompt: Union[str, List[str]], n: int, request_id: str, namespace: str, params: DecodingParameters, tab: str="default") -> List[str]:
         """
@@ -50,17 +52,17 @@ class API(ABC):
         response = await self.pipeline.request(request)
         end = time.perf_counter()
 
+        # Update tabs
+        self.tabs.add(tab)
+        
         # Measuring latency
         self.latencies[tab].append(end - start)
 
         # Measuring reuse
         hashed_prompt = DeepHash(prompt)[prompt]
-        if hashed_prompt in self.reuse:
-            self.reuse[tab][hashed_prompt] += n
-        else:
-            self.reuse[tab][hashed_prompt] = n
+        self.reuse[tab][hashed_prompt] += n
 
-        # Measuring number of caslls
+        # Measuring number of calls
         self.calls[tab]["total"] += len(response.data)
         self.calls[tab]["cacher"] += sum(response.cached)
         self.calls[tab]["deduplicator"] += sum(response.duplicated)
