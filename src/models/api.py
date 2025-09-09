@@ -56,14 +56,14 @@ class API(ABC):
         # Measuring reuse
         hashed_prompt = DeepHash(prompt)[prompt]
         if hashed_prompt in self.reuse:
-            self[tab].reuse[hashed_prompt] += n
+            self.reuse[tab][hashed_prompt] += n
         else:
-            self[tab].reuse[hashed_prompt] = n
+            self.reuse[tab][hashed_prompt] = n
 
         # Measuring number of caslls
-        self[tab].calls["total"] += len(response.data)
-        self[tab].calls["cacher"] += sum(response.cached)
-        self[tab].calls["deduplicator"] += sum(response.duplicated)
+        self.calls[tab]["total"] += len(response.data)
+        self.calls[tab]["cacher"] += sum(response.cached)
+        self.calls[tab]["deduplicator"] += sum(response.duplicated)
 
         # Measuring number of tokens
         messages, tokin, tokout = zip(*response.data)
@@ -86,11 +86,11 @@ class API(ABC):
                 duplicated_in += in_tok
 
 
-        self[tab].tokens["total"]["in"] += total_in
-        self[tab].tokens["total"]["out"] += total_out
-        self[tab].tokens["cacher"]["in"] += cached_in
-        self[tab].tokens["cacher"]["out"] += cached_out
-        self[tab].tokens["duplicator"]["in"] += duplicated_in
+        self.tokens[tab]["total"]["in"] += total_in
+        self.tokens[tab]["total"]["out"] += total_out
+        self.tokens[tab]["cacher"]["in"] += cached_in
+        self.tokens[tab]["cacher"]["out"] += cached_out
+        self.tokens[tab]["duplicator"]["in"] += duplicated_in
 
         return messages
 
