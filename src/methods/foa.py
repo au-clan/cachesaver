@@ -59,7 +59,6 @@ class MethodFOA(Method):
             if solved:
                 break
             
-            print(f"MethodFoA model: {self.model}")
             # Generate actions for each state
             action_coroutines = [
                 self.step_agent.act(
