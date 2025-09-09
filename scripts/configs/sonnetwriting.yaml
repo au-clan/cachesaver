@@ -1,3 +1,13 @@
+foa:
+  num_agents: 3
+  num_steps: 5
+  k: 2
+  backtrack: 0.5
+  resampling: "linear_filtered"
+  min_steps: 1
+  num_evaluations: 3
+  origin: 120
+  
 got:
   num_selections: 3
   num_steps: 1
