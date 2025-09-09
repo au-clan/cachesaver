@@ -1,11 +1,13 @@
 import os
+import time
 import asyncio
 import argparse
 
 from diskcache import Cache
 from omegaconf import OmegaConf
 
-from openai import AsyncOpenAI
+import logging
+logger = logging.getLogger(__name__)
 
 from cachesaver.pipelines import OnlineAPI
 
@@ -17,6 +19,8 @@ from src.tasks import *
 from src.methods import *
 from src.models import OnlineLLM, API
 from src.typedefs import DecodingParameters
+
+from src.utils import initial_logging, final_logging
 
 
 async def run(args, trial, cache_path):
@@ -68,38 +72,59 @@ async def run(args, trial, cache_path):
         env=environment,
         config=config)
     
-    print(type(method.model))
 
     # Benchmark
     benchmark = BenchmarkFactory.get(args.benchmark, split=args.split)
 
-    # Run the method
-    results = await method.benchmark(
+
+    # Start timing
+    start = time.perf_counter()
+
+    # Run the method 
+    durations, results = await method.benchmark(
         benchmark=benchmark,
         ns_ratio=args.ns_ratio,
-        cache=args.value_cache
+        **({"value_cache": True} if bool(args.value_cache) else {})
     )
+
+    # End timing
+    end = time.perf_counter()
+    clocktime = end - start
+
+    # Logging
+    evaluations = [sorted([EnvironmentGame24.evaluate(state) for state in r], key=lambda x: x[1]) for r in results]
+    final_logging(logger, api, clocktime, durations, evaluations)
+
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("Solve tasks with different methods.")
-    parser.add_argument("--benchmark", type=str)
+    
     parser.add_argument("--method", type=str)
+    parser.add_argument("--benchmark", type=str)
+    parser.add_argument("--dataset_path", type=str)
+    parser.add_argument("--split", type=str)
+    parser.add_argument("--value_cache", action="store_true")
+
+    parser.add_argument("--provider", type=str)
     parser.add_argument("--model", type=str)
-    parser.add_argument("--batch_size", type=int)
-    parser.add_argument("--timeout", type=float)
     parser.add_argument("--temperature", type=float)
     parser.add_argument("--max_completion_tokens", type=int)
     parser.add_argument("--top_p", type=float)
     parser.add_argument("--stop", type=str, nargs="+")
     parser.add_argument("--logprobs", action="store_true")
-    parser.add_argument("--dataset_path", type=str)
-    parser.add_argument("--split", type=str)
-    parser.add_argument("--value_cache", action="store_true")
-    parser.add_argument("--correctness", type=int)
+
+    parser.add_argument("--batch_size", type=int)
+    parser.add_argument("--timeout", type=float)
     parser.add_argument("--allow_batch_overflow", type=int)
     parser.add_argument("--ns_ratio", type=float)
-    parser.add_argument("--provider", type=str)
+    parser.add_argument("--correctness", type=int)
+
+    parser.add_argument("--log_path", type=str)
+    args = parser.parse_args()
+    
+    log_path = f"logs/{args.model}/{args.benchmark}/{args.method}_{args.split}.log"
+    initial_logging(logger, args, log_path)
 
     args = parser.parse_args()
 

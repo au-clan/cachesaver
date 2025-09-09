@@ -1,7 +1,14 @@
+import os
 import re
+import time
 import random
-from typing import List
+import logging
+
 import numpy as np 
+
+from argparse import Namespace
+from omegaconf import OmegaConf
+from typing import List, Awaitable, Tuple, Any
 
 def assign_ns(length: int, fraction: float) -> List[int]:
     """
@@ -190,3 +197,150 @@ class Resampler:
         threshold = np.percentile(values, percentile)
         values = [value if value >= threshold else 0 for value in values]
         return Resampler.linear(values)
+    
+async def timed(label: str, coroutine: Awaitable) -> Tuple[str, float, Any]:
+    # Start timing
+    start = time.perf_counter()
+    
+    # Await / Execute the coroutine
+    result = await coroutine
+    
+    # End timing
+    end = time.perf_counter()
+    duration = end - start
+
+    return label, duration, result
+    
+def initial_logging(
+        logger: logging.Logger, 
+        args:Namespace, 
+        log_path: str
+        ):
+    
+    os.makedirs(os.path.dirname(log_path), exist_ok=True)
+    f_handler = logging.FileHandler(log_path, mode="w", encoding="utf-8")
+    f_handler.setLevel(logging.INFO)
+    logger.addHandler(f_handler)
+    logger.setLevel(logging.INFO)
+
+    logger.info("Script: simple.py")
+    logger.info("Description: Solve a specified task using a specified method.\n")
+
+    logger.info("General information:")
+    logger.info("\tMethod: %s", args.method)
+    logger.info("\tBenchmark: %s", args.benchmark)
+    logger.info("\tSplit: %s", args.split)
+    logger.info("\tDataset Path: %s", args.dataset_path)
+    logger.info("\tUsing method's internal cache: %s\n", args.value_cache)
+
+    logger.info("Method Configuration:")
+    config = OmegaConf.load(f"scripts/configs/{args.benchmark}.yaml")[args.method]
+    for key, value in config.items():
+        logger.info(f"\t{key}: {value}")
+    logger.info("\n")
+    
+
+    logger.info("LLM Information:")
+    logger.info("\tProvider: %s", args.provider)
+    logger.info("\tModel: %s", args.model)
+    logger.info("\tTemperature: %f", args.temperature)
+    logger.info("\tMax Completion Tokens: %d", args.max_completion_tokens)
+    logger.info("\tTop-p: %f", args.top_p)
+    logger.info("\tStop: %s", args.stop)
+    logger.info("\tLogprobs: %s\n", args.logprobs)
+
+    logger.info("CacheSaver Information:")
+    logger.info("\tBatch Size: %d", args.batch_size)
+    logger.info("\tTimeout: %f", args.timeout)
+    logger.info("\tAllow Batch Overflow: %d", args.allow_batch_overflow)
+    logger.info("\tNameSpace : %f\n", args.ns_ratio)
+
+# TODO: Clarify types in definition: Importing creates circular import
+def final_logging(
+        logger: logging.Logger, 
+        api: "src.models.API", 
+        clocktime: float, 
+        durations: List[float], 
+        evaluations: List[Any]
+        ):
+
+
+    if len(api.tabs) > 1:
+        logger.info("API Detailed Information (per tab)")
+        for tab in api.tabs:
+            logger.info(f"\tTab: {tab}")
+
+            # Latency
+            latencies = api.latencies[tab]
+            logger.info("\t\tLatencies (in seconds): %s\n", latencies)
+
+            # Reuse
+            reuse = api.reuse[tab]
+            logger.info("\t\tReuse (number of uses): %s\n", reuse.values())
+
+            # Calls
+            calls = api.calls[tab]
+            logger.info("\t\tCalls (total): %s", calls["total"])
+            logger.info("\t\tCalls (saved by cacher): %s", calls["cacher"])
+            logger.info("\t\tCalls (saved by deduplicator): %s\n", calls["deduplicator"])
+
+            # Tokens
+            tokens = api.tokens[tab]
+            logger.info("\t\tTokens (total): in %s, out %s", tokens["total"]["in"], tokens["total"]["out"])
+            logger.info("\t\tTokens (saved by cacher): in %s, out %s", tokens["cacher"]["in"], tokens["cacher"]["out"])
+            logger.info("\t\tTokens (saved by deduplicator): in %s, out %s\n", tokens["duplicator"]["in"], tokens["duplicator"]["out"])
+
+            # Cost
+            cost = {key: tokens2cost(tokens[key], api.model) for key in tokens.keys()}
+            logger.info("\t\tCost (total): in $%f, out $%f, total $%f", cost["total"]["in"], cost["total"]["out"], cost["total"]["total"])
+            logger.info("\t\tCost (saved by cacher): in $%f, out $%f, total $%f", cost["cacher"]["in"], cost["cacher"]["out"], cost["cacher"]["total"])
+            logger.info("\t\tCost (saved by deduplicator): in $%f, out $%f, total $%f\n", cost["duplicator"]["in"], cost["duplicator"]["out"], cost["duplicator"]["total"])
+
+        # Moving to API Summed Information
+        logger.info("API Summed Information (all tabs)")
+    else:
+        logger.info("API Information")
+    
+
+    # Latency
+    all_latencies = [lat for tab in api.tabs for lat in api.latencies[tab]]
+    logger.info("\tSummed Latencies (in seconds): %s\n", all_latencies)
+
+    # Reuse
+    all_reuse = {key: sum(api.reuse[tab].get(key, 0) for tab in api.tabs) for tab in api.tabs for key in api.reuse[tab].keys()}
+    logger.info("\tSummed Reuse (number of uses): %s\n", all_reuse.values())
+
+    # Calls
+    all_calls = {key: sum(api.calls[tab][key] for tab in api.tabs) for key in ["total", "cacher", "deduplicator"]}
+    logger.info("\tSummed Calls (total): %s", all_calls["total"])
+    logger.info("\tSummed Calls (saved by cacher): %s", all_calls["cacher"])
+    logger.info("\tSummed Calls (saved by deduplicator): %s\n", all_calls["deduplicator"])
+
+    # Tokens
+    all_tokens = {key: {"in": sum(api.tokens[tab][key]["in"] for tab in api.tabs), "out": sum(api.tokens[tab][key]["out"] for tab in api.tabs)} for key in ["total", "cacher", "duplicator"]}
+    logger.info("\tSummed Tokens (total): in %s, out %s", all_tokens["total"]["in"], all_tokens["total"]["out"])
+    logger.info("\tSummed Tokens (saved by cacher): in %s, out %s", all_tokens["cacher"]["in"], all_tokens["cacher"]["out"])
+    logger.info("\tSummed Tokens (saved by deduplicator): in %s, out %s\n", all_tokens["duplicator"]["in"], all_tokens["duplicator"]["out"])
+
+    # Cost
+    all_cost = {key: tokens2cost(all_tokens[key], api.model) for key in all_tokens.keys()}
+    logger.info("\tSummed Cost (total): in $%f, out $%f, total $%f", all_cost["total"]["in"], all_cost["total"]["out"], all_cost["total"]["total"])
+    logger.info("\tSummed Cost (saved by cacher): in $%f, out $%f, total $%f", all_cost["cacher"]["in"], all_cost["cacher"]["out"], all_cost["cacher"]["total"])
+    logger.info("\tSummed Cost (saved by deduplicator): in $%f, out $%f, total $%f\n", all_cost["duplicator"]["in"], all_cost["duplicator"]["out"], all_cost["duplicator"]["total"])
+
+
+
+    
+    # Total duration
+    logger.info("Total clocktime (in seconds): %f", clocktime)
+    logger.info("Individual durations of each sample (in seconds): %s\n", list(durations))
+
+    # Evaluations
+    correct = [max(agent_result[1] for agent_result in e) for e in evaluations]
+    logger.info("Correct: %s", correct)
+    logger.info("Average correctness: %f", sum(correct) / len(correct))
+
+
+
+    
+    
