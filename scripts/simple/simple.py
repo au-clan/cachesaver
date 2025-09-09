@@ -83,8 +83,6 @@ async def run(args, trial, cache_path):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("Solve tasks with different methods.")
-    #parser.add_argument("--provider", type=str, help="LLM provider")
-    #parser.add_argument("--base_url", type=str, help="Base URL for the API")
     parser.add_argument("--benchmark", type=str)
     parser.add_argument("--method", type=str)
     parser.add_argument("--model", type=str)

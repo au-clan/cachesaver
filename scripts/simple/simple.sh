@@ -2,8 +2,10 @@
 
 benchmark="game24"
 method="foa"
-model="gpt-5-nano"
 split="single"
+
+provider="openai"
+model="gpt-4.1-nano"
 
 python scripts/simple/simple.py \
     --benchmark "$benchmark" \
@@ -19,4 +21,5 @@ python scripts/simple/simple.py \
     --correctness 1 \
     --allow_batch_overflow 1 \
     --ns_ratio 0.0 \
+    --provider "$provider" \
     --value_cache
