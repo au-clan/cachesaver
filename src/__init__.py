@@ -45,7 +45,7 @@ class AgentFactory:
     def get(cls, agent_type: str, benchmark: str, *args, **kwargs):
         key = f"agent{agent_type}{benchmark}".lower()
         try:
-            return cls.registry[key](*args, **kwargs)
+            return cls.registry[key]#(*args, **kwargs) : Not initialized
         except KeyError:
             raise ValueError(f"No agent found for type={agent_type}, benchmark={benchmark}")
 
