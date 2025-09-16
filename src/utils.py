@@ -223,7 +223,7 @@ def initial_logging(
     logger.addHandler(f_handler)
     logger.setLevel(logging.INFO)
 
-    logger.info("Script: simple.py")
+    #logger.info("Script: simple.py")
     logger.info("Description: Solve a specified task using a specified method.\n")
 
     logger.info("General information:")
@@ -340,6 +340,32 @@ def final_logging(
     logger.info("Correct: %s", correct)
     logger.info("Average correctness: %f", sum(correct) / len(correct))
 
+def remove_parentheses(text: str) -> str:
+    """
+    Removes all parentheses and their contents from a string,
+    including nested ones, and cleans up extra spaces.
+    """
+    result = []
+    depth = 0
+
+    for char in text:
+        if char == "(":
+            depth += 1
+        elif char == ")":
+            if depth > 0:
+                depth -= 1
+        else:
+            if depth == 0:
+                result.append(char)
+
+    cleaned = "".join(result)
+    # Replace multiple spaces with one, and strip leading/trailing spaces
+    cleaned = re.sub(r"[ ]{2,}", " ", cleaned)
+    # Then strip spaces at line starts/ends
+    cleaned = re.sub(r"[ \t]+(\n)", r"\1", cleaned)   # spaces before newline
+    cleaned = re.sub(r"(\n)[ \t]+", r"\1", cleaned)   # spaces after newline
+    cleaned = cleaned.strip()
+    return cleaned
 
 
     
