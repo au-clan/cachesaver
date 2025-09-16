@@ -76,6 +76,9 @@ async def run(args, trial, cache_path):
     # Benchmark
     benchmark = BenchmarkFactory.get(args.benchmark, split=args.split)
 
+    # Initial logging
+    log_path = f"logs/simple/{args.model}/{args.benchmark}/{args.method}_{args.split}.log"
+    initial_logging(logger, args, log_path)
 
     # Start timing
     start = time.perf_counter()
@@ -91,15 +94,15 @@ async def run(args, trial, cache_path):
     end = time.perf_counter()
     clocktime = end - start
 
-    # Logging
-    evaluations = [sorted([EnvironmentGame24.evaluate(state) for state in r], key=lambda x: x[1]) for r in results]
+    # Final logging
+    evaluations = [sorted([environment.evaluate(state) for state in r], key=lambda x: x[1]) for r in results]
     final_logging(logger, api, clocktime, durations, evaluations)
 
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("Solve tasks with different methods.")
-    
+
     parser.add_argument("--method", type=str)
     parser.add_argument("--benchmark", type=str)
     parser.add_argument("--dataset_path", type=str)
@@ -119,13 +122,6 @@ if __name__ == "__main__":
     parser.add_argument("--allow_batch_overflow", type=int)
     parser.add_argument("--ns_ratio", type=float)
     parser.add_argument("--correctness", type=int)
-
-    parser.add_argument("--log_path", type=str)
-    args = parser.parse_args()
-    
-    log_path = f"logs/{args.model}/{args.benchmark}/{args.method}_{args.split}.log"
-    initial_logging(logger, args, log_path)
-
     args = parser.parse_args()
 
     if args.ns_ratio > 1.0 or args.ns_ratio < 0.0:

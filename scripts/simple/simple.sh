@@ -7,7 +7,13 @@ split="single"
 provider="openai"
 model="gpt-4.1-nano"
 
+# Decoding parameters
 source scripts/configs/$benchmark.env
+
+# Override MAX_COMPLETION_TOKENS if method is "io" or "cot"
+if [[ "$method" == "io" || "$method" == "cot" ]]; then
+  MAX_COMPLETION_TOKENS=10000
+fi
 
 python scripts/simple/simple.py \
     --benchmark "$benchmark" \
@@ -17,8 +23,6 @@ python scripts/simple/simple.py \
     --timeout 2.0 \
     --temperature "$TEMPERATURE" \
     --max_completion_tokens "$MAX_COMPLETION_TOKENS" \
-    --temperature 0.7 \
-    --max_completion_tokens 200 \
     --top_p "$TOP_P" \
     --dataset_path "datasets/dataset_${benchmark}.csv.gz" \
     --split "$split" \
