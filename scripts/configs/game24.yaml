@@ -14,14 +14,11 @@ tot_bfs:
   num_evaluations: 3
 
 tot_dfs:
+  num_selections: 5
   num_steps: 4
-  num_selections: 3
-  num_evaluations: 3
-  convergence_threshold: 0.6
-  pruning_threshold: 0.1
-  confidence_threshold: 20
-  max_iterations: 10
-  convergence_count: 20
+  num_evaluations: 1
+  pruning_threshold: 0.05
+  max_iterations: 10  
 
 got:
   num_selections: 5

@@ -13,6 +13,13 @@ tot_bfs:
   num_steps: 6
   num_evaluations: 3
 
+tot_dfs:
+  num_selections: 3
+  num_steps: 6
+  num_evaluations: 3
+  pruning_threshold: 0
+  max_iterations: 10
+
 got:
   num_selections: 3
   num_steps: 5

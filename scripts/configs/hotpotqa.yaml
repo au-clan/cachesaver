@@ -13,6 +13,12 @@ tot_bfs:
   num_steps: 4
   num_evaluations: 1
 
+tot_dfs:
+  num_selections: 3
+  num_steps: 5
+  num_evaluations: 1
+  max_iterations: 6
+
 got:
   num_selections: 3
   num_steps: 5
