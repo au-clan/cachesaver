@@ -78,7 +78,16 @@ class MethodFactory:
     def get(cls, method: str, benchmark: str, params: DecodingParameters, *args, **kwargs):
         key = f"method{method}".lower()
 
-        if method == "foa":
+        
+        if method == "io":
+            agents = {
+                "step": AgentFactory.get("io", benchmark),
+            }
+        elif method == "cot":
+            agents = {
+                "step": AgentFactory.get("cot", benchmark),
+            }
+        elif method == "foa":
             agents = {
                 "step": AgentFactory.get("act", benchmark),
                 "evaluate": AgentFactory.get("evaluate", benchmark),

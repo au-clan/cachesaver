@@ -13,6 +13,50 @@ from ...typedefs import Agent, Model, DecodingParameters
 act_cache = {}
 
 @AgentFactory.register
+class AgentIoHotpotQA(Agent):
+    async def act(
+        model: Model,
+        state: StateHotpotQA,
+        n: int,
+        namespace: str,
+        request_id: str,
+        params: DecodingParameters
+        ) -> List[str]:
+
+        prompt = prompts.io.format(question=state.puzzle)
+        responses = await model.request(
+                prompt=prompt,
+                n=n,
+                request_id=request_id,
+                namespace=namespace,
+                params=params,
+            )
+        proposals = [r.strip() for r in responses]
+        return proposals
+    
+@AgentFactory.register
+class AgentCotHotpotQA(Agent):
+    async def act(
+        model: Model,
+        state: StateHotpotQA,
+        n: int,
+        namespace: str,
+        request_id: str,
+        params: DecodingParameters
+        ) -> List[str]:
+
+        prompt = prompts.cot.format(question=state.puzzle)
+        responses = await model.request(
+                prompt=prompt,
+                n=n,
+                request_id=request_id,
+                namespace=namespace,
+                params=params,
+            )
+        proposals = [r.strip() for r in responses]
+        return proposals
+
+@AgentFactory.register
 class AgentActHotpotQA(Agent):
     """
     Agent performing the Act operation for the HotpotQA task.

@@ -53,6 +53,7 @@ class EnvironmentSciBench(Environment):
         Evaluates the current state.
         """
         final = EnvironmentSciBench.is_final(state)
+        
         if final:
             return True, verify_answer(state.answer, state.steps[-1])
         else:
@@ -69,6 +70,7 @@ def verify_answer(answer: float, output: str):
         spl_ans = spl_ans.strip()
     else:
         spl_ans = output.strip()
+        print(f"spl_ans: {spl_ans}")
 
     try:
         match = re.findall(r'[^^{.\-0123456789]-?[0-9]+\.?[0-9]*[^^}.0123456789]', spl_ans)[-1][1:][:-1]

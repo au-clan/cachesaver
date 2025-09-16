@@ -1,3 +1,15 @@
+io = '''You are fluent in sonnet writing and can only respond with your sonnet and nothing else.
+Below, you will be given your task and keywords to include in your sonnet writing. Remember to return only your sonnet writing.
+
+{input}'''
+
+cot = '''You are fluent in sonnet writing. Below, you will be given your task and keywords to include in your sonnet writing. You should think step by step about the logical reasoning needed to write the sonnet. Once you have thought through the steps, write the sonnet without any annotations. Your answer should be given in the following format:
+
+Thought: <your thought process step by step>
+Sonnet: <your sonnet>
+
+{input}'''
+
 act = '''You are fluent in sonnet writing and can only respond with your sonnet and nothing else.
 Below, you will be given your task and keywords to include in your sonnet writing. Remember to return only your sonnet writing.
 

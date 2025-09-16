@@ -31,7 +31,7 @@ class MethodCOT(Method):
         self.n = config.n
         assert self.n == 1, "CoT has only 1 output"
 
-    async def solve(self, idx: int, state: State, namespace: str):
+    async def solve(self, idx: int, state: State, namespace: str, value_cache: dict=None):
         randomness = idx
         random.seed(randomness)
 
@@ -53,23 +53,3 @@ class MethodCOT(Method):
         # Execute the actions
         states = [self.env.step(state, action[0]) for state, action in zip(states, actions)]
         return states
-
-    async def benchmark(self, benchmark: Benchmark, ns_ratio: bool = False):
-
-        # Set up Namespace distibution
-        n_shared = int(ns_ratio * len(benchmark))
-        n_unique = len(benchmark) - n_shared
-        namespaces = [f"benchmark_{0}" for _ in range(n_shared)] + [f"benchmark_{i+1}" for i in range(n_unique)]
-        random.seed(42)
-        random.shuffle(namespaces)
-
-        solve_coroutines = [
-            self.solve(
-                idx=index,
-                state=state,
-                namespace=ns
-            )
-            for (index, state), ns in zip(benchmark, namespaces)
-        ]
-        results = await asyncio.gather(*solve_coroutines)
-        return results

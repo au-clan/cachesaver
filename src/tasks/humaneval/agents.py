@@ -9,6 +9,56 @@ from ... import AgentFactory
 from ...typedefs import Request, Agent, Model, DecodingParameters
 
 @AgentFactory.register
+class AgentIoHumanEval(Agent):
+    async def act(
+        model: Model,
+        state: StateHumanEval,
+        n: int,
+        namespace: str,
+        request_id: str,
+        params: DecodingParameters
+        ) -> List[str]:
+
+        language = "py" if "def" in state.puzzle else "rs"
+        responses = await model.request(
+                prompt=[
+                {"role": "system", "content": prompts.io.format(lang=language)},
+                {"role": "user", "content": state.puzzle},
+                ],
+                n=n,
+                request_id=request_id,
+                namespace=namespace,
+                params=params,
+            )
+        proposals = [r.split("Final answer:")[-1].strip().removeprefix("```python").removesuffix("```").strip() for r in responses]
+        return proposals
+    
+@AgentFactory.register
+class AgentCotHumanEval(Agent):
+    async def act(
+        model: Model,
+        state: StateHumanEval,
+        n: int,
+        namespace: str,
+        request_id: str,
+        params: DecodingParameters
+        ) -> List[str]:
+
+        language = "py" if "def" in state.puzzle else "rs"
+        responses = await model.request(
+                prompt=[
+                {"role": "system", "content": prompts.cot.format(lang=language)},
+                {"role": "user", "content": state.puzzle},
+                ],
+                n=n,
+                request_id=request_id,
+                namespace=namespace,
+                params=params,
+            )
+        proposals = [r.split("Final answer:")[-1].strip().removeprefix("```python").removesuffix("```").strip() for r in responses]
+        return proposals
+    
+@AgentFactory.register
 class AgentActHumanEval(Agent):
     @staticmethod
     async def act(

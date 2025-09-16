@@ -3,8 +3,25 @@
 ###################
 
 io = '''
+Instruction:
+You are given a science problem. Provide only the final numeric answer and not a mathematical expression. 
+- Do not return formulas, fractions, square roots, or variables. 
+- Evaluate all expressions to a single numeric value. 
+- Round the result to a reasonable number of significant figures if necessary.
+
+The response must follow this exact format:
+
+Summary: The final answer is $[number]$
+
+Input:
+{problem}
+
+Output:
+'''
+
+cot = '''
 Given a science problem, your task is to answer the question step-by-step in a clear and specific manner.
-The format of the solution is limited to: "Solution: ...\nSummary: The final answer is $...$"
+The format of the solution is limited to the exact following: "Solution: ...\nSummary: The final answer is $...$", where $...$ is your final answer without any explanations. The final answer must be a numeric value, not a mathematical expression.
 Please complete the answer step-by-step, and finally outline the final answer.
 Problem: {problem}
 Solution:'''

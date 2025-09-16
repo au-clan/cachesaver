@@ -7,6 +7,58 @@ from ... import AgentFactory
 from ...typedefs import Agent, Model, DecodingParameters
 
 @AgentFactory.register
+class AgentIoHLE(Agent):
+    async def act(
+        model: Model,
+        state: StateHLE,
+        n: int,
+        namespace: str,
+        request_id: str,
+        params: DecodingParameters
+        ) -> List[str]:
+
+        mcq = "Only return the letter or number of the choice you've made and not the answer itself." if state.answer_type == "multipleChoice" else ""
+
+        responses = await model.request(
+                prompt=[
+                {"role": "system", "content": prompts.io + mcq},
+                {"role": "user", "content": state.question},
+                ],
+                n=n,
+                request_id=request_id,
+                namespace=namespace,
+                params=params,
+            )
+        proposals = [r.split("Final Answer:")[-1].strip() for r in responses]
+        return responses
+    
+@AgentFactory.register
+class AgentCotHLE(Agent):
+    async def act(
+        model: Model,
+        state: StateHLE,
+        n: int,
+        namespace: str,
+        request_id: str,
+        params: DecodingParameters
+        ) -> List[str]:
+
+        mcq = "Only return the letter or number of the choice you've made and not the answer itself." if state.answer_type == "multipleChoice" else ""
+
+        responses = await model.request(
+                prompt=[
+                {"role": "system", "content": prompts.cot + mcq},
+                {"role": "user", "content": state.question},
+                ],
+                n=n,
+                request_id=request_id,
+                namespace=namespace,
+                params=params,
+            )
+        proposals = [r.split("Final Answer:")[-1].strip(" *") for r in responses]
+        return proposals
+    
+@AgentFactory.register
 class AgentActHLE(Agent):
     """
     Agent performing the Act operation for the HLE task.

@@ -1,4 +1,5 @@
 import re
+import asyncio
 import numpy as np
 from typing import List
 
@@ -8,6 +9,76 @@ from ... import AgentFactory
 from ...typedefs import Agent, Model, DecodingParameters
 
 
+@AgentFactory.register
+class AgentIoSciBench(Agent):
+    async def act(
+            model: Model,
+            state: StateSciBench,
+            n: int,
+            namespace: str,
+            request_id: str,
+            params: DecodingParameters,
+    )-> List[str]:
+        
+        prompt = prompts.io.format(problem=state.puzzle)
+        response = await model.request(
+            prompt=prompt,
+            n=n,
+            request_id=request_id,
+            namespace=namespace,
+            params=params,
+        )
+
+        summaries = [prompts.summary.format(problem=state.puzzle, existing_steps=r) for r in response]
+        summary_coroutines = [
+            model.request(
+                prompt=s,
+                n=1,
+                request_id=request_id+f"_summary_{i}",
+                namespace=namespace,
+                params=params,
+            ) for i, s in enumerate(summaries)
+        ]
+        
+        summary_responses = await asyncio.gather(*summary_coroutines)
+        proposals = [r[0].strip(" .,\n*$") for r in summary_responses]
+        return proposals
+    
+@AgentFactory.register
+class AgentCotSciBench(Agent):
+    async def act(
+            model: Model,
+            state: StateSciBench,
+            n: int,
+            namespace: str,
+            request_id: str,
+            params: DecodingParameters,
+    )-> List[str]:
+        
+        prompt = prompts.cot.format(problem=state.puzzle)
+        response = await model.request(
+            prompt=prompt,
+            n=n,
+            request_id=request_id,
+            namespace=namespace,
+            params=params,
+        )
+
+        summaries = [prompts.summary.format(problem=state.puzzle, existing_steps=r) for r in response]
+        summary_coroutines = [
+            model.request(
+                prompt=s,
+                n=1,
+                request_id=request_id+f"_summary_{i}",
+                namespace=namespace,
+                params=params,
+            ) for i, s in enumerate(summaries)
+        ]
+        
+        summary_responses = await asyncio.gather(*summary_coroutines)
+        proposals = [r[0].strip(" .,\n*$") for r in summary_responses]
+        return proposals
+    
 @AgentFactory.register
 class AgentActSciBench(Agent):
 

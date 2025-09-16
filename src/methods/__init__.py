@@ -5,3 +5,5 @@ from .got import AgentDictGOT, MethodGOT
 from .rap import MethodRAP, AgentDictRAP
 from .react import AgentDictReact, MethodReact
 from .io import AgentDictIO, MethodIO
+from .cot import AgentDictCOT, MethodCOT
+from .cot_sc import AgentDictCoT, MethodCOT_SC

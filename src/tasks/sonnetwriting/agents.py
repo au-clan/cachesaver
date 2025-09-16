@@ -6,8 +6,57 @@ from . import prompts as prompts
 from .state import StateSonnetWriting
 from ... import AgentFactory
 from ...typedefs import Agent, Model, DecodingParameters
+from ...utils import remove_parentheses
 
 
+@AgentFactory.register
+class AgentIoSonnetWriting(Agent):
+    async def act(
+        model: Model,
+        state: StateSonnetWriting,
+        n: int,
+        namespace: str,
+        request_id: str,
+        params: DecodingParameters
+        ) -> List[str]:
+
+        responses = await model.request(
+                prompt=[
+                {"role": "system", "content": prompts.io},
+                {"role": "user", "content": state.puzzle},
+                ],
+                n=n,
+                request_id=request_id,
+                namespace=namespace,
+                params=params,
+            )
+        proposals = [remove_parentheses(r.split("Sonnet:")[-1].strip()).strip() for r in responses]
+        return proposals
+    
+@AgentFactory.register
+class AgentCotSonnetWriting(Agent):
+    async def act(
+        model: Model,
+        state: StateSonnetWriting,
+        n: int,
+        namespace: str,
+        request_id: str,
+        params: DecodingParameters
+        ) -> List[str]:
+
+        responses = await model.request(
+                prompt=[
+                {"role": "system", "content": prompts.cot},
+                {"role": "user", "content": state.puzzle},
+                ],
+                n=n,
+                request_id=request_id,
+                namespace=namespace,
+                params=params,
+            )
+        proposals = [remove_parentheses(r.split("Sonnet:")[-1].strip()).strip() for r in responses]
+        return proposals
+    
 @AgentFactory.register
 class AgentActSonnetWriting(Agent):
     """ """

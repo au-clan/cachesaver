@@ -4,6 +4,9 @@ from typing import Tuple
 import pandas as pd
 
 from .state import StateHLE
+
+from ... import BenchmarkFactory
+
 from ...typedefs import Benchmark
 
 
@@ -19,11 +22,9 @@ class BenchmarkHLE(Benchmark):
         """
 
         self.name = "hle"
-        
-        df = pd.read_json(path, lines=True,
+        df = pd.read_json(path.replace("csv", "jsonl"), lines=True,
                           compression='gzip')
         df.reset_index(inplace=True)
-        print("Dataset columns:", df.columns)
 
         # Check if 'image_preview' exists
         if 'image_preview' not in df.columns:
@@ -62,7 +63,7 @@ class BenchmarkHLE(Benchmark):
         valid_idxs = valid_idxs - set(test_set_idxs)
         if split == "single":
             self.data = data[:1]
-        if split == "mini":
+        elif split == "mini":
             self.data = [data[i] for i in mini_set_idxs]
         elif split == "train":
             self.data = [data[i] for i in train_set_idxs]

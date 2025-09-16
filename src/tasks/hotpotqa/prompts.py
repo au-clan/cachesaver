@@ -1,6 +1,16 @@
 ###################
 ###---Prompts---###
 ###################
+
+io = """Return the solution of the following question answering task. Do not include any explanations or intermediate steps, simply return the final answer. The final answer should be given in the exact following format: "Finish[...]" where ... denotes your final answer.
+
+Question: {question}
+"""
+
+cot = """Return the solution of the following question answering task with step-by-step reasoning. The reasoning steps should be clear and specific, leading to the final answer. The final answer should be given in the exact following format: "Finish[answer]".
+
+Questions: {question}
+"""
 act = """Solve a question answering task with sequential Action steps. Action can be three types:
 
 (1) Search[entity], which searches the exact entity on Wikipedia and returns the first paragraph if it exists. If not, it will return some similar entities to search.

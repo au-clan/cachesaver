@@ -10,6 +10,54 @@ from ...typedefs import Request, Agent, Model, DecodingParameters
 
 act_cache = {}
 
+
+@AgentFactory.register
+class AgentIoGame24(Agent):
+    async def act(
+            model: Model,
+            state: StateGame24,
+            n: int,
+            namespace: str,
+            request_id: str,
+            params: DecodingParameters,
+    )-> List[str]:
+        
+        prompt = prompts.io.format(input=state.puzzle)
+        response = await model.request(
+            prompt=prompt,
+            n=n,
+            request_id=request_id,
+            namespace=namespace,
+            params=params,
+        )
+
+        proposals = [p[:p.find("=")+4].strip(" .,\n") for p in response]
+        return proposals
+    
+@AgentFactory.register
+class AgentCotGame24(Agent):
+    async def act(
+            model: Model,
+            state: StateGame24,
+            n: int,
+            namespace: str,
+            request_id: str,
+            params: DecodingParameters,
+    )-> List[str]:
+        
+        prompt = prompts.cot_.format(input=state.puzzle)
+        response = await model.request(
+            prompt=prompt,
+            n=n,
+            request_id=request_id,
+            namespace=namespace,
+            params=params,
+        )
+
+        proposals = [p.split("Final answer:")[-1].strip(" .,\n*$") for p in response]
+        return proposals
+        
+
 @AgentFactory.register
 class AgentActGame24(Agent):
     """ """

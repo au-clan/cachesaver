@@ -19,6 +19,7 @@ class StateHLE(State):
     canary: str
     steps: List[str] = field(default_factory=list)
     randomness: int = 0
+    current_state: str = ""
 
     def serialize(self) -> dict:
         """
@@ -37,8 +38,9 @@ class StateHLE(State):
             "raw_subject": self.raw_subject,
             "category": self.category,
             "canary": self.canary,
-            "steps": self.steps,
-            "randomness": self.randomness
+            "steps": " -> ".join(self.steps),
+            "randomness": self.randomness,
+            "current_state": self.current_state
         }
 
     def clone(self, randomness: int = None) -> "StateHLE":
@@ -59,14 +61,14 @@ class StateHLE(State):
             category=self.category,
             canary=self.canary,
             steps=self.steps,
-            randomness=randomness or self.randomness
+            randomness=randomness or self.randomness,
+            current_state=self.current_state
         )
 
     def get_seed(self) -> int:
         """
         Returns the randomness value associated with the state.
         """
-        pass
         return self.randomness
 
     def __hash__(self) -> int:

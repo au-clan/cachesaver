@@ -166,7 +166,8 @@ def unsafe_execute(code: str, entry_point: str, test: str, timeout: float, resul
         reliability_guard()
 
         program = (
-            code 
+            "from typing import *\n"
+            + code 
             + '\n'
             + test
             + '\n'
