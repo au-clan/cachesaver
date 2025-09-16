@@ -95,7 +95,21 @@ class API(ABC):
         self.tokens[tab]["duplicator"]["in"] += duplicated_in
 
         return messages
+    
+    def clean(self):
 
+        self.tabs = set()
+        self.calls = defaultdict(lambda: {
+            "total": 0,       # Total calls
+            "cacher": 0,      # Calls saved by the cacher
+            "deduplicator": 0 # Calls saved by the deduplicator
+            })
         
-    
-    
+        self.tokens = defaultdict(lambda: {
+            "total": {"in": 0, "out": 0},      # Total tokens
+            "cacher": {"in": 0, "out": 0},     # Tokens saved by the cacher
+            "duplicator": {"in": 0, "out": 0}, # Tokens saved by the deduplicator
+        })
+
+        self.latencies = defaultdict(list)
+        self.reuse = defaultdict(lambda: defaultdict(int))
