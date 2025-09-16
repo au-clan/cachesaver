@@ -1,3 +1,12 @@
+io:
+  n: 1
+
+cot:
+  n: 1
+
+cot_sc:
+  n: 10
+
 foa:
   num_agents: 7
   num_steps: 7
