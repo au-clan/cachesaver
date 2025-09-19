@@ -47,7 +47,9 @@ class EnvironmentHLE(Environment):
             canary=state.canary,
             steps=state.steps + [action],
             current_state= state.current_state + action,
-            randomness=randomness
+            randomness=randomness,
+            step_n=state.step_n + 1,
+            values=state.values
         )
         return state
 
@@ -66,9 +68,12 @@ class EnvironmentHLE(Environment):
         """
         if not state.steps:
             return False
-        expression = state.steps[-1].split("\n")[-2]  # Get the last action
-        action_type, _ = parse_action(expression.split(": ")[-1])
-        return action_type == "Finish"
+        try:
+            expression = state.steps[-1].split("\n")[-2]  # Get the last action
+            action_type, _ = parse_action(expression.split(": ")[-1])
+            return action_type == "Finish"
+        except Exception:
+            return False
 
     # @staticmethod
     # def evaluate(state: StateHLE) -> Tuple[bool, float]:
@@ -86,8 +91,11 @@ class EnvironmentHLE(Environment):
     def evaluate(state: StateHLE) -> Tuple[bool, float]:
         """Evaluates the current state"""
         #is_final = EnvironmentHLE.is_final(state)
+        if len(state.steps) == 0:
+            return False, 0.0
+        
         answer = extract_answer(state.question, state.answer, state.steps[-1])
-        if answer["correct"] == "yes":
+        if answer and answer.get("correct", "no") == "yes":
             return True, 1.0
         else:
             return True, 0.0 #TODO: Change True to is_final

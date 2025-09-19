@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import List
+from typing import List, Dict
 from ...typedefs import State
 
 
@@ -20,6 +20,8 @@ class StateHLE(State):
     steps: List[str] = field(default_factory=list)
     randomness: int = 0
     current_state: str = ""
+    values: Dict = field(default_factory=dict)
+    step_n: int = 0
 
     def serialize(self) -> dict:
         """

@@ -71,9 +71,20 @@ class AgentActHLE(Agent):
         """
 
         # Format the prompt
-        num_examples = 2
-        examples = "(Example)\n" + "\n\n(Example)\n".join([example for example in prompts.examples_act[:num_examples]])
-        prompt = prompts.act.format(examples=examples, question=state.question, current_state="\n".join(state.steps))
+        existing_steps = "\n".join(state.steps) if len(state.steps) > 0 else "None\n"
+
+        # Early termination heuristic
+        if (len(state.values) > 0 and state.values[max(state.values)] >= 0.9) or (
+            len(state.steps) > 0 and "answer is" in state.steps[-1].lower()
+        ):  # some hacky stuff from rest-mcts*
+            prompt = prompts.summary.format(
+                problem=state.question, existing_steps=existing_steps
+            )
+        else:
+
+            prompt = prompts.act.format(
+                problem=state.question, existing_steps=existing_steps
+            )
 
         # Generate the responses
         responses = await model.request(
@@ -85,8 +96,9 @@ class AgentActHLE(Agent):
         )
 
         # Parse the responses
-        actions = [r.strip() for r in responses]
-        return actions
+        proposals = [r.strip().split("\n")[:5] for r in responses]
+        proposals = [parse_proposal(r, state.step_n, existing_steps) for r in proposals]
+        return proposals
 
 @AgentFactory.register
 class AgentBfsHLE(Agent):
@@ -101,12 +113,22 @@ class AgentBfsHLE(Agent):
         """
 
         # Format the prompt
-        num_examples = 3
-        examples = "(Example)\n" + "\n\n(Example)\n".join([example for example in prompts.examples_bfs[:num_examples]])
-        prompt = prompts.bfs.format(examples=examples, question=state.question, current_state=state.serialize())
+        existing_steps = "\n".join(state.steps) if len(state.steps) > 0 else "None\n"
 
-        # Generate the response
-        response = await model.request(
+        # Early termination heuristic
+        if (len(state.values) > 0 and state.values[max(state.values)] >= 0.9) or (
+            len(state.steps) > 0 and "answer is" in state.steps[-1].lower()
+        ):  # some hacky stuff from rest-mcts*
+            prompt = prompts.summary.format(
+                problem=state.question, existing_steps=existing_steps
+            )
+        else:
+
+            prompt = prompts.bfs.format(
+                problem=state.question, existing_steps=existing_steps
+            )
+        
+        responses = await model.request(
             prompt=prompt,
             n=1,
             request_id=request_id,
@@ -114,10 +136,63 @@ class AgentBfsHLE(Agent):
             params=params
         )
 
-        # Parse the response
-        proposals = [r.strip() for r in response[0].split("\n")]
+         # Generate the responses
+        proposals = [
+            "Next step: " + step.strip()
+            for step in responses[0].split("Next step:")
+            if step.strip()
+        ]
+
+        # Parse the responses
+        proposals = [r.strip().split("\n")[:5] for r in proposals]
+        proposals = [parse_proposal(r, state.step_n, existing_steps) for r in proposals]
         return proposals
 
+@AgentFactory.register
+class AgentAggregateHLE(Agent):
+
+    @staticmethod
+    async def act(
+        model: Model,
+        state: StateHLE,
+        actions: List[str],
+        k: int,
+        namespace: str,
+        request_id: str,
+        params: DecodingParameters,
+    ) -> List[str]:
+        """
+        Returns the aggregated action for SciBench task.
+        """
+        if len(actions) == 0:
+            return []
+        
+        if (len(state.values) > 0 and state.values[max(state.values)] >= 0.9) or (
+            len(state.steps) > 0 and "answer is" in state.steps[-1].lower()
+        ):  # some hacky stuff from rest-mcts*
+            return actions
+
+        # Format the prompt
+        steps = "\n".join(actions)
+        prompt = prompts.aggregate.format(problem=state.question, k=k, steps=steps)
+
+        # Generate the response
+        responses = await model.request(
+            prompt=prompt,
+            n=1,
+            request_id=request_id,
+            namespace=namespace,
+            params=params,
+        )
+
+        # Parse the response
+        try:
+            indexes = [int(i.strip()) - 1 for i in re.findall(r"\d+", responses[0])]
+            out = [actions[i] for i in indexes if i < len(actions)]
+        except Exception as e:
+            out = []
+        return out
+    
 @AgentFactory.register
 class AgentReactHLE(Agent):
     """
@@ -160,38 +235,92 @@ class AgentEvaluateHLE(Agent):
         Returns an evaluation for the HLE task.
         """
         # Check if the state is already in the cache
-        if cache is not None and state.serialize() in cache:
-            return cache[state.serialize()]
+        if cache is not None and state.current_state in cache:
+            value = cache[state.current_state]
 
-        # Format the prompt
-        num_examples = 2
-        examples = "(Example)\n" + "\n\n(Example)\n".join([example for example in prompts.examples_evaluate[:num_examples]])
-        prompt = prompts.evaluate.format(examples=examples, question=state.question, current_state=state.serialize())
+        else:
+            # Format the promp
+            prompt = prompts.evaluate.format(
+                problem=state.question,
+                existing_steps="\n".join(state.steps),
+            )
 
-        # Generate the responses
-        responses = await model.request(
-            prompt=prompt,
-            n=n,
-            request_id=request_id,
-            namespace=namespace,
-            params=params
-        )
+            # Generate the response
+            responses = await model.request(
+                prompt=prompt,
+                n=n,
+                request_id=request_id,
+                namespace=namespace,
+                params=params,
+            )
 
-        # Parse the responses
-        values = []
-        pattern = r"\b(?:correctness[\s_]?score|score for correctness|correctness)\b(?:\s*(?:is|=|:|was|stands at|of))?\s*(-?\d+(?:\.\d+)?)"
+            # Parse the response
+            values = [parse_value(r) for r in responses]
+            value = sum(values) / len(values)
 
-        for response in responses:
-            match = re.search(pattern, response, re.IGNORECASE)
-            if match:
-                value = float(match.group(1))
-            else:
-                print(f"Unable to parse value from response : {response}")
-                value = 1
-            values.append(value)
-        value = sum(values)
-
-        # Cache the value
-        if cache is not None:
-            cache[state.serialize()] = value
+            # Cache the value
+            if cache is not None:
+                cache[state.current_state] = value
+            state.values[state.step_n] = value
         return value
+    
+# ---Helper functions---#
+def parse_proposal(response: List[str], step_n: int, existing_steps: str) -> str:
+    p = ""
+    for _ in response:
+        p = p + _ + " "
+    p = p.strip()
+
+    if "Next step:" in p:
+        stp = p.split("Next step:")[1].strip()
+        if len(stp) < 2:
+            # print('Output step too short!\n')
+            return ""
+        if stp in existing_steps:
+            # print('Output step repeated!\n')
+            return ""
+
+        revised_ = "Step " + str(step_n) + ": " + stp
+
+    elif "Step" in p and ":" in p:
+        pre_len = len(p.split(":")[0])
+        p_ = p[pre_len:]
+        p_ = p_.split("Step")[0].strip()
+        if len(p_) < 4:
+            # print('Output step too short!\n')
+            return ""
+        p_ = p_[1:].strip()
+        if p_ in existing_steps:
+            # print('Output step repeated!\n')
+            return ""
+
+        revised_ = "Step " + str(step_n) + ": " + p_
+
+    else:
+        p_ = p.strip()
+        if len(p_) < 3:
+            # print('Output step too short!\n')
+            return ""
+        if p_ in existing_steps:
+            # print('Output step repeated!\n')
+            return ""
+
+        revised_ = "Step " + str(step_n) + ": " + p_
+    revised = revised_ + "\n"
+    return revised
+
+def parse_value(response: str, low=0.0, high=1.0) -> float:
+    out_value = low
+
+    # score expected in output
+    if "score" not in response.lower():
+        return out_value
+
+    response = response.lower().split("score")[-1].strip()
+    try:
+        match = re.findall(r"-?[0-9]+\.?[0-9]*", response)[-1]
+        out_value = float(match)
+        out_value = min(max(low, out_value), high)
+    except Exception as e:
+        out_value = low
+    return out_value

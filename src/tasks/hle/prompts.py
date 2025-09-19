@@ -7,23 +7,51 @@ io = """You will be given a question. Simply provide the final answer. Do not pr
 cot = """You will be given a question. Think step by step and provide your reasoning before giving the final answer. The format to respond is "Final Answer: ...", where "..." is the final answer."""
 
 
-act = """Solve a human-labeled explanation task with sequential Action steps. Action can be three types:
+act = '''Given a problem, you need to answer based on your existing knowledge. The input may include some existing steps to solve the question and you should continue to complete the solution based on these existing steps. 
 
-(1) Analyze[topic], which analyzes the given topic in the context of the question and image.
-(2) Explain[aspect], which provides explanations about specific aspects of the topic.
-(3) Finish[answer], which returns the answer and finishes the task.
-You may take as many steps as necessary.
+If the input does not provide any existing steps, you need to give the first step in solving or calculating the problem. If partial solution steps are provided, you need to output only the next step along the lines of the existing steps.
 
-Below some examples are given. The examples also include the observations after each action, which you should not use in your answer.
+The output format is limited to: "Next step: ..." where ... indicates omitted output information, which is the next step in the answer that you should give. Your output must be a single complete step, which may include detailed calculations, one node of reasoning (eg. a sentence), choosing answers, etc.
 
-{examples}
+If the existing steps are already sufficient, you can output "The final answer is: $...$" where ... indicates the final answer to the question. 
 
-(END OF EXAMPLES)
+Below is the input, please follow the specified format for your output.
 
-Remember, your task is to find the immediate next action. Answer in the format given by the examples and mention nothing more.
+Problem: {problem}
+Existing steps:
+{existing_steps}
+Output:'''
 
-Question: {question}
-{current_state}"""
+bfs = '''Given a problem, you need to answer on your existing knowledge. The input may include some existing steps to solve the question and you should continue to complete the solution based on these existing steps. 
+
+If the input does not provide any existing steps, you need give the first step in solving or calculating the problem. If partial solution steps are provided, you need to output the next step along the lines of the existing steps.
+
+The output format is limited to: "Next step: ..." where ... indicates omitted output information, which is the next step in the answer that you should give. Your output must be a single complete step, which may include detailed calculations, one node of reasoning (eg. a sentence), choosing answers, etc.
+
+If the existing steps are already sufficient, you can output "The final answer is: $...$" where ... indicates the final answer to the question. 
+
+Please provide MULTIPLE alternative next steps. Use the following format:
+"Next step: $...$
+Next step: $...$
+Next step: $...$".
+
+Below is the input, please follow the specified format for your output.
+
+Problem: {problem}
+Existing steps:
+{existing_steps}
+Output:'''
+
+aggregate = '''Given a  proplem, you need to answer based on your existing knowledge. The input may include some existing steps to solve the question and you should choose from the given steps, which best helps you get towards a solution to the question.
+
+From the partial or fully solutions, your task is to select {k} partial or full solutions that best solves or calculates the problem. Your output must be the numbers of the selected partial or full solutions, without any explanation, reasoning, introduction, conclusion or modifucations.
+
+Below is the input, please only output the {k} indexes of your choices.
+
+Problem: {problem}
+Solutions:
+{steps}
+Output:'''
 
 react = """Solve a human-labeled explanation task with interleaving Thought and Action steps. Thought can reason about the current situation, and Action can be three types:
 
@@ -43,46 +71,27 @@ Remember, your task is to find the immediate next thought and action. Answer the
 Question: {question}
 {current_state}"""
 
-bfs = """We're solving a human-labeled explanation task with sequential Action steps. Your task is to propose possible next actions given the current trajectory. Action can be three types:
+summary = '''
+Given a math problem and its corresponding solution, your task is to extract the final answer obtained in the solution.
+You should summarize the answer using the format: "The final answer is $...$". Replace "..." with the answer obtained in the solution.
+Problem: {problem}
+Solution: {existing_steps}
+Extracted answer:'''
 
-(1) Analyze[topic], which analyzes the given topic in the context of the question and image.
-(2) Explain[aspect], which provides explanations about specific aspects of the topic.
-(3) Finish[answer], which returns the answer and finishes the task.
-You may take as many steps as necessary.
+evaluate = '''Your task is to assess whether the provided solution steps can successfully solve the given science/mathematics problem and output a score.
+The score should be a decimal between 0 and 1. If all the provided steps are incorrect (every step is wrong), the score should be 0. If all steps are correct and the final answer is successfully calculated, the score should be 1. The more errors there are in the steps, the closer the score should be to 0. The closer the steps are to the final correct answer, the closer the score should be to 1.
+A score equal to or greater than 0.9 can only be given if the answer has already been calculated to a specific value. If the thought process is complete but the answer is not computed, or only the mathematical expression is written without solving it, the score must be below 0.9.
 
-Below some examples are given. The examples also include the observations after each action, which you should not use in your answer.
+First provide an analysis, then the score. Your analysis and scoring should be entirely based on the given steps. Do not continue solving the problem.
 
-{examples}
+Below is a problem and the existing steps, with analysis and scoring. Be careful not to output the next steps in the analysis, and the scoring should be based entirely on the steps given in the input.
+The output format is limited to: "Analysis:...\nScore:...", where ... indicates omitted output content, which is the part you need to fill in.
 
-(END OF EXAMPLES)
-
-Remember, your task is to propose immediate next actions. Answer in the format given by the examples and mention nothing more.
-
-Question: {question}
-{current_state}
-
-Possible Actions:"""
-
-evaluate = '''Analyze the trajectories of a solution to a human-labeled explanation task. The trajectories are labeled by environmental observations about the situation, thoughts that can reason about the current situation and actions that can be three types:
-(1) Analyze[topic], which analyzes the given topic in the context of the question and image.
-(2) Explain[aspect], which provides explanations about specific aspects of the topic.
-(3) Finish[answer], which returns the answer and finishes the task.
-
-Given a question and a trajectory, evaluate its correctness and provide your reasoning and analysis in detail. Focus on the latest available thought, action, and observation. Incomplete trajectories can be correct if the thoughts and actions so far are correct, even if the answer is not found yet. Do not generate additional thoughts or actions. Then at the last line conclude with your value estimation which can be an integer number from 1 to 10.
-
-Below some examples are given.
-
-{examples}
-
-(END OF EXAMPLES)
-
-Remember, your task is to evaluate the correctness of the latest available thought, action, and observation based on your reasoning analysis. Answer in the format given by the examples and mention nothing more. Make sure to indicate the correctness score at the end of your answer in the following format: "Correctness score : <score>".
-
-Question: {question}
-{current_state}
-
-Evaluation:
-'''
+Input:
+Problem: {problem}
+Existing steps:
+{existing_steps}
+Output:'''
 
 ### Judge prompt to evaluate the final answer correctness based on the ground truth answer.
 JUDGE_PROMPT = """Judge whether the following [response] to [question] is correct or not based on the precise and unambiguous [correct_answer] below.
