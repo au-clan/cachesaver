@@ -50,9 +50,21 @@ class OnlineLLM(Model):
 
             input_tokens = completion.usage.prompt_tokens
             completion_tokens = completion.usage.completion_tokens
+            if getattr(completion.usage, 'prompt_tokens_details', None):
+                try:
+                    cached_tokens = completion.usage.prompt_tokens_details.cached_tokens
+                    
+                except Exception as e:
+                    print(f"Could not access cached tokens: {e}")
+                    pass
+            else:
+                cached_tokens = 0
+            
+            print(f"Input tokens: {input_tokens}, Completion tokens: {completion_tokens}, Cached tokens: {cached_tokens}")
+            
 
             results.extend(
-                (choice.message.content, input_tokens, completion_tokens / current_n)
+                (choice.message.content, input_tokens, completion_tokens / current_n, cached_tokens)
                 for choice in completion.choices
             )
 
