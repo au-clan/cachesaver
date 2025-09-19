@@ -20,7 +20,10 @@ class EnvironmentGame24(Environment):
         if "left" in action:
             current_state = action.split('left: ')[-1].split(')')[0]
         else:
-            current_state = action.split(' = ')[-1]
+            if "=" in action:
+                current_state = action.split(' = ')[-1]
+            else:
+                current_state = ""
 
         # Randomness handling
         random.seed(state.randomness)

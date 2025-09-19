@@ -158,6 +158,54 @@ Finish[director, screenwriter and actor]
 Lookup[Nicholas Ray]
 Lookup[profession]
 Lookup[producer]""",
+
+"""Question: What year did the Titanic sink, and where was it headed?  
+Action 1: Search[Titanic sinking]  
+Observation 1: RMS Titanic sank in the early morning of April 15, 1912.  
+Action 2: Lookup[destination]  
+Observation 2: The Titanic was headed for New York City on its maiden voyage.  
+Action 3: Search[Titanic route]  
+Observation 3: The Titanic departed from Southampton, England, with stops planned in Cherbourg, France, and Queenstown (now Cobh), Ireland.  
+
+Possible Actions:  
+Finish[1912, New York City]  
+Lookup[year]  
+Lookup[destination city]  
+Search[Titanic voyage details]""",
+
+"""Question: Who developed the theory of general relativity, and in what year was it published?  
+Action 1: Search[general relativity]  
+Observation 1: General relativity is a theory of gravitation developed in the early 20th century.  
+Action 2: Lookup[developed by]  
+Observation 2: General relativity was developed by Albert Einstein.  
+Action 3: Search[general relativity published year]  
+Observation 3: General relativity was first published in 1915.  
+Action 4: Lookup[physics theory]  
+Observation 4: General relativity is considered one of the two pillars of modern physics, alongside quantum mechanics.  
+
+Possible Actions:  
+Finish[Albert Einstein, 1915]  
+Lookup[Einstein]  
+Lookup[publication year]  
+Search[relativity history]""",
+
+"""Question: Which planet is known as the "Red Planet," how many moons does it have, and what are they called?  
+Action 1: Search[Red Planet]  
+Observation 1: The Red Planet is Mars.  
+Action 2: Lookup[moons of Mars]  
+Observation 2: Mars has two moons.  
+Action 3: Search[names of Mars moons]  
+Observation 3: The two moons of Mars are Phobos and Deimos.  
+Action 4: Lookup[planet characteristics]  
+Observation 4: Mars is the fourth planet from the Sun in the Solar System.  
+Action 5: Search[Mars nickname origin]  
+Observation 5: Mars is called the Red Planet because of its reddish appearance, due to iron oxide on its surface.  
+
+Possible Actions:  
+Finish[Mars, 2 moons: Phobos and Deimos]  
+Lookup[Mars]  
+Lookup[Phobos, Deimos]  
+Search[Mars facts]"""
 ]
 
 
@@ -207,7 +255,21 @@ Action 1: Search[Pavel Urysohn]
 Observation 1: Pavel Samuilovich Urysohn (February 3, 1898 â August 17, 1924) was a Soviet mathematician who is best known for his contributions in dimension theory.
 Action 2: Search[Leonid Levin]
 Observation 2: Leonid Anatolievich Levin is a Soviet-American mathematician and computer scientist. 
-Action 3: Finish[yes]"""]
+Action 3: Finish[yes]""",
+
+"""Question: Which planet is known as the "Red Planet," how many moons does it have, and what are they called?  
+Action 1: Search[Red Planet]  
+Observation 1: The Red Planet is Mars.  
+Action 2: Lookup[moons of Mars]  
+Observation 2: Mars has two moons.  
+Action 3: Search[names of Mars moons]  
+Observation 3: The two moons of Mars are Phobos and Deimos.  
+Action 4: Lookup[planet characteristics]  
+Observation 4: Mars is the fourth planet from the Sun in the Solar System.  
+Action 5: Search[Mars nickname origin]  
+Observation 5: Mars is called the Red Planet because of its reddish appearance, due to iron oxide on its surface.
+Finish[Mars, 2 moons: Phobos and Deimos]"""
+]
 
 examples_react = [
 """Question: What is the elevation range for the area that the eastern sector of the Colorado orogeny extends into?

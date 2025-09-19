@@ -70,6 +70,14 @@ class State(ABC):
     def get_seed(self) -> int:
         pass
 
+    def __getitem__(self, key: str) -> Any:
+        # This lets you do state["puzzle"]
+        return getattr(self, key)
+
+    def get(self, key: str, default: Any = None) -> Any:
+        # This mimics dict.get()
+        return getattr(self, key, default)
+
     
 class Environment(ABC):
     def __init__(self):
