@@ -7,7 +7,7 @@ from ...typedefs import Benchmark
 
 @BenchmarkFactory.register
 class BenchmarkGame24(Benchmark):
-    def __init__(self, path: str, split: str = "mini"):
+    def __init__(self, path: str, split: str = "mini", max_len: int=None):
 
         self.name = "game24"
 
@@ -27,6 +27,9 @@ class BenchmarkGame24(Benchmark):
             self.data = data[900:1000]
         else:
             raise ValueError(f"Invalid set name: {split}")
+        
+        if max_len:
+            self.data = self.data[:max_len]
 
     def __len__(self) -> int:
         return len(self.data)

@@ -12,7 +12,7 @@ from ...typedefs import Benchmark
 
 @BenchmarkFactory.register
 class BenchmarkHLE(Benchmark):
-    def __init__(self, path: str, split: str = "mini"):
+    def __init__(self, path: str, split: str = "mini", max_len: int = None):
         """
         Initializes the benchmark with the dataset.
 
@@ -73,6 +73,9 @@ class BenchmarkHLE(Benchmark):
             self.data = [data[i] for i in test_set_idxs]
         else:
             raise ValueError("Invalid set name")
+        
+        if max_len:
+            self.data = self.data[:max_len]
         
     def __len__(self) -> int:
         """

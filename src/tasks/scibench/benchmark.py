@@ -7,7 +7,7 @@ from ...typedefs import Benchmark
 
 @BenchmarkFactory.register
 class BenchmarkSciBench(Benchmark):
-    def __init__(self, path: str, split: str = "mini", task: str = "class"):
+    def __init__(self, path: str, split: str = "mini", task: str = "100", max_len: int=None):
         """
         Initializes the benchmark with the dataset.
 
@@ -44,6 +44,10 @@ class BenchmarkSciBench(Benchmark):
             self.data = data[mini + train + valid:]
         else:
             raise ValueError("Invalid set name")
+        
+        if max_len:
+            self.data = self.data[:max_len]
+
         
     def __len__(self) -> int:
         """

@@ -8,7 +8,7 @@ from ...typedefs import Benchmark
 
 @BenchmarkFactory.register
 class BenchmarkHumanEval(Benchmark):
-    def __init__(self, path: str, split: str = "mini") -> None:
+    def __init__(self, path: str, split: str = "mini", max_len: int=None) -> None:
         """
         Initializes the Benchmark for HumanEval dataset.
         """
@@ -31,6 +31,9 @@ class BenchmarkHumanEval(Benchmark):
             self.data = data[:1]
         else:
             raise ValueError("Invalid set name")
+        
+        if max_len:
+            self.data = self.data[:max_len]
     
     def __len__(self) -> int:
         return len(self.data)
