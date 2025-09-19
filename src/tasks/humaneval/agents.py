@@ -156,7 +156,7 @@ class AgentBfsHumanEval(Agent):
         # Format the prompt
         language = "py" if "def" in state.puzzle else "rs"
         ### change n, depending on how many to generate
-        instruct = prompts.SIMPLE_CHAT_INSTRUCTION_BFS.format(lang=language, n=5)
+        instruct = prompts.bfs.format(lang=language) if state.current_state == state.puzzle else prompts.bfs_refine.format(lang=language,  current_state=state.current_state)
         responses = await model.request(
             prompt=[
                 {"role": "system", "content": instruct},
@@ -167,15 +167,13 @@ class AgentBfsHumanEval(Agent):
             namespace=namespace,
             params=params,
         )
-        response_text = responses[0]
 
-        code_blocks = re.findall(r'(```.*?```)', response_text, flags=re.DOTALL)
+        code_blocks = re.findall(r'(```.*?```)', responses[0], flags=re.DOTALL)
 
         # Strip each code block
-        actions = [block.strip() for block in code_blocks]
+        proposals = [r.removeprefix("```python").removesuffix("```").strip() for r in code_blocks]
 
-        return actions
-
+        return proposals
 
 
 @AgentFactory.register
