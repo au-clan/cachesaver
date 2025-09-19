@@ -210,7 +210,43 @@ async def timed(label: str, coroutine: Awaitable) -> Tuple[str, float, Any]:
     duration = end - start
 
     return label, duration, result
+
+def api_logging(
+        logger: logging.Logger, 
+        prompt: Any, 
+        n: int,
+        response: List[str]
+        ):
+    if isinstance(prompt, str):
+        logger.info(starbox("USER"))
+        logger.info(f"{prompt}")
+    elif isinstance(prompt, list):
+        try:
+            for message in prompt:
+                logger.info(starbox(message['role'].upper()))
+                logger.info(message['content'])
+        except:
+            print(f"Problem with the following prompt:\n***\n{prompt}\n***")
+            raise ValueError("Prompt format not recognized for logging.")
+    logger.info(starbox(f"N: {n}"))
+
+    for i, res in enumerate(response):
+        logger.info(starbox(f"RESPONSE {i+1}"))
+        logger.info(f"{res}")
+    logger.info(f"{'='*100}\n"*3)
+
+def starbox(text: str) -> str:
+    # Determine width of the box (text + 2 spaces padding)
+    width = len(text) + 4
+    # Top border
+    top = "*" * width
+    # Middle with text
+    middle = f"* {text} *"
+    # Bottom border
+    bottom = "*" * width
     
+    return f"{top}\n{middle}\n{bottom}"
+
 def initial_logging(
         logger: logging.Logger, 
         args:Namespace, 
@@ -218,6 +254,13 @@ def initial_logging(
         ):
     
     os.makedirs(os.path.dirname(log_path), exist_ok=True)
+
+    # Removing potential previous handlers
+    for handler in logger.handlers[:]:
+        logger.removeHandler(handler)
+        handler.close()
+    
+    # Setting up new handler
     f_handler = logging.FileHandler(log_path, mode="w", encoding="utf-8")
     f_handler.setLevel(logging.INFO)
     logger.addHandler(f_handler)
@@ -286,7 +329,7 @@ def final_logging(
 
             # Tokens
             tokens = api.tokens[tab]
-            logger.info("\t\tTokens (total): in %s, out %s", tokens["total"]["in"], tokens["total"]["out"])
+            logger.info("\t\tTokens (total): in %s, out %s cached %s", tokens["total"]["in"], tokens["total"]["out"], tokens["total"]["cached"])
             logger.info("\t\tTokens (saved by cacher): in %s, out %s", tokens["cacher"]["in"], tokens["cacher"]["out"])
             logger.info("\t\tTokens (saved by deduplicator): in %s, out %s\n", tokens["duplicator"]["in"], tokens["duplicator"]["out"])
 
@@ -318,7 +361,8 @@ def final_logging(
 
     # Tokens
     all_tokens = {key: {"in": sum(api.tokens[tab][key]["in"] for tab in api.tabs), "out": sum(api.tokens[tab][key]["out"] for tab in api.tabs)} for key in ["total", "cacher", "duplicator"]}
-    logger.info("\tSummed Tokens (total): in %s, out %s", all_tokens["total"]["in"], all_tokens["total"]["out"])
+    all_tokens["total"].update({"cached": sum(api.tokens[tab]["total"]["cached"] for tab in api.tabs)})
+    logger.info("\tSummed Tokens (total): in %s, out %s, cached %s", all_tokens["total"]["in"], all_tokens["total"]["out"], all_tokens["total"]["cached"])
     logger.info("\tSummed Tokens (saved by cacher): in %s, out %s", all_tokens["cacher"]["in"], all_tokens["cacher"]["out"])
     logger.info("\tSummed Tokens (saved by deduplicator): in %s, out %s\n", all_tokens["duplicator"]["in"], all_tokens["duplicator"]["out"])
 
