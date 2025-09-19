@@ -1,7 +1,7 @@
 #!/bin/bash
 
-benchmark="game24"
-method="foa"
+benchmark="hle"
+method="got"
 split="single"
 
 provider="openai"

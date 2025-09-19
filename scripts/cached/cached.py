@@ -46,7 +46,7 @@ async def run(args, trial, cache_path):
     api = API(
         pipeline=pipeline,
         model=args.model,
-        log_path=f"logs/raw_calls/simple/{args.model}/{args.benchmark}/{args.method}_{args.split}.log"
+        log_path=f"logs/raw_calls/cached/{args.model}/{args.benchmark}/{args.method}_{args.split}.log"
     )
 
     # Decoding Parameters
@@ -75,35 +75,48 @@ async def run(args, trial, cache_path):
     
 
     # Benchmark
-    benchmark = BenchmarkFactory.get(args.benchmark, split=args.split, max_len=50)
+    benchmark = BenchmarkFactory.get(args.benchmark, split=args.split, max_len=2)
 
-    # Initial logging
-    log_path = f"logs/simple/{args.model}/{args.benchmark}/{args.method}_{args.split}.log"
-    initial_logging(logger, args, log_path)
+    for i in range(int(args.repeats)):
+        print(f"Repeat {i+1}/{args.repeats}")
 
-    # Start timing
-    start = time.perf_counter()
+        # Clean the API costs and update the log_path (not the cache though)
+        api.clean()
+        api.update_log_path(
+            log_path=f"logs/raw_calls/cached/{args.model}/{args.benchmark}/{args.method}_{args.split}_{i}.log"
+        )
+        
+        # Initial logging
+        log_path = f"logs/cached/{args.model}/{args.benchmark}/{args.method}_{args.split}_{i}.log"
+        initial_logging(logger, args, log_path)
 
-    # Run the method 
-    durations, results = await method.benchmark(
-        benchmark=benchmark,
-        ns_ratio=args.ns_ratio,
-        **({"value_cache": True} if bool(args.value_cache) else {})
-    )
+        # Start timing
+        start = time.perf_counter()
 
-    # End timing
-    end = time.perf_counter()
-    clocktime = end - start
+        # Run the method 
+        durations, results = await method.benchmark(
+            benchmark=benchmark,
+            ns_ratio=args.ns_ratio,
+            **({"value_cache": True} if bool(args.value_cache) else {})
+        )
 
-    # Final logging
-    evaluations = [sorted([environment.evaluate(state) for state in r], key=lambda x: x[1]) for r in results]
-    final_logging(logger, api, clocktime, durations, evaluations)
+        # End timing
+        end = time.perf_counter()
+        clocktime = end - start
+
+        # Final logging
+        evaluations = [sorted([environment.evaluate(state) for state in r], key=lambda x: x[1]) for r in results]
+        final_logging(logger, api, clocktime, durations, evaluations)
+
+        
 
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("Solve tasks with different methods.")
 
+    parser.add_argument("--repeats", type=int)
+    
     parser.add_argument("--method", type=str)
     parser.add_argument("--benchmark", type=str)
     parser.add_argument("--dataset_path", type=str)
