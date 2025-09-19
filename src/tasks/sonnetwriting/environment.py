@@ -43,7 +43,8 @@ class EnvironmentSonnetWriting(Environment):
         """
         Checks if the current state is a final state.
         """
-        raise NotImplementedError("is_final have not been implemented yet.")
+        if state.current_state:
+            return True
 
     @staticmethod
     def evaluate(state: StateSonnetWriting) -> Tuple[bool | float]:

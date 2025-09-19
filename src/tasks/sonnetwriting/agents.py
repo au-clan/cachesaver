@@ -85,6 +85,34 @@ class AgentActSonnetWriting(Agent):
         # Parse responses
         proposals = [r.strip() for r in responses]
         return proposals
+    
+@AgentFactory.register
+class AgentBfsSonnetWriting(Agent):
+
+    @staticmethod
+    async def act(
+        model: Model,
+        state: StateSonnetWriting,
+        namespace: str,
+        request_id: str,
+        params: DecodingParameters,
+    ) -> List[str]:
+        
+        # Format the prompt
+        prompt = prompts.act.format(input=state.current_state)
+
+        # Generate response
+        responses = await model.request(
+            prompt=prompt,
+            n=3,
+            request_id=request_id,
+            namespace=namespace,
+            params=params,
+        )
+
+        # Parse responses
+        proposals = [r.strip() for r in responses]
+        return proposals
 
 
 @AgentFactory.register
