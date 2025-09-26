@@ -1,5 +1,4 @@
 from src.rag.components import ContextBuilderBase
-# from components import ContextBuilderBase
 
 class ConcatContextBuilder(ContextBuilderBase):
     def build(self, docs):

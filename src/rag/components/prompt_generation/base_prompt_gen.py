@@ -1,6 +1,4 @@
 from src.rag.components import PromptGenerationBase
-# from components.base_components import PromptGenerationBase
-
 
 class BasePromptGeneration(PromptGenerationBase):
 

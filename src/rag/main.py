@@ -7,9 +7,10 @@ import src.rag.components.retrievers as ret
 
 from langchain.embeddings import HuggingFaceEmbeddings
 from cachesaver.pipelines import OnlineAPI
-# from langchain.vectorstores import FAISS
 from langchain_community.vectorstores import FAISS
-import os
+import os, asyncio
+
+from openai import AsyncOpenAI
 
 from src.typedefs import DecodingParameters
 from src.models import API, OnlineLLM, GroqAPILLM
@@ -36,6 +37,16 @@ top_p=1.0
 stop=None
 logprobs=None
 
+# Decoding Parameters
+params = DecodingParameters(
+    temperature=temperature,
+    max_completion_tokens=max_completion_tokens,
+    top_p=top_p,
+    stop=stop,
+    logprobs=logprobs
+)
+
+
 # Utils function
 def get_cachesaver_client():
     """
@@ -44,8 +55,7 @@ def get_cachesaver_client():
     cache = Cache(cache_path)
 
     # Model
-    # model = OnlineLLM(provider="openai")
-    model = GroqAPILLM(False)
+    model = OnlineLLM(provider="openai")
 
     # Pipeline
     pipeline = OnlineAPI(
@@ -62,10 +72,17 @@ def get_cachesaver_client():
         pipeline=pipeline,
         model="gpt-5-nano"
     )
-
     return client_cachesaver
 
-if __name__ == '__main__':
+def get_openai_client():
+    """
+    Just a random function to intialize CacheSaver client
+    """
+    client_openai = AsyncOpenAI()
+    return client_openai
+
+async def main():
+# if __name__ == '__main__':
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
     current_dir = os.path.dirname(os.path.abspath(__file__))
     save_path = os.path.join(current_dir, "local", "FAISS")
@@ -94,16 +111,15 @@ if __name__ == '__main__':
     new_prompt = rag_pipeline.execute(prompt)
     print(f'New Prompt: {new_prompt}')
 
-    params = DecodingParameters(
-        temperature=temperature,
-        max_completion_tokens=max_completion_tokens,
-        top_p=top_p,
-        stop=stop,
-        logprobs=logprobs
-    )
-
     cash_cli = get_cachesaver_client()
-
+    response = await cash_cli.request(
+            prompt = prompt,
+            params = params,
+            n = 1,
+            request_id = f"sth",
+            namespace="cities_experiment",
+        )
+    print(f"Asking for 1 output samples: ", [content for content in response])
     # response = await cash_cli.request(
     #     prompt=new_prompt,
     #     params='',
@@ -111,3 +127,6 @@ if __name__ == '__main__':
     #     request_id = f"test",
     #     namespace="test_experiment",
     # )
+
+if __name__ == '_main__':
+    asyncio.run(main())

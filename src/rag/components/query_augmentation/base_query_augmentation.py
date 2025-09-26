@@ -1,5 +1,4 @@
 from src.rag.components import QueryAugmentationBase
-# from components.base_components import QueryAugmentationBase
 
 class PassQueryAugmentation(QueryAugmentationBase):
 

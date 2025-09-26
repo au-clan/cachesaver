@@ -1,6 +1,4 @@
 from src.rag.components import RetrieverBase
-# from components.base_components import RetrieverBase
-
 
 class Faiss_Retriever(RetrieverBase):
 
