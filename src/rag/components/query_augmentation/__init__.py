@@ -1,1 +1,2 @@
 from .base_query_augmentation import PassQueryAugmentation
+from .synonym_extension_qa import SynonymExtensionQueryAugmentation
