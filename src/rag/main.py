@@ -5,7 +5,8 @@ import src.rag.components.prompt_generation as pg
 import src.rag.components.query_augmentation as qa
 import src.rag.components.retrievers as ret
 
-from langchain.embeddings import HuggingFaceEmbeddings
+from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 from cachesaver.pipelines import OnlineAPI
 from langchain_community.vectorstores import FAISS
 import os, asyncio
@@ -30,9 +31,9 @@ benchmark="hotpotqa"
 method="tot_bfs"
 split="mini"
 
-model="gpt-5-nano"
-temperature=1.5
-max_completion_tokens=10000
+model_name="gpt-5-nano"
+temperature=1.0
+max_completion_tokens=10_000
 top_p=1.0
 stop=None
 logprobs=None
@@ -70,22 +71,20 @@ def get_cachesaver_client():
     # CacheSaver Client
     client_cachesaver = API(
         pipeline=pipeline,
-        model="gpt-5-nano"
+        model=model_name
     )
     return client_cachesaver
 
-def get_openai_client():
-    """
-    Just a random function to intialize CacheSaver client
-    """
-    client_openai = AsyncOpenAI()
-    return client_openai
 
 async def main():
-# if __name__ == '__main__':
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    save_path = os.path.join(current_dir, "local", "FAISS")
+
+    # similarity_metric = 'cosine_similarity'
+    # similarity_metric = 'l2'
+    similarity_metric = 'dot_product'
+    save_path = os.path.join(current_dir, "local", similarity_metric)
 
     vectorstore = FAISS.load_local(
         save_path,
@@ -93,8 +92,9 @@ async def main():
         allow_dangerous_deserialization=True
     )
 
-    query_aug = qa.PassQueryAugmentation()
-    retriever = ret.Faiss_Retriever(vectorstore=vectorstore, k=1)
+    # query_aug = qa.PassQueryAugmentation()
+    query_aug = qa.SynonymExtensionQueryAugmentation(max_nr_synonyms=1)
+    retriever = ret.Faiss_Retriever(vectorstore=vectorstore, kwargs={'k':1})
     context_builder = cb.ConcatContextBuilder()
     prompt_generation = pg.BasePromptGeneration()
 
@@ -105,28 +105,23 @@ async def main():
         prompt_generation=prompt_generation
     )
 
-    prompt = "How much does a table cost?"
+    prompt = "How much does a piece of cake cost?"
     print(f'Prompt: {prompt}\n')
 
     new_prompt = rag_pipeline.execute(prompt)
     print(f'New Prompt: {new_prompt}')
 
     cash_cli = get_cachesaver_client()
+    print(' ================= ')
     response = await cash_cli.request(
-            prompt = prompt,
+            prompt = new_prompt,
             params = params,
             n = 1,
             request_id = f"sth",
-            namespace="cities_experiment",
+            namespace="temp",
         )
-    print(f"Asking for 1 output samples: ", [content for content in response])
-    # response = await cash_cli.request(
-    #     prompt=new_prompt,
-    #     params='',
-    #     n = 1,
-    #     request_id = f"test",
-    #     namespace="test_experiment",
-    # )
-
-if __name__ == '_main__':
+    print(' ================= ')
+    print(response)
+    
+if __name__ == '__main__':
     asyncio.run(main())
