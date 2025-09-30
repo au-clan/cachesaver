@@ -1,4 +1,4 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 
 
 #############################################################################
@@ -11,18 +11,20 @@ class QueryAugmentationBase(ABC):
     def __init__(self):
         super().__init__()
 
+    @abstractmethod
     def augment(self, prompt:str):
         ...
 
 
 class RetrieverBase(ABC):
 
-    def __init__(self, vectorstore, k:int):
-        assert k >= 1, "The number of retrieved documents needs to be biggern then 0"
+    def __init__(self, vectorstore, kwargs:dict):
+        assert kwargs['k'] >= 1, "The number of retrieved documents needs to be biggern then 0"
         super().__init__()
         self.vectorstore = vectorstore
-        self.k = k
+        self.kwargs = kwargs
 
+    @abstractmethod
     def retrieve(self):
         ...
 
@@ -32,6 +34,7 @@ class ContextBuilderBase(ABC):
     def __init__(self):
         super().__init__()
 
+    @abstractmethod
     def build(self, docs):
         ...
 
@@ -41,6 +44,7 @@ class PromptGenerationBase(ABC):
     def __init__(self):
         super().__init__()
 
+    @abstractmethod
     def build(self, context: str, prompt:str):
         ...
 
