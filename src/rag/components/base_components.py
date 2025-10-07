@@ -18,11 +18,8 @@ class QueryAugmentationBase(ABC):
 
 class RetrieverBase(ABC):
 
-    def __init__(self, vectorstore, kwargs:dict):
-        assert kwargs['k'] >= 1, "The number of retrieved documents needs to be biggern then 0"
-        super().__init__()
-        self.vectorstore = vectorstore
-        self.kwargs = kwargs
+    def __init__(self, *args, **kwargs,):
+        pass
 
     @abstractmethod
     def retrieve(self):

@@ -1,1 +1,2 @@
 from .faiss_retriever import Faiss_Retriever
+from .sparse_retriever import Sparse_Retriever

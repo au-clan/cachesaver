@@ -15,6 +15,9 @@ from openai import AsyncOpenAI
 
 from src.typedefs import DecodingParameters
 from src.models import API, OnlineLLM, GroqAPILLM
+from src.utils import tokens2cost
+from sentence_transformers import CrossEncoder
+from whoosh import index
 
 
 # Hyperparameter
@@ -81,23 +84,42 @@ async def main():
 
     current_dir = os.path.dirname(os.path.abspath(__file__))
 
+    ### PARAMETERS: RETRIEVER
     # similarity_metric = 'cosine_similarity'
     # similarity_metric = 'l2'
-    similarity_metric = 'dot_product'
-    save_path = os.path.join(current_dir, "local", similarity_metric)
+    # similarity_metric = 'dot_product'
 
-    vectorstore = FAISS.load_local(
-        save_path,
-        embeddings,
-        allow_dangerous_deserialization=True
-    )
+    # load_path_dense = os.path.join(current_dir, "local", similarity_metric)
+    # vectorstore = FAISS.load_local(
+    #     load_path_dense,
+    #     embeddings,
+    #     allow_dangerous_deserialization=True
+    # )
 
-    # query_aug = qa.PassQueryAugmentation()
-    query_aug = qa.SynonymExtensionQueryAugmentation(max_nr_synonyms=1)
-    retriever = ret.Faiss_Retriever(vectorstore=vectorstore, kwargs={'k':1})
-    context_builder = cb.ConcatContextBuilder()
+    load_path_sparse = os.path.join(current_dir, "local", "sparse")
+    ix = index.open_dir(load_path_sparse)
+
+    ### PARAMETERS: CONTEXT BUILDER
+    cross_enc_model = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
+    
+
+
+    ### QUERY AUGMENTATION
+    query_aug = qa.PassQueryAugmentation()
+    # query_aug = qa.SynonymExtensionQueryAugmentation(max_nr_synonyms=1)
+
+    ### RETRIEVER
+    retriever = ret.Sparse_Retriever(ix, 3)
+    # retriever = ret.Faiss_Retriever(vectorstore=vectorstore, retriever_kwargs={'k':3})
+    
+    ### CONTEXT BUILDER
+    # context_builder = cb.ConcatContextBuilder()
+    context_builder = cb.CrossEncderContextBuilder(3, cross_enc_model)
+
+    ### PROMPT GERNERATION
     prompt_generation = pg.BasePromptGeneration()
 
+    ### PIPELINE
     rag_pipeline = RAG_pipeline(
         query_augmentation=query_aug,
         retriever=retriever,
@@ -106,22 +128,26 @@ async def main():
     )
 
     prompt = "How much does a piece of cake cost?"
-    print(f'Prompt: {prompt}\n')
+    # print(f'Prompt: {prompt}\n')
 
     new_prompt = rag_pipeline.execute(prompt)
-    print(f'New Prompt: {new_prompt}')
+    # print(f'New Prompt: {new_prompt}')
 
-    cash_cli = get_cachesaver_client()
-    print(' ================= ')
-    response = await cash_cli.request(
-            prompt = new_prompt,
-            params = params,
-            n = 1,
-            request_id = f"sth",
-            namespace="temp",
-        )
-    print(' ================= ')
-    print(response)
+    # cash_cli = get_cachesaver_client()
+    # print(' ================= ')
+    # response = await cash_cli.request(
+    #         prompt = new_prompt,
+    #         params = params,
+    #         n = 1,
+    #         request_id = f"sth",
+    #         namespace="temp",
+    #     )
+    # total_tokens_used = cash_cli.tokens['default']['total']
+    # print('Total Number of tokens:', total_tokens_used)
+    # print('Total Cost:', tokens2cost(total_tokens_used, model_name))
+    # print(' ================= ')
+    
+    # print(response)
     
 if __name__ == '__main__':
     asyncio.run(main())
