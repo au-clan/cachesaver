@@ -7,6 +7,8 @@ import os
 import numpy as np
 from faiss import IndexFlatIP, IndexFlatL2
 from langchain_community.docstore.in_memory import InMemoryDocstore
+from whoosh.fields import Schema, TEXT, ID
+from whoosh import index
 
 
 class DenseKBIndexingPipeline(ABC):
@@ -72,3 +74,55 @@ class DenseKBIndexingPipeline(ABC):
         )
 
         return vectorstore
+
+
+class SparseKBIndexingPipeline(ABC):
+
+    def __init__(self,
+                loader: langchain.document_loaders, 
+                splitter: langchain_text_splitters, 
+                ):
+        super().__init__()
+        self.loader = loader
+        self.splitter = splitter
+
+        self.schema = Schema(
+            doc_id=ID(stored=True, unique=True),
+            # title=TEXT(stored=True),
+            content=TEXT(stored=True),
+            source=TEXT(stored=True),
+        )
+
+
+    def index_documents(self, path:str, save_path:str):
+        if not os.path.exists(save_path):
+            os.makedirs(save_path)
+            ix = index.create_in(save_path, self.schema)
+        else:
+            ix = index.create_in(save_path, self.schema)
+        
+        writer = ix.writer()
+
+        # prepare path to files
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        file_path = os.path.join(current_dir, path)
+        files = [os.path.join(file_path, file_name) for file_name in os.listdir(file_path)]
+
+        # laod and split files
+        all_chunks = []
+        for f in files:
+            l = self.loader(f)
+            chunks = l.load_and_split(self.splitter)
+            all_chunks.extend(chunks)
+
+        # chunk_content = [d.page_content for d in all_chunks]
+
+        for i, chunk in enumerate(all_chunks):
+            writer.add_document(
+                doc_id=str(i),
+                # title=
+                content=chunk.page_content,
+                source=chunk.metadata['source'],
+            )
+        
+        writer.commit()
