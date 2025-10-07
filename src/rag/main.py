@@ -18,6 +18,9 @@ from src.models import API, OnlineLLM, GroqAPILLM
 from src.utils import tokens2cost
 from sentence_transformers import CrossEncoder
 from whoosh import index
+from langchain import hub
+from langchain_core.prompts import PromptTemplate
+
 
 
 # Hyperparameter
@@ -80,9 +83,33 @@ def get_cachesaver_client():
 
 
 async def main():
-    embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 
     current_dir = os.path.dirname(os.path.abspath(__file__))
+
+    ### Initialize Cash Client
+    cash_cli = get_cachesaver_client()
+
+    ### PARAMETERS: QUERY AUGMENTATION
+    query_rewriting_text = """You are a helpful assistant that generates multiple search queries based on a single input query.
+
+        Perform query expansion. If there are multiple common ways of phrasing a user question
+        or common synonyms for key words in the question, make sure to return multiple versions
+        of the query with the different phrasings.
+
+        If there are acronyms or words you are not familiar with, do not try to rephrase them.
+
+        Return 2 different versions of the question.
+        
+        Question: {question}
+        """
+    
+    query_rewriting_template = PromptTemplate.from_template(query_rewriting_text)
+    client_kwargs = {
+        'params':params,
+        'n':1,
+        'request_id':f"sth",
+        'namespace':"temp",
+    }
 
     ### PARAMETERS: RETRIEVER
     # similarity_metric = 'cosine_similarity'
@@ -90,6 +117,7 @@ async def main():
     # similarity_metric = 'dot_product'
 
     # load_path_dense = os.path.join(current_dir, "local", similarity_metric)
+    # embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
     # vectorstore = FAISS.load_local(
     #     load_path_dense,
     #     embeddings,
@@ -102,22 +130,26 @@ async def main():
     ### PARAMETERS: CONTEXT BUILDER
     cross_enc_model = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
     
+    ### PARAMETERS: PROMPT GENERATION
+    prompt_template = hub.pull("rlm/rag-prompt")
+
 
 
     ### QUERY AUGMENTATION
     query_aug = qa.PassQueryAugmentation()
     # query_aug = qa.SynonymExtensionQueryAugmentation(max_nr_synonyms=1)
+    query_aug = qa.RewritingQueryAugmentation(client=cash_cli, prompt_template=query_rewriting_template, client_kwargs=client_kwargs)
 
     ### RETRIEVER
-    retriever = ret.Sparse_Retriever(ix, 3)
     # retriever = ret.Faiss_Retriever(vectorstore=vectorstore, retriever_kwargs={'k':3})
+    retriever = ret.Sparse_Retriever(ix=ix, k=3)
     
     ### CONTEXT BUILDER
     # context_builder = cb.ConcatContextBuilder()
-    context_builder = cb.CrossEncderContextBuilder(3, cross_enc_model)
+    context_builder = cb.CrossEncderContextBuilder(k=3, cross_enc_model=cross_enc_model)
 
     ### PROMPT GERNERATION
-    prompt_generation = pg.BasePromptGeneration()
+    prompt_generation = pg.BasePromptGeneration(prompt_template=prompt_template)
 
     ### PIPELINE
     rag_pipeline = RAG_pipeline(
@@ -130,10 +162,9 @@ async def main():
     prompt = "How much does a piece of cake cost?"
     # print(f'Prompt: {prompt}\n')
 
-    new_prompt = rag_pipeline.execute(prompt)
+    new_prompt = await rag_pipeline.execute(prompt)
     # print(f'New Prompt: {new_prompt}')
 
-    # cash_cli = get_cachesaver_client()
     # print(' ================= ')
     # response = await cash_cli.request(
     #         prompt = new_prompt,
