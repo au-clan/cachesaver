@@ -31,11 +31,12 @@ class RetrieverBase(ABC):
 
 class ContextBuilderBase(ABC):
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *args, **kwargs):
+        # super().__init__()
+        pass
 
     @abstractmethod
-    def build(self, docs):
+    def build(self, docs, query):
         ...
 
 
@@ -70,7 +71,7 @@ class RAG_pipeline():
     def execute(self, prompt: str):
         query = self.query_augmentation.augment(prompt)
         docs = self.retriever.retrieve(query)
-        context = self.context_builder.build(docs)
+        context = self.context_builder.build(docs, query)
         generated_prompt = self.prompt_generation.build(context, prompt)
         return generated_prompt
 
