@@ -8,7 +8,7 @@ from abc import ABC, abstractmethod
 
 class QueryAugmentationBase(ABC):
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         super().__init__()
 
     @abstractmethod
@@ -39,7 +39,7 @@ class ContextBuilderBase(ABC):
 
 class PromptGenerationBase(ABC):
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         super().__init__()
 
     @abstractmethod
@@ -65,8 +65,8 @@ class RAG_pipeline():
         self.context_builder = context_builder
         self.prompt_generation = prompt_generation
 
-    def execute(self, prompt: str):
-        query = self.query_augmentation.augment(prompt)
+    async def execute(self, prompt: str):
+        query = await self.query_augmentation.augment(prompt)
         docs = self.retriever.retrieve(query)
         context = self.context_builder.build(docs, query)
         generated_prompt = self.prompt_generation.build(context, prompt)

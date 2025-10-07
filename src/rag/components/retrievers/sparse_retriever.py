@@ -21,8 +21,6 @@ class Sparse_Retriever(RetrieverBase):
                     metadata={'source': hit['source']}
                 )
                 docs.append(d)
-        
-        print(docs)
 
         return docs
         # retriever = self.vectorstore.as_retriever(search_kwargs=self.kwargs)
