@@ -3,36 +3,53 @@ from langchain_community.vectorstores import FAISS
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import PyPDFLoader
 import os
-
-from src.rag.kb_indexing.kb_indexing_pipeline import DenseKBIndexingPipeline
+from datasets import load_dataset
+from src.rag.kb_indexing.kb_indexing_pipeline import DenseKBIndexingPipeline, get_idxs_from_HotpotQA, get_examples_from_HotpotQA
 
 
 if __name__ == '__main__':
     # Define Parameter for indexing pipeline
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    path = os.path.join(current_dir, 'local', 'files') 
+    path = os.path.join(current_dir, 'local', 'files')
 
-    splitter = RecursiveCharacterTextSplitter(
-        chunk_size=1000,
-        chunk_overlap=0,
-    )
-    loader = PyPDFLoader
-    embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
-
+    ###################################
+    ########### Parameter: ############
+    ###################################
+    splitter_chunk_size = 100
+    spliter_chunk_overlap = 10
+    embedding_model_name = "sentence-transformers/all-MiniLM-L6-v2"
     similarity_metric = 'cosine_similarity'
     # similarity_metric = 'dot_product'
     # similarity_metric = 'l2'
+    ##################################
+    save_path = f'C:/root/code_repositories/Uni_AU/Semester5/RAG_Project/cachesaver/src/rag/local/test2_hotpotQA'
+
+
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=splitter_chunk_size,
+        chunk_overlap=spliter_chunk_overlap,
+    )
+    # loader = PyPDFLoader
+    embeddings = HuggingFaceEmbeddings(model_name=embedding_model_name)
+
+    ds = load_dataset("hotpotqa/hotpot_qa", "distractor")
+    df = ds['train'].to_pandas()
+
+    idxs = get_idxs_from_HotpotQA(df)
+    df_sel = df.iloc[idxs]
+    df_sel.to_csv(os.path.join(save_path, 'questions_used.csv'))
+
+    docs = get_examples_from_HotpotQA(df=df, idxs=idxs, single_sentence=False)
 
     vectorstore = DenseKBIndexingPipeline(
-        loader=loader,
-        splitter=splitter,
         embeddings=embeddings,
-        similarity_metric=similarity_metric
-    ).index_documents(path)
+        similarity_metric=similarity_metric,
+        # loader=loader,
+        splitter=splitter,
+    ).index_documents(docs, split=True)
 
-    save_path = f'C:/root/code_repositories/Uni_AU/Semester5/RAG_Project/cachesaver/src/rag/local/{similarity_metric}'
-    vectorstore.save_local(save_path)
-    # print('Vectorstore saved!')
+    vectorstore.save_local(os.path.join(save_path, similarity_metric))
+    print('Vectorstore saved!')
 
     # print(vectorstore.similarity_search(query='Piece of cake', k=1)[0].page_content)
     # print()
