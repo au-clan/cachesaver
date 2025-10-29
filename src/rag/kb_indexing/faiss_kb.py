@@ -2,7 +2,7 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import PyPDFLoader
-import os
+import os, json
 from datasets import load_dataset
 from src.rag.kb_indexing.kb_indexing_pipeline import DenseKBIndexingPipeline, get_idxs_from_HotpotQA, get_examples_from_HotpotQA
 
@@ -34,6 +34,14 @@ if __name__ == '__main__':
 
     ds = load_dataset("hotpotqa/hotpot_qa", "distractor")
     df = ds['train'].to_pandas()
+
+    parameter_dict = {
+        "splitter_chunk_size": splitter_chunk_size,
+        "spliter_chunk_overlap": spliter_chunk_overlap,
+        "embedding_model_name": embedding_model_name,
+    }
+    with open(os.path.join(save_path, 'parameters.json'), 'w') as f:
+        json.dump(parameter_dict, f, indent=4)
 
     idxs = get_idxs_from_HotpotQA(df)
     df_sel = df.iloc[idxs]
