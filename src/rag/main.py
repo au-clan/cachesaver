@@ -1,5 +1,5 @@
 from diskcache import Cache
-from src.rag.components import RAG_pipeline
+from src.rag.components import RAGPipeline
 import src.rag.components.context_builder as cb
 import src.rag.components.prompt_generation as pg
 import src.rag.components.query_augmentation as qa
@@ -12,6 +12,7 @@ from langchain_community.vectorstores import FAISS
 import os, asyncio
 
 from openai import AsyncOpenAI
+from src.rag.eval.eval_helper import eval_loop, get_hotpotQA_questions
 
 from src.typedefs import DecodingParameters
 from src.models import API, OnlineLLM, GroqAPILLM
@@ -90,6 +91,13 @@ async def main():
     cash_cli = get_cachesaver_client()
 
     ### PARAMETERS: QUERY AUGMENTATION
+    client_kwargs = {
+        'params':params,
+        'n':1,
+        'request_id':f"sth",
+        'namespace':"temp",
+    }
+
     query_rewriting_text = """You are a helpful assistant that generates multiple search queries based on a single input query.
 
         Perform query expansion. If there are multiple common ways of phrasing a user question
@@ -102,64 +110,118 @@ async def main():
         
         Question: {question}
         """
-    
     query_rewriting_template = PromptTemplate.from_template(query_rewriting_text)
-    client_kwargs = {
-        'params':params,
-        'n':1,
-        'request_id':f"sth",
-        'namespace':"temp",
-    }
 
+    hyde_query_template = PromptTemplate(
+        input_variables=["question"],
+        template="""Given this question: '{question}'
+
+        Please write a detailed, informative document that directly answers this question. 
+        The document should be comprehensive and approximately 500 characters long.
+        Write as if you're explaining this topic in a textbook or educational material.
+
+        Document:"""
+    )
+
+    query_decompose_prompt = """
+        You are a helpful assistant that prepares queries that will be sent to a search component.
+        Sometimes, these queries are very complex.
+        Your job is to simplify complex queries into multiple queries that can be answered
+        in isolation to eachother.
+
+        If the query is simple, then keep it as it is.
+        Examples
+        1. Query: Did Microsoft or Google make more money last year?
+        Decomposed Questions: [Question(question='How much profit did Microsoft make last year?', answer=None), Question(question='How much profit did Google make last year?', answer=None)]
+        2. Query: What is the capital of France?
+        Decomposed Questions: [Question(question='What is the capital of France?', answer=None)]
+        3. Query: {question}
+        Decomposed Questions:
+    """
+    query_decompose_template = PromptTemplate.from_template(query_decompose_prompt)
+
+    
     ### PARAMETERS: RETRIEVER
     # similarity_metric = 'cosine_similarity'
     # similarity_metric = 'l2'
-    # similarity_metric = 'dot_product'
+    similarity_metric = 'dot_product'
+    k_dense = 6
+    k_sparse = 6
 
-    # load_path_dense = os.path.join(current_dir, "local", similarity_metric)
-    # embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
-    # vectorstore = FAISS.load_local(
-    #     load_path_dense,
-    #     embeddings,
-    #     allow_dangerous_deserialization=True
-    # )
+    base_path = os.path.join(current_dir, "local", "test_hotpotQA")
 
-    load_path_sparse = os.path.join(current_dir, "local", "sparse")
+    load_path_dense = os.path.join(base_path, similarity_metric)
+    embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+    vectorstore = FAISS.load_local(
+        load_path_dense,
+        embeddings,
+        allow_dangerous_deserialization=True
+    )
+
+    load_path_sparse = os.path.join(base_path, "sparse")
     ix = index.open_dir(load_path_sparse)
 
     ### PARAMETERS: CONTEXT BUILDER
-    cross_enc_model = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
+    k_context_builder = 6
+    cross_enc_model_name = "cross-encoder/ms-marco-MiniLM-L-6-v2"
+    cross_enc_model = CrossEncoder(cross_enc_model_name)
     
     ### PARAMETERS: PROMPT GENERATION
     prompt_template = hub.pull("rlm/rag-prompt")
 
 
-
     ### QUERY AUGMENTATION
     query_aug = qa.PassQueryAugmentation()
     # query_aug = qa.SynonymExtensionQueryAugmentation(max_nr_synonyms=1)
-    query_aug = qa.RewritingQueryAugmentation(client=cash_cli, prompt_template=query_rewriting_template, client_kwargs=client_kwargs)
+    # query_aug = qa.RewritingQueryAugmentation(
+    #     client=cash_cli, 
+    #     # prompt_template=query_rewriting_template, 
+    #     prompt_template=hyde_query_template,
+    #     # prompt_template=query_decompose_template, 
+    #     client_kwargs=client_kwargs
+    #     )
 
     ### RETRIEVER
-    # retriever = ret.Faiss_Retriever(vectorstore=vectorstore, retriever_kwargs={'k':3})
-    retriever = ret.Sparse_Retriever(ix=ix, k=3)
+    retriever_1 = ret.Faiss_Retriever(vectorstore=vectorstore, retriever_kwargs={'k':k_dense})
+    retriever_2 = ret.Sparse_Retriever(ix=ix, k=k_sparse)
     
     ### CONTEXT BUILDER
-    # context_builder = cb.ConcatContextBuilder()
-    context_builder = cb.CrossEncderContextBuilder(k=3, cross_enc_model=cross_enc_model)
+    context_builder = cb.ConcatContextBuilder()
+    # context_builder = cb.CrossEncderContextBuilder(k=k_context_builder, cross_enc_model=cross_enc_model)
 
     ### PROMPT GERNERATION
     prompt_generation = pg.BasePromptGeneration(prompt_template=prompt_template)
 
     ### PIPELINE
-    rag_pipeline = RAG_pipeline(
+    rag_pipeline = RAGPipeline(
         query_augmentation=query_aug,
-        retriever=retriever,
+        retriever_list=[retriever_1],
         context_builder=context_builder,
         prompt_generation=prompt_generation
     )
 
-    prompt = "How much does a piece of cake cost?"
+    # question_answer_pairs = get_hotpotQA_questions(os.path.join(base_path, 'questions_used.csv'))
+
+    # metric, total_tokens_used, runtime = await eval_loop(
+    #     rag_pipeline=rag_pipeline,
+    #     question_answer_pairs=question_answer_pairs,
+    #     cash_client=cash_cli,
+    #     client_params=params,
+    #     verbose=True,
+    #     )
+    
+    # print('Total Cost', tokens2cost(total_tokens_used, model_name))
+
+    # return
+
+    # prompt = "How much does a piece of cake cost?"
+    # prompt = '750 7th Avenue and 101 Park Avenue, are located in which city?'
+    prompt = 'Who was once considered the best kick boxer in the world, however he has been involved in a number of controversies relating to his "unsportsmanlike conducts" in the sport and crimes of violence outside of the ring'
+    # prompt = """
+    #     Compare and contrast the ethical implications of using large language models (LLMs) in clinical diagnostic decision support systems 
+    #     with the privacy concerns associated with federated learning models trained on distributed electronic health records (EHRs), and discuss 
+    #     the regulatory frameworks in the EU and the US that currently or might eventually govern both technologies.
+    # """
     # print(f'Prompt: {prompt}\n')
 
     new_prompt = await rag_pipeline.execute(prompt)
@@ -173,12 +235,17 @@ async def main():
     #         request_id = f"sth",
     #         namespace="temp",
     #     )
+    # response = response[0]
     # total_tokens_used = cash_cli.tokens['default']['total']
     # print('Total Number of tokens:', total_tokens_used)
     # print('Total Cost:', tokens2cost(total_tokens_used, model_name))
     # print(' ================= ')
+    # # print(type(response), type(response[0]))
     
     # print(response)
-    
+    # print(response == 'New York City')
+    # print(response == 'Badr Hari')
+
+
 if __name__ == '__main__':
     asyncio.run(main())
