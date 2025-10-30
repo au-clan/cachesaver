@@ -22,6 +22,8 @@ from whoosh import index
 from langchain import hub
 from langchain_core.prompts import PromptTemplate
 from src.rag.components import prompt_templates as template
+from src.rag.eval import eval_helper as evh
+from src.rag.eval import experiment_helper as exh
 
 
 
@@ -55,6 +57,8 @@ params = DecodingParameters(
     logprobs=logprobs
 )
 
+import yaml
+from pathlib import Path
 
 # Utils function
 def get_cachesaver_client():
@@ -85,6 +89,18 @@ def get_cachesaver_client():
 
 
 async def main():
+    config_path = 'C:/root/code_repositories/Uni_AU/Semester5/RAG_Project/cachesaver/src/rag/experiments/config.yml'
+    config = yaml.safe_load(Path(config_path).read_text())
+    cash_cli = get_cachesaver_client()
+
+    rag_pipeline = exh.rag_pipeline_from_config(config=config, cash_client=cash_cli)
+    print(rag_pipeline)
+    print(rag_pipeline.query_augmentation)
+    print(rag_pipeline.retriever_list)
+    print(rag_pipeline.context_builder)
+    print(rag_pipeline.prompt_generation)
+
+    return
 
     current_dir = os.path.dirname(os.path.abspath(__file__))
 
