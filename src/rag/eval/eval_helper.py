@@ -1,7 +1,11 @@
 import re, string, time
 from collections import Counter
 from datasets import load_dataset
+from diskcache import Cache
 import pandas as pd
+from src.models.api import API
+from cachesaver.pipelines import OnlineAPI
+from src.models.online import OnlineLLM
 from src.rag.components.base_components import RAGPipeline
 from src.typedefs import DecodingParameters
 from src.utils import tokens2cost
@@ -65,6 +69,40 @@ def f1_score(prediction, ground_truth):
 
 
 # Own Code
+# Defined default parameters for Cachesaver Client
+def get_cachesaver_client(
+        batch_size:int=1,
+        timeout:int=2,
+        allow_batch_overflow:int=1,
+        correctness:int=1, 
+        cache_path:str="caches/developping",
+        model_name:str="gpt-5-nano"
+    ):
+    """
+    Just a random function to intialize CacheSaver client
+    """
+    cache = Cache(cache_path)
+
+    # Model
+    model = OnlineLLM(provider="openai")
+
+    # Pipeline
+    pipeline = OnlineAPI(
+        model=model,
+        cache=cache,
+        batch_size=batch_size,
+        timeout=timeout,
+        allow_batch_overflow=allow_batch_overflow,
+        correctness=bool(correctness)
+    )
+
+    # CacheSaver Client
+    client_cachesaver = API(
+        pipeline=pipeline,
+        model=model_name
+    )
+    return client_cachesaver
+
 def transform_supporting_facts(context:dict, supporting_facts:dict):
     sup_facts = []
     for title, sent_id in zip(supporting_facts['title'], supporting_facts['sent_id']):
@@ -116,9 +154,6 @@ def get_hotpotQA_questions(load_path:str) -> list[tuple]:
 
     return list(zip(questions, answers, level)) 
 
-def gen_rag_pipeline_from_string(conf:str):
-    ...
-
 async def eval_loop(
         rag_pipeline:RAGPipeline, 
         question_answer_pairs:list[tuple], 
@@ -140,7 +175,9 @@ async def eval_loop(
     total_tokens_used = {'in': 0, 'out': 0, 'cached':0}
     # total_cost = {'in': 0, 'out': 0, 'total': 0} 
 
-    for ques, answ, lev in question_answer_pairs:
+    generation_dict = {}
+
+    for i, (ques, answ, lev) in enumerate(question_answer_pairs):
         ques_w_context = await rag_pipeline.execute(ques)
         # rag_ret_docs = rag_pipeline.docs
 
@@ -153,7 +190,15 @@ async def eval_loop(
         )
         response = response[0]
 
+        generation_dict.update({i: {
+            'question': ques,
+            'answer': answ,
+            'level': lev,
+            'response': response
+        }})
+
         tokens_used_run = cash_client.tokens['default']['total']
+        print('TOKENS USED RUN:',tokens_used_run)
         total_tokens_used = update_dict(total_tokens_used, tokens_used_run)
         # tokens_cost_run = tokens2cost(tokens_used_run, model_name)
         # total_tokens_cos = update_dict(total_tokens_used, tokens_used_run)
@@ -173,9 +218,17 @@ async def eval_loop(
     for k in metrics.keys():
         metrics[k] /= N
 
+    result_dict = {
+        'metrics': metrics,
+        'runtime': runtime,
+        'tokens_used': total_tokens_used
+    }
+
+    # metrics['runtime'] = runtime
+
     if verbose: 
         print(" =" * 10)
         print(total_tokens_used)
         print(metrics)
         print('Runtime:', runtime)
-    return metrics, total_tokens_used, runtime
+    return result_dict, generation_dict #metrics, total_tokens_used, generation_dict

@@ -1,3 +1,4 @@
+from pathlib import Path
 from src.rag.components.base_components import RAGPipeline
 import src.rag.components.context_builder as cb
 import src.rag.components.prompt_generation as pg
@@ -5,14 +6,15 @@ import src.rag.components.query_augmentation as qa
 import src.rag.components.retrievers as ret
 from src.rag.components import prompt_templates as template
 from src.typedefs import DecodingParameters
+from src.rag.eval.eval_helper import eval_loop, get_cachesaver_client, get_hotpotQA_questions
 
 from langchain_huggingface import HuggingFaceEmbeddings
 from sentence_transformers import CrossEncoder
 from whoosh import index
 from langchain_community.vectorstores import FAISS
 
-
-import os
+import os, yaml
+from datetime import datetime
 
 
 def rag_pipeline_from_config(config:dict, cash_client) -> RAGPipeline:
@@ -21,6 +23,8 @@ def rag_pipeline_from_config(config:dict, cash_client) -> RAGPipeline:
 
     # Define Cashsaver client Params
     cash_client_params = DecodingParameters(
+        logprobs=None,
+        stop=None,
         **config['client_kwargs']['decoding_params']
         # temperature=temperature,
         # max_completion_tokens=max_completion_tokens,
@@ -99,3 +103,52 @@ def rag_pipeline_from_config(config:dict, cash_client) -> RAGPipeline:
     )
 
     return rag_pipeline
+
+
+def save_experiment_results(
+        config:dict, 
+        result_metrics:dict, 
+        generation_dict:dict,
+        path:str='C:/root/code_repositories/Uni_AU/Semester5/RAG_Project/cachesaver/src/rag/experiments', 
+    ):
+    exp_timestamp = f"{datetime.now():%Y-%m-%d_%H-%M-%S}_{config['experiment_name']}"
+    save_dir = os.path.join(path, exp_timestamp)
+    os.makedirs(save_dir, exist_ok=True)
+
+    with open(f"{save_dir}/config.yaml", "w") as f:
+        yaml.safe_dump(config, f)
+
+    with open(f"{save_dir}/results.yaml", "w") as f:
+        yaml.safe_dump(result_metrics, f)
+
+    with open(f"{save_dir}/generations.yaml", "w") as f:
+        yaml.safe_dump(generation_dict, f)
+
+
+async def experiment_loop(config_path:str):
+
+    # Define RAG Pipeline
+    config = yaml.safe_load(Path(config_path).read_text())
+    cash_client = get_cachesaver_client()
+    rag_pipeline = rag_pipeline_from_config(config, cash_client)
+
+    # load questions
+    base_path = 'C:/root/code_repositories/Uni_AU/Semester5/RAG_Project/cachesaver/src/rag/local'
+    question_answer_pairs = get_hotpotQA_questions(os.path.join(base_path , config['data'], 'questions_used.csv'))
+
+    # define client params
+    params = DecodingParameters(
+        logprobs=None,
+        stop=None,
+        **config['client_kwargs']['decoding_params']
+    )
+
+    result_dict, generation_dict = await eval_loop(
+        rag_pipeline=rag_pipeline,
+        question_answer_pairs=question_answer_pairs,
+        cash_client=cash_client,
+        client_params=params,
+        verbose=True
+    )
+
+    save_experiment_results(config=config, result_metrics=result_dict, generation_dict=generation_dict)
