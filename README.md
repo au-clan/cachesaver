@@ -90,6 +90,7 @@ resp = await client.chat.completions.create(
 )
 ```
 
+For more use cases and examples of CacheSaver in action, please see the following [Jupyter notebook](https://github.com/au-clan/cachesaver/blob/main/examples.ipynb).
 ---
 
 ## Performance
