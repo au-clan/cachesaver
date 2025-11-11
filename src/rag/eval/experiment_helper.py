@@ -109,9 +109,10 @@ def save_experiment_results(
         config:dict, 
         result_metrics:dict, 
         generation_dict:dict,
-        path:str='C:/root/code_repositories/Uni_AU/Semester5/RAG_Project/cachesaver/src/rag/experiments', 
+        rag_ret_docs:dict,
+        path:str='C:/root/code_repositories/Uni_AU/Semester5/RAG_Project/cachesaver/src/rag/experiments/local', 
     ):
-    exp_timestamp = f"{datetime.now():%Y-%m-%d_%H-%M-%S}_{config['experiment_name']}"
+    exp_timestamp = f"{config['experiment_name']}/{datetime.now():%Y-%m-%d_%H-%M-%S}"
     save_dir = os.path.join(path, exp_timestamp)
     os.makedirs(save_dir, exist_ok=True)
 
@@ -124,12 +125,16 @@ def save_experiment_results(
     with open(f"{save_dir}/generations.yaml", "w") as f:
         yaml.safe_dump(generation_dict, f)
 
+    with open(f"{save_dir}/rag_ret_docs.yaml", "w") as f:
+        yaml.safe_dump(rag_ret_docs, f)
 
-async def experiment_loop(config_path:str):
+
+async def experiment_loop(config:dict, verbose:bool=False):
+    save_path = 'C:/root/code_repositories/Uni_AU/Semester5/RAG_Project/cachesaver/src/rag/experiments/local'
 
     # Define RAG Pipeline
-    config = yaml.safe_load(Path(config_path).read_text())
-    cash_client = get_cachesaver_client()
+    # config = yaml.safe_load(Path(config_path).read_text())
+    cash_client = get_cachesaver_client(cache_path=os.path.join(save_path, config['experiment_name']), **config['cachesaver_config'])
     rag_pipeline = rag_pipeline_from_config(config, cash_client)
 
     # load questions
@@ -143,12 +148,16 @@ async def experiment_loop(config_path:str):
         **config['client_kwargs']['decoding_params']
     )
 
-    result_dict, generation_dict = await eval_loop(
+    result_dict, generation_dict, rag_ret_docs = await eval_loop(
         rag_pipeline=rag_pipeline,
         question_answer_pairs=question_answer_pairs,
         cash_client=cash_client,
         client_params=params,
-        verbose=True
+        verbose=verbose,
     )
 
-    save_experiment_results(config=config, result_metrics=result_dict, generation_dict=generation_dict)
+    save_experiment_results(config=config, result_metrics=result_dict, generation_dict=generation_dict, rag_ret_docs=rag_ret_docs)
+
+async def run_multiple_experiments(config_path:str):
+    
+    multiple_config = yaml.safe_load(Path(config_path).read_text())
