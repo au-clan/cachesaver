@@ -18,7 +18,8 @@ class Sparse_Retriever(RetrieverBase):
             for hit in results:
                 d = Document(
                     page_content=hit['content'], 
-                    metadata={'source': hit['source']}
+                    metadata={k:v for k, v in hit.fields().items() if k not in ('content', 'doc_id')}
+                    # metadata={'source': hit['source']}
                 )
                 docs.append(d)
 
