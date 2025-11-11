@@ -32,7 +32,7 @@ class SynonymExtensionQueryAugmentation(QueryAugmentationBase):
         seen_synonyms.update(synonym_list[:max_syns])
         return synonym_list[:max_syns], seen_synonyms
 
-    def augment(self, prompt:str):
+    async def augment(self, prompt:str):
         words = word_tokenize(prompt.lower())
 
         exp_query = []

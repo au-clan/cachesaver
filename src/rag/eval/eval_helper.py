@@ -1,4 +1,4 @@
-import re, string, time
+import re, string, time, os
 from collections import Counter
 from datasets import load_dataset
 from diskcache import Cache
@@ -81,7 +81,7 @@ def get_cachesaver_client(
     """
     Just a random function to intialize CacheSaver client
     """
-    cache = Cache(cache_path)
+    cache = Cache(os.path.join(cache_path, 'cache'))
 
     # Model
     model = OnlineLLM(provider="openai")
@@ -176,10 +176,21 @@ async def eval_loop(
     # total_cost = {'in': 0, 'out': 0, 'total': 0} 
 
     generation_dict = {}
+    rag_ret_docs = {}
 
     for i, (ques, answ, lev) in enumerate(question_answer_pairs):
+        rag_pipeline.docs = []
         ques_w_context = await rag_pipeline.execute(ques)
-        # rag_ret_docs = rag_pipeline.docs
+        rag_docs = rag_pipeline.docs
+
+        rag_doc_dict = [{
+            'metadata': rag_docs[i].metadata,
+            'page_content': rag_docs[i].page_content,
+        } for i in range(len(rag_docs))]
+
+        rag_ret_docs.update({
+            f'question_{i}': rag_doc_dict
+        })
 
         response = await cash_client.request(
             prompt = ques_w_context,
@@ -198,13 +209,12 @@ async def eval_loop(
         }})
 
         tokens_used_run = cash_client.tokens['default']['total']
-        print('TOKENS USED RUN:',tokens_used_run)
         total_tokens_used = update_dict(total_tokens_used, tokens_used_run)
         # tokens_cost_run = tokens2cost(tokens_used_run, model_name)
         # total_tokens_cos = update_dict(total_tokens_used, tokens_used_run)
         em, prec, recall = update_answer(metrics=metrics, prediction=response, answer=answ, level=lev)
         if verbose: 
-            print('Total Number of tokens:', tokens_used_run)
+            print('Total Number of Tokens:', tokens_used_run)
             print('prediction:', response)
             print('answer:', answ)
 
@@ -224,11 +234,9 @@ async def eval_loop(
         'tokens_used': total_tokens_used
     }
 
-    # metrics['runtime'] = runtime
-
     if verbose: 
         print(" =" * 10)
         print(total_tokens_used)
         print(metrics)
         print('Runtime:', runtime)
-    return result_dict, generation_dict #metrics, total_tokens_used, generation_dict
+    return result_dict, generation_dict, rag_ret_docs
