@@ -1,12 +1,12 @@
-experiment_name: temp1
+experiment_name: TEMP
 
 data: test2_hotpotQA
 
 cachesaver_config:
-  batch_size: 1
+  batch_size: 20
   timeout: 2
   allow_batch_overflow: 1
-  correctness: 1
+  correctness: 0
   model_name: 'gpt-5-nano'
 
 client_kwargs:
@@ -21,13 +21,13 @@ query_augmentation:
   # Options: pass, synonym_extension, rewriting, hyde, decompose 
   component: pass
   kwargs:
-    nr_synonyms: 1
+    nr_synonyms: 3
 
 retriever:
   # Options: sparse, dot_product, cosine_similarity, l2
-  type: [sparse]
+  type: [dot_product]
   kwargs:
-    k: [2]
+    k: [3]
     # should this be taken from the 'data' folder?
     embedding_model: sentence-transformers/all-MiniLM-L6-v2
 
