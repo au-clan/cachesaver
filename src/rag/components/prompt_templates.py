@@ -4,6 +4,22 @@ from langchain import hub
 # Basic Generation Prompt
 prompt_template = hub.pull("rlm/rag-prompt")
 
+# prompt_template_text = """You are an assistant for question-answering tasks. 
+# Use the following pieces of retrieved context to answer the question. 
+# If you don't know the answer, just say that you don't know. 
+# Use three sentences maximum and keep the answer concise.\n
+# Answer in the same style as the examples below: \n
+# The Colosseum, one of the most famous landmarks in the world, is located in which city?
+# Rome \n
+# Which invention came first, the telephone or the light bulb?
+# The telephone \n
+# Question: {question} \n
+# Context: {context} \n
+# Answer:"""
+
+# prompt_template = PromptTemplate.from_template(prompt_template_text)
+
+
 # Query Rewriting Prompt
 query_rewriting_text = """You are a helpful assistant that generates multiple search queries based on a single input query.
 

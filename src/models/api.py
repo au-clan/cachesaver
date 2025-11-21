@@ -113,7 +113,7 @@ class API(ABC):
         cached_in = cached_out = 0
         duplicated_in = 0 # deduplicator saves only on input
 
-        for in_tok, out_tok, cached_tok, cached, duplicated in zip(tokin, tokcached, tokout, response.cached, response.duplicated):
+        for in_tok, out_tok, cached_tok, cached, duplicated in zip(tokin, tokout, tokcached, response.cached, response.duplicated):
 
             total_in += in_tok
             total_out += out_tok
@@ -128,7 +128,7 @@ class API(ABC):
                 duplicated_in += in_tok
 
             if not duplicated and not cached:
-                cached_tok += cached_tok
+                total_cached += cached_tok
 
         self.tokens[tab]["total"]["in"] += total_in
         self.tokens[tab]["total"]["out"] += total_out

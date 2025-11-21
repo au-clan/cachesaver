@@ -172,8 +172,6 @@ async def eval_loop(
                'em_medium': 0, 'f1_medium': 0, 'prec_medium': 0, 'recall_medium': 0,
                'em_hard': 0, 'f1_hard': 0, 'prec_hard': 0, 'recall_hard': 0,
                }
-    total_tokens_used = {'in': 0, 'out': 0, 'cached':0}
-    # total_cost = {'in': 0, 'out': 0, 'total': 0} 
 
     generation_dict = {}
     rag_ret_docs = {}
@@ -208,13 +206,8 @@ async def eval_loop(
             'response': response
         }})
 
-        tokens_used_run = cash_client.tokens['default']['total']
-        total_tokens_used = update_dict(total_tokens_used, tokens_used_run)
-        # tokens_cost_run = tokens2cost(tokens_used_run, model_name)
-        # total_tokens_cos = update_dict(total_tokens_used, tokens_used_run)
         em, prec, recall = update_answer(metrics=metrics, prediction=response, answer=answ, level=lev)
         if verbose: 
-            print('Total Number of Tokens:', tokens_used_run)
             print('prediction:', response)
             print('answer:', answ)
 
@@ -222,7 +215,11 @@ async def eval_loop(
             print('Precision |', prec)
             print('Recall |', recall)
             print('-'* 30)
+    
     runtime = time.time() - start_time
+
+    tokes_used = cash_client.tokens['default']['total']
+    tokes_cached = cash_client.tokens['default']['cacher']
 
     N = len(question_answer_pairs)
     for k in metrics.keys():
@@ -231,12 +228,14 @@ async def eval_loop(
     result_dict = {
         'metrics': metrics,
         'runtime': runtime,
-        'tokens_used': total_tokens_used
+        'tokens_used': tokes_used,
+        'tokens_cached': tokes_cached,
     }
 
     if verbose: 
-        print(" =" * 10)
-        print(total_tokens_used)
+        print(" =" * 20)
+        print(tokes_used)
+        print(tokes_cached)
         print(metrics)
         print('Runtime:', runtime)
     return result_dict, generation_dict, rag_ret_docs
