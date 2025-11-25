@@ -182,9 +182,9 @@ async def eval_loop(
         rag_docs = rag_pipeline.docs
 
         rag_doc_dict = [{
-            'metadata': rag_docs[i].metadata,
-            'page_content': rag_docs[i].page_content,
-        } for i in range(len(rag_docs))]
+            'metadata': doc.metadata,
+            'page_content': doc.page_content,
+        } for j, doc in rag_docs]
 
         rag_ret_docs.update({
             f'question_{i}': rag_doc_dict

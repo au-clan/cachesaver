@@ -23,7 +23,7 @@ class Sparse_Retriever(RetrieverBase):
                 )
                 docs.append(d)
 
-        return docs
+        return list(enumerate(docs))
         # retriever = self.vectorstore.as_retriever(search_kwargs=self.kwargs)
         # docs = retriever.invoke(query)
         # return docs

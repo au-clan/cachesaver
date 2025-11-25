@@ -1,13 +1,14 @@
-experiment_name: TEMP
+experiment_name: experiment1_30
 
-data: test2_hotpotQA
+# data: test2_hotpotQA
+data: experiment1_hotpotqa
 
 cachesaver_config:
+  model_name: 'gpt-5-nano'
   batch_size: 20
   timeout: 2
   allow_batch_overflow: 1
   correctness: 0
-  model_name: 'gpt-5-nano'
 
 client_kwargs:
   #model_name: 'gpt-5-nano'
@@ -18,16 +19,22 @@ client_kwargs:
     top_p: 1.0
 
 query_augmentation:
-  # Options: pass, synonym_extension, rewriting, hyde, decompose 
-  component: pass
+  # Options: pass, normalize, synonym_extension, rewriting, multi_query, hyde, decompose
+  # component: [normalize, multi_query]
+  # component: [rewriting]
+  # component: [normalize, rewriting]
+  # component: [decompose]
+  component: [normalize, decompose]
   kwargs:
     nr_synonyms: 3
+    lowercase: 1
+    stop_word: 0
 
 retriever:
   # Options: sparse, dot_product, cosine_similarity, l2
-  type: [dot_product]
+  type: [sparse, l2]
   kwargs:
-    k: [3]
+    k: [6, 6]
     # should this be taken from the 'data' folder?
     embedding_model: sentence-transformers/all-MiniLM-L6-v2
 
