@@ -67,7 +67,7 @@ class PromptGenerationBase(ABC):
 class RAGPipeline():
     
     def __init__(self, 
-                 query_augmentation:QueryAugmentationBase, 
+                 query_augmentation:list[QueryAugmentationBase], 
                  retriever_list:list[RetrieverBase], 
                 #  retriever_pipeline: list[RetrieverPipeline],
                  context_builder:ContextBuilderBase,
@@ -81,7 +81,9 @@ class RAGPipeline():
         self.docs = []
 
     async def execute(self, prompt: str):
-        query = await self.query_augmentation.augment(prompt)
+        for qa in self.query_augmentation:
+            prompt = await qa.augment(prompt)
+        query = prompt
         # query = self.query_augmentation.augment(prompt)
         for retriever in self.retriever_list:
             docs_part = retriever.retrieve(query)
