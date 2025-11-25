@@ -42,25 +42,38 @@ def rag_pipeline_from_config(config:dict, cash_client) -> RAGPipeline:
     
     # Define Query Augmentation
     query_aug_component = config['query_augmentation']['component']
-    if query_aug_component == 'pass':
-        query_aug = qa.PassQueryAugmentation()
-    elif query_aug_component == 'synonym_extension':
-        query_aug = qa.SynonymExtensionQueryAugmentation(max_nr_synonyms=config['query_augmentation']['kwargs']['nr_synonyms'])
-    elif query_aug_component in ['rewriting', 'hyde', 'decompose']:
-        if query_aug_component == 'rewriting':
-            query_aug_template = template.query_rewriting_template
-        elif query_aug_component == 'hyde':
-            query_aug_template = template.hyde_query_template
-        elif query_aug_component == 'decompose':
-            query_aug_template = template.query_decompose_template
-            
-        query_aug = qa.RewritingQueryAugmentation(
-            client=cash_client, 
-            prompt_template=query_aug_template,
-            client_kwargs=client_kwargs
+    if 'normalize' in query_aug_component:
+        base_path_dataset = f'{base_path_dataset}_normalize'
+
+    query_aug_list = []
+    for qa_comp in query_aug_component:
+        if qa_comp == 'pass':
+            query_aug = qa.PassQueryAugmentation()
+        elif qa_comp == 'normalize':
+            query_aug = qa.NormalizeQueryAugmentation(
+                lowercase=config['query_augmentation']['kwargs']['lowercase'],
+                stop_word=config['query_augmentation']['kwargs']['stop_word']
             )
-    else:
-        raise AttributeError('The QueryAugmentation component is not defined! Select between: pass, synonym_extension, rewriting, hyde, decompose')
+        elif qa_comp == 'synonym_extension':
+            query_aug = qa.SynonymExtensionQueryAugmentation(max_nr_synonyms=config['query_augmentation']['kwargs']['nr_synonyms'])
+        elif qa_comp in ['rewriting', 'hyde', 'decompose', 'multi_query']:
+            if qa_comp == 'rewriting':
+                query_aug_template = template.query_rewriting_template
+            elif qa_comp == 'hyde':
+                query_aug_template = template.hyde_query_template
+            elif qa_comp == 'decompose':
+                query_aug_template = template.query_decompose_template
+            elif qa_comp == 'multi_query':
+                query_aug_template = template.multi_query_rewriting_template
+                
+            query_aug = qa.RewritingQueryAugmentation(
+                client=cash_client, 
+                prompt_template=query_aug_template,
+                client_kwargs=client_kwargs
+                )
+            query_aug_list.append(query_aug)
+        else:
+            raise AttributeError('The QueryAugmentation component is not defined! Select between: pass, synonym_extension, rewriting, hyde, decompose')
 
 
     # Define Retriever
@@ -96,7 +109,7 @@ def rag_pipeline_from_config(config:dict, cash_client) -> RAGPipeline:
     prompt_generation = pg.BasePromptGeneration(prompt_template=template.prompt_template)
 
     rag_pipeline = RAGPipeline(
-        query_augmentation=query_aug,
+        query_augmentation=query_aug_list,
         retriever_list=retriever_list,
         context_builder=context_builder,
         prompt_generation=prompt_generation
@@ -157,6 +170,7 @@ async def experiment_loop(config:dict, verbose:bool=False):
     )
 
     save_experiment_results(config=config, result_metrics=result_dict, generation_dict=generation_dict, rag_ret_docs=rag_ret_docs)
+
 
 async def run_multiple_experiments(config_path:str):
     

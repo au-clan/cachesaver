@@ -28,12 +28,26 @@ query_rewriting_text = """You are a helpful assistant that generates multiple se
     of the query with the different phrasings.
 
     If there are acronyms or words you are not familiar with, do not try to rephrase them.
-
-    Return 2 different versions of the question.
     
     Question: {question}
     """
 query_rewriting_template = PromptTemplate.from_template(query_rewriting_text)
+
+# Multi Query Rewriting Prompt
+multi_query_rewriting_text = """You are a helpful assistant that generates multiple search queries based on a single input query.
+
+    Perform query expansion. If there are multiple common ways of phrasing a user question
+    or common synonyms for key words in the question, make sure to return multiple versions
+    of the query with the different phrasings.
+
+    If there are acronyms or words you are not familiar with, do not try to rephrase them.
+
+    Return 3 different versions of the question.
+    
+    Question: {question}
+    """
+multi_query_rewriting_template = PromptTemplate.from_template(multi_query_rewriting_text)
+
 
 # Hyde Query Template
 hyde_query_template = PromptTemplate(
