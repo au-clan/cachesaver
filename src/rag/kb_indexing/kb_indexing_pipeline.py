@@ -11,9 +11,20 @@ from whoosh.fields import Schema, TEXT, ID
 from whoosh import index
 from langchain_core.documents.base import Document
 import pandas as pd
+import nltk
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
 
 
 class IndexingPipeline(ABC):
+
+    def __init__(self, lower:bool, stop_word:bool):
+        super().__init__()
+        nltk.download('stopwords', quiet=True)
+
+        self.stop_words = set(stopwords.words('english'))
+        self.lower = lower
+        self.stop_word = stop_word
 
     def load_docs_from_path(self, path:str) -> list[Document]:
         current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -32,15 +43,32 @@ class IndexingPipeline(ABC):
     def index_documents(self, documents: Document):
         pass
 
+    def normalize(self, chunk):
+        if self.lower:
+            print('lowercase chunk')
+            chunk = chunk.lower()
+        if self.stop_word:
+            words = word_tokenize(chunk.lower())
+
+            chunk_list = []
+            for w in words:
+                if w not in self.stop_word:
+                    chunk_list.append(w)
+            chunk = ' '.join(chunk_list)
+        return chunk
+
+
 class DenseKBIndexingPipeline(IndexingPipeline):
 
     def __init__(self, 
+                 lower:bool,
+                 stop_word:bool,
                  similarity_metric:str,
                  embeddings: langchain.embeddings,
                  loader: langchain.document_loaders=None, 
-                 splitter: langchain_text_splitters=None, 
+                 splitter: langchain_text_splitters=None,
                 ):
-        super().__init__()
+        super().__init__(lower, stop_word)
         assert similarity_metric in ['cosine_similarity', 'dot_product', 'l2'], 'The chosen similarity_metric is not implementend, please chose an existing similarity metric (cosine_similarity, dot_product, l2)'
         
         self.loader = loader
@@ -56,7 +84,7 @@ class DenseKBIndexingPipeline(IndexingPipeline):
         if split:
             documents = self.splitter.split_documents(documents)
 
-        chunk_content = [': '.join([d.metadata['title'], d.page_content]) for d in documents]
+        chunk_content = [': '.join([self.normalize(d.metadata['title']), self.normalize(d.page_content)]) for d in documents]
 
         # embed files DOES IT MAKE SENSE LIKE THIS?
         chunk_embeddings = self.embeddings.embed_documents(chunk_content)
@@ -104,7 +132,7 @@ class DenseKBIndexingPipeline(IndexingPipeline):
             chunks = l.load_and_split(self.splitter)
             all_chunks.extend(chunks)
 
-        chunk_content = [d.page_content for d in all_chunks]
+        chunk_content = [self.normalize(d.page_content) for d in all_chunks]
 
         # embed files
         chunk_embeddings = self.embeddings.embed_documents(chunk_content)
@@ -141,10 +169,12 @@ class DenseKBIndexingPipeline(IndexingPipeline):
 class SparseKBIndexingPipeline(IndexingPipeline):
 
     def __init__(self,
+                lower:bool,
+                stop_word:bool,
                 loader: langchain.document_loaders=None, 
                 splitter: langchain_text_splitters=None, 
                 ):
-        super().__init__()
+        super().__init__(lower, stop_word)
         self.loader = loader
         self.splitter = splitter
 
@@ -175,7 +205,9 @@ class SparseKBIndexingPipeline(IndexingPipeline):
         for f in files:
             l = self.loader(f)
             chunks = l.load_and_split(self.splitter)
-            all_chunks.extend(chunks)
+            for c in chunks:
+                all_chunks.append(self.normalize(c))
+            # all_chunks.extend(chunks)
 
         # chunk_content = [d.page_content for d in all_chunks]
 
@@ -205,8 +237,8 @@ class SparseKBIndexingPipeline(IndexingPipeline):
         for i, chunk in enumerate(documents):
             writer.add_document(
                 doc_id=str(i),
-                title=chunk.metadata['title'],
-                content=chunk.page_content,
+                title=self.normalize(chunk.metadata['title']),
+                content=self.normalize(chunk.page_content),
                 source=chunk.metadata['source'],
             )
         
