@@ -1,6 +1,13 @@
-experiment_name: test1
+experiment_name: Temp2
 
 data: test2_hotpotQA
+
+cachesaver_config:
+  model_name: 'gpt-5-nano'
+  batch_size: 20
+  timeout: 2
+  allow_batch_overflow: 1
+  correctness: 0
 
 client_kwargs:
   model_name: 'gpt-5-nano'
@@ -12,21 +19,23 @@ client_kwargs:
 
 query_augmentation:
   # Options: pass, synonym_extension, rewriting, hyde, decompose 
-  component: [pass, synonym_extension, rewriting, hyde, decompose]
+  component: [[pass], [synonym_extension]]
   kwargs:
     nr_synonyms: 1
+    lowercase: 1
+    stop_word: 0
 
 retriever:
   # Options: sparse, dot_product, cosine_similarity, l2
-  type: [[sparse],[dot_product],[cosine_similarity],[l2],[sparse, l2]]
+  type: [[sparse],[dot_product]]
   kwargs:
-    k: [6, 6]
+    k: [[6],[6]]
     # should this be taken from the 'data' folder?
     embedding_model: sentence-transformers/all-MiniLM-L6-v2
 
 context_builder:
   # Options: concat, cross_encoder
-  component: [concat, cross_encoder]
+  component: [concat, concat]
   kwargs: 
     k_context_builder: 6
     cross_enc_model_name: cross-encoder/ms-marco-MiniLM-L-6-v2 

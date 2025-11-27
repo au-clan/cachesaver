@@ -36,6 +36,8 @@ class API(ABC):
         self.latencies = defaultdict(list)
         self.reuse = defaultdict(lambda: defaultdict(int))
 
+        self.request_prompts = []
+
         self.log_path = log_path
         if self.log_path:
             os.makedirs(os.path.dirname(self.log_path), exist_ok=True)
@@ -86,6 +88,7 @@ class API(ABC):
             stop=params.stop,
             logprobs=params.logprobs
         )
+        self.request_prompts.append(prompt)
 
         start = time.perf_counter()
         response = await self.pipeline.request(request)

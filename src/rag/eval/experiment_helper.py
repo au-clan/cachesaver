@@ -13,7 +13,7 @@ from sentence_transformers import CrossEncoder
 from whoosh import index
 from langchain_community.vectorstores import FAISS
 
-import os, yaml
+import os, yaml, json, copy
 from datetime import datetime
 
 
@@ -123,6 +123,7 @@ def save_experiment_results(
         result_metrics:dict, 
         generation_dict:dict,
         rag_ret_docs:dict,
+        request_prompts:list[str],
         path:str='C:/root/code_repositories/Uni_AU/Semester5/RAG_Project/cachesaver/src/rag/experiments/local', 
     ):
     exp_timestamp = f"{config['experiment_name']}/{datetime.now():%Y-%m-%d_%H-%M-%S}"
@@ -140,6 +141,23 @@ def save_experiment_results(
 
     with open(f"{save_dir}/rag_ret_docs.yaml", "w") as f:
         yaml.safe_dump(rag_ret_docs, f)
+
+    # save request prompts to test for duplicates
+    current_list = []
+    requ_prompt_path = os.path.join(path, config['experiment_name'], "request_prompts.json")
+    if os.path.exists(requ_prompt_path):
+        try:
+            with open(requ_prompt_path, 'r', encoding='utf-8') as f:
+                current_list = json.load(f)
+        except:
+            print("Error opening the json file")
+
+    current_list.extend(request_prompts)
+
+    with open(requ_prompt_path, 'w', encoding='utf-8') as f:
+        json.dump(current_list, f, indent=4)
+
+    return current_list
 
 
 async def experiment_loop(config:dict, verbose:bool=False):
@@ -169,9 +187,32 @@ async def experiment_loop(config:dict, verbose:bool=False):
         verbose=verbose,
     )
 
-    save_experiment_results(config=config, result_metrics=result_dict, generation_dict=generation_dict, rag_ret_docs=rag_ret_docs)
+    # print(len(cash_client.request_prompts))
+    # print(len(set(cash_client.request_prompts)))
+    # # print(cash_client.request_prompts)
+    # print()
 
+    request_prompts = save_experiment_results(config=config, result_metrics=result_dict, generation_dict=generation_dict, rag_ret_docs=rag_ret_docs, request_prompts=cash_client.request_prompts)
+    return request_prompts
 
-async def run_multiple_experiments(config_path:str):
+async def run_multiple_experiments(config_path:str, verbose:bool):
     
     multiple_config = yaml.safe_load(Path(config_path).read_text())
+    assert (len(multiple_config['query_augmentation']['component']) == len(multiple_config['retriever']['type']) == len(multiple_config['context_builder']['component']))#, f"number of compoents need to be the same for query_augmentation: {len(multiple_config['query_augmentation']['component'])}, retriever: {len(multiple_config['retriever']['type'])} and context builder: {len(multiple_config['context_builder']['component'])}")
+    for i in range(len(multiple_config['query_augmentation']['component'])):
+        print(f" ============= EXPERIMENT RUN: {i+1} ============= ")
+        config = copy.deepcopy(multiple_config)
+        config['query_augmentation']['component'] = config['query_augmentation']['component'][i]
+        config['retriever']['type'] = config['retriever']['type'][i]
+        config['retriever']['kwargs']['k'] = config['retriever']['kwargs']['k'][i]
+        config['context_builder']['component'] = config['context_builder']['component'][i]
+
+        request_prompts = await experiment_loop(config=config, verbose=verbose)
+
+    total_requests = len(request_prompts)
+    unique_requests = len(set(request_prompts))
+    perc_unique = unique_requests / total_requests
+
+    save_path = f"C:/root/code_repositories/Uni_AU/Semester5/RAG_Project/cachesaver/src/rag/experiments/local/{multiple_config['experiment_name']}/nr_duplicates.txt"
+    with open(save_path, 'w') as f:
+        f.write(f"Total Requests: {total_requests} \nUnique Requests: {unique_requests} \nPercentage Unique Requests: {perc_unique}")

@@ -1,7 +1,8 @@
-experiment_name: experiment1_30
+experiment_name: temp
+# experiment_name: experiment1_30
 
-# data: test2_hotpotQA
-data: experiment1_hotpotqa
+data: test2_hotpotQA
+# data: experiment1_hotpotqa
 
 cachesaver_config:
   model_name: 'gpt-5-nano'
@@ -20,11 +21,7 @@ client_kwargs:
 
 query_augmentation:
   # Options: pass, normalize, synonym_extension, rewriting, multi_query, hyde, decompose
-  # component: [normalize, multi_query]
-  # component: [rewriting]
-  # component: [normalize, rewriting]
-  # component: [decompose]
-  component: [normalize, decompose]
+  component: [pass]
   kwargs:
     nr_synonyms: 3
     lowercase: 1
@@ -32,7 +29,7 @@ query_augmentation:
 
 retriever:
   # Options: sparse, dot_product, cosine_similarity, l2
-  type: [sparse, l2]
+  type: [sparse]
   kwargs:
     k: [6, 6]
     # should this be taken from the 'data' folder?
